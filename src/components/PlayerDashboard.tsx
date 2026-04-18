@@ -909,7 +909,7 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
       setPhase("done");
       const w = cards[winnerIdx];
       // Force the winner to be the picked card visually
-      toast.success(`You won: ${cards[idx].name}!`);
+      toast.success(`Laimėjai: ${cards[idx].name}!`);
       // Update the actual winner reference to picked card so payouts match what user sees
       setWinnerIdx(idx);
       void w;
@@ -956,7 +956,7 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
           {phase === "idle" ? (
             <div className="text-center space-y-1">
               <Package className="h-10 w-10 mx-auto text-muted-foreground" strokeWidth={1.25} />
-              <p className="text-sm text-muted-foreground">Press „Open" to reveal {CARD_COUNT} cards.</p>
+              <p className="text-sm text-muted-foreground">Paspausk „Atidaryti", kad atskleistum {CARD_COUNT} korteles.</p>
             </div>
           ) : (
             <div className="flex items-center justify-center gap-3 md:gap-4 flex-wrap">
@@ -1118,7 +1118,7 @@ const FlipCard = ({
         interactive ? "hover:-translate-y-2 cursor-pointer" : "cursor-default"
       } ${dimmed ? "opacity-40 scale-95" : ""} ${picked && phase === "done" ? "scale-105" : ""}`}
       style={shuffleAnim}
-      aria-label={interactive ? `Pick card ${index + 1}` : item.name}
+      aria-label={interactive ? `Pasirink kortelę ${index + 1}` : item.name}
     >
       <div
         className="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]"
