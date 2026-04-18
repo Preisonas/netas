@@ -127,22 +127,24 @@ const Index = () => {
         <section className="relative overflow-hidden">
           {/* Map background (left side) — clean blend, no masks */}
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[50%] opacity-40"
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[45%] opacity-70 mix-blend-screen"
             aria-hidden
           >
             <img
               src={mapBg}
               alt=""
-              className="h-full w-full object-contain object-left scale-110"
+              className="h-full w-full object-contain object-left scale-105"
               style={{
                 WebkitMaskImage:
-                  "radial-gradient(ellipse at 30% 50%, black 0%, transparent 60%)",
+                  "radial-gradient(ellipse at 25% 50%, black 0%, rgba(0,0,0,0.6) 25%, transparent 65%)",
                 maskImage:
-                  "radial-gradient(ellipse at 30% 50%, black 0%, transparent 60%)",
+                  "radial-gradient(ellipse at 25% 50%, black 0%, rgba(0,0,0,0.6) 25%, transparent 65%)",
+                filter: "blur(0.4px)",
               }}
             />
           </div>
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-background/40 to-background" aria-hidden />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/30 via-background/20 to-background" aria-hidden />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/60" aria-hidden />
 
           <div className="relative container grid lg:grid-cols-2 gap-12 items-center py-24">
             {/* Spacer for map column on desktop */}
