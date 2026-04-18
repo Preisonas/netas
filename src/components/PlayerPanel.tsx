@@ -21,16 +21,11 @@ const PlayerPanel = ({ onClose }: PlayerPanelProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleDiscordLogin = async () => {
+  const handleDiscordLogin = () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "discord",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) {
-      toast.error("Nepavyko prisijungti per Discord", { description: error.message });
-      setLoading(false);
-    }
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const returnTo = encodeURIComponent(window.location.origin);
+    window.location.href = `https://${projectId}.supabase.co/functions/v1/discord-auth-start?return_to=${returnTo}`;
   };
 
   const handleLogout = async () => {
