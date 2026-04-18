@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Play, ImageIcon } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import palmsBg from "@/assets/palms-bg.png";
+import logo from "@/assets/logo.png";
 
 const navItems = ["Home", "Loja", "Wiki", "Termos"];
 
@@ -20,8 +21,8 @@ const Index = () => {
       <div className="relative z-10">
         {/* Nav */}
         <header className="container flex items-center justify-between py-6">
-          <a href="#" className="flex items-center gap-2 text-primary">
-            <Play className="h-6 w-6 fill-primary" />
+          <a href="#" className="flex items-center gap-2">
+            <img src={logo} alt="Dynamic Roleplay logo" className="h-9 w-9" />
           </a>
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item, i) => (
