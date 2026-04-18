@@ -113,11 +113,19 @@ const Index = () => {
         <section className="relative border-t border-border/40">
           <div className="container grid lg:grid-cols-2 gap-12 items-center py-24">
             {/* Map */}
-            <div className="relative">
+            <div
+              className="relative"
+              style={{
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent 0%, black 45%, black 100%)",
+                maskImage:
+                  "linear-gradient(to right, transparent 0%, black 45%, black 100%)",
+              }}
+            >
               <img
                 src={mapBg}
                 alt="Speed Roleplay miesto žemėlapis"
-                className="w-full h-auto opacity-80"
+                className="w-full h-auto opacity-90"
               />
             </div>
 
