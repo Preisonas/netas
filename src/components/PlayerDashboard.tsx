@@ -333,10 +333,10 @@ const shopVehicles: ShopVehicle[] = [
     features: ["Dirt map", "Ray Tracing Ready", "Universalas", "5 sėdimos vietos"] },
 ];
 
-const tierStyles: Record<Tier, { bg: string; text: string; label: string }> = {
-  gold:   { bg: "bg-[hsl(330_85%_55%)]", text: "text-white", label: "gold" },
-  silver: { bg: "bg-[hsl(160_70%_45%)]", text: "text-white", label: "silver" },
-  bronze: { bg: "bg-[hsl(30_85%_55%)]",  text: "text-white", label: "bronze" },
+const tierStyles: Record<Tier, { text: string; label: string }> = {
+  gold:   { text: "text-[hsl(330_90%_65%)]", label: "gold" },
+  silver: { text: "text-[hsl(160_75%_55%)]", label: "silver" },
+  bronze: { text: "text-[hsl(30_90%_60%)]",  label: "bronze" },
 };
 
 const categories: Category[] = ["Visi", "Transportas", "Paslaugos", "Daiktai", "Ratai", "Kita"];
@@ -410,7 +410,7 @@ const ShopSection = () => {
 const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
   const tier = tierStyles[v.tier];
   return (
-    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 border border-border/60 hover:border-primary/40 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
+    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
         {v.image ? (
           <img
