@@ -714,4 +714,444 @@ const Placeholder = ({ title }: { title: string }) => (
   </div>
 );
 
+// ============================================================
+// CASES (Dėžės)
+// ============================================================
+
+type Rarity = "common" | "rare" | "epic" | "legendary" | "mythic";
+
+interface CaseItem {
+  id: string;
+  name: string;
+  rarity: Rarity;
+  weight: number;
+  kind: "vehicle" | "credits" | "cosmetic";
+  value?: number;
+}
+
+interface LootBox {
+  id: string;
+  name: string;
+  tagline: string;
+  price: number;
+  icon: typeof Package;
+  accent: string;
+  pool: CaseItem[];
+}
+
+const rarityStyles: Record<Rarity, { text: string; ring: string; glow: string; label: string; bg: string }> = {
+  common:    { text: "text-[hsl(220_10%_75%)]", ring: "ring-[hsl(220_10%_55%)]/40",  glow: "hsl(220 10% 55% / 0.35)",  label: "Įprastas",   bg: "from-[hsl(220_15%_25%)] to-[hsl(220_15%_15%)]" },
+  rare:      { text: "text-[hsl(210_90%_70%)]", ring: "ring-[hsl(210_90%_55%)]/50",  glow: "hsl(210 90% 55% / 0.45)",  label: "Retas",      bg: "from-[hsl(210_60%_25%)] to-[hsl(210_60%_12%)]" },
+  epic:      { text: "text-[hsl(280_85%_72%)]", ring: "ring-[hsl(280_85%_60%)]/55",  glow: "hsl(280 85% 60% / 0.50)",  label: "Epinis",     bg: "from-[hsl(280_60%_25%)] to-[hsl(280_60%_12%)]" },
+  legendary: { text: "text-[hsl(35_100%_65%)]", ring: "ring-[hsl(35_100%_55%)]/60",  glow: "hsl(35 100% 55% / 0.55)",  label: "Legendinis", bg: "from-[hsl(35_80%_25%)] to-[hsl(35_80%_12%)]" },
+  mythic:    { text: "text-[hsl(330_95%_68%)]", ring: "ring-[hsl(330_95%_60%)]/65",  glow: "hsl(330 95% 60% / 0.65)",  label: "Mitinis",    bg: "from-[hsl(330_70%_28%)] to-[hsl(330_70%_12%)]" },
+};
+
+const lootBoxes: LootBox[] = [
+  {
+    id: "starter", name: "Pradedančiojo dėžė", tagline: "Geras startas naujokams", price: 5, icon: Gift, accent: "210 90% 60%",
+    pool: [
+      { id: "c5",   name: "5 kreditai",    rarity: "common", weight: 60, kind: "credits", value: 5 },
+      { id: "c10",  name: "10 kreditų",    rarity: "common", weight: 30, kind: "credits", value: 10 },
+      { id: "tshirt", name: "Marškinėliai", rarity: "rare",  weight: 8,  kind: "cosmetic" },
+      { id: "c50",  name: "50 kreditų",    rarity: "epic",   weight: 2,  kind: "credits", value: 50 },
+    ],
+  },
+  {
+    id: "vehicle", name: "Transporto dėžė", tagline: "Šansas laimėti automobilį", price: 25, icon: Car, accent: "160 75% 55%",
+    pool: [
+      { id: "c10",   name: "10 kreditų",   rarity: "common",    weight: 50, kind: "credits", value: 10 },
+      { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 25, kind: "credits", value: 25 },
+      { id: "audi",  name: "Audi RS6",     rarity: "epic",      weight: 15, kind: "vehicle" },
+      { id: "bmwm3", name: "BMW M3 G81",   rarity: "legendary", weight: 8,  kind: "vehicle" },
+      { id: "senna", name: "McLaren Senna",rarity: "mythic",    weight: 2,  kind: "vehicle" },
+    ],
+  },
+  {
+    id: "vip", name: "VIP dėžė", tagline: "Tik geri prizai", price: 50, icon: Crown, accent: "35 100% 60%",
+    pool: [
+      { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 40, kind: "credits", value: 25 },
+      { id: "c50",   name: "50 kreditų",   rarity: "epic",      weight: 30, kind: "credits", value: 50 },
+      { id: "shirt", name: "VIP rūbai",    rarity: "epic",      weight: 15, kind: "cosmetic" },
+      { id: "bmwm5", name: "BMW M5 F10",   rarity: "legendary", weight: 12, kind: "vehicle" },
+      { id: "csl",   name: "BMW M4 CSL",   rarity: "mythic",    weight: 3,  kind: "vehicle" },
+    ],
+  },
+  {
+    id: "premium", name: "Premium dėžė", tagline: "Aukštesnė klasė", price: 100, icon: Sparkles, accent: "280 85% 65%",
+    pool: [
+      { id: "c50",   name: "50 kreditų",   rarity: "rare",      weight: 35, kind: "credits", value: 50 },
+      { id: "c100",  name: "100 kreditų",  rarity: "epic",      weight: 30, kind: "credits", value: 100 },
+      { id: "huayra",name: "Pagani Huayra",rarity: "legendary", weight: 20, kind: "vehicle" },
+      { id: "csl",   name: "BMW M4 CSL",   rarity: "legendary", weight: 10, kind: "vehicle" },
+      { id: "senna", name: "McLaren Senna",rarity: "mythic",    weight: 5,  kind: "vehicle" },
+    ],
+  },
+  {
+    id: "legendary", name: "Legendinė dėžė", tagline: "Tik mitiniai prizai", price: 250, icon: Flame, accent: "330 95% 65%",
+    pool: [
+      { id: "c100",  name: "100 kreditų",  rarity: "epic",      weight: 30, kind: "credits", value: 100 },
+      { id: "c250",  name: "250 kreditų",  rarity: "legendary", weight: 25, kind: "credits", value: 250 },
+      { id: "huayra",name: "Pagani Huayra",rarity: "legendary", weight: 20, kind: "vehicle" },
+      { id: "senna", name: "McLaren Senna",rarity: "mythic",    weight: 15, kind: "vehicle" },
+      { id: "csl",   name: "BMW M4 CSL",   rarity: "mythic",    weight: 10, kind: "vehicle" },
+    ],
+  },
+];
+
+const rarityIcon = (kind: CaseItem["kind"]) => {
+  if (kind === "vehicle") return Car;
+  if (kind === "cosmetic") return Shirt;
+  return Coins;
+};
+
+const BoxesSection = () => {
+  const [openingBox, setOpeningBox] = useState<LootBox | null>(null);
+  return (
+    <>
+      <SectionHeader title="Dėžės" subtitle="Atidaryk dėžes ir laimėk transportą, kreditus arba kosmetiką." />
+
+      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {lootBoxes.map((box) => (
+          <BoxCard key={box.id} box={box} onOpen={() => setOpeningBox(box)} />
+        ))}
+      </div>
+
+      {openingBox && (
+        <CaseOpeningModal box={openingBox} onClose={() => setOpeningBox(null)} />
+      )}
+    </>
+  );
+};
+
+const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
+  const Icon = box.icon;
+  return (
+    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 p-6">
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-30 pointer-events-none"
+        style={{ background: `radial-gradient(120% 80% at 50% 0%, hsl(${box.accent} / 0.45), transparent 60%)` }}
+      />
+      <div
+        aria-hidden
+        className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full opacity-20 blur-3xl pointer-events-none"
+        style={{ background: `hsl(${box.accent})` }}
+      />
+
+      <div className="relative">
+        <div className="flex items-start justify-between">
+          <div
+            className="h-16 w-16 rounded-xl grid place-items-center"
+            style={{
+              background: `linear-gradient(135deg, hsl(${box.accent} / 0.4), hsl(${box.accent} / 0.1))`,
+              boxShadow: `0 10px 30px -10px hsl(${box.accent} / 0.6)`,
+            }}
+          >
+            <Icon className="h-8 w-8" style={{ color: `hsl(${box.accent})` }} />
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-bold">
+            <Coins className="h-3.5 w-3.5" />
+            {box.price} €
+          </span>
+        </div>
+
+        <h3 className="mt-4 text-lg font-bold leading-tight">{box.name}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
+
+        <div className="mt-4">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Galimi prizai</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
+              <span
+                key={r}
+                className={`text-[10px] uppercase tracking-wider font-bold ${rarityStyles[r].text}`}
+                style={{ textShadow: `0 0 12px ${rarityStyles[r].glow}` }}
+              >
+                {rarityStyles[r].label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={onOpen}
+          className="mt-5 w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
+        >
+          <Package className="h-4 w-4" />
+          Atidaryti už {box.price} €
+        </button>
+      </div>
+    </article>
+  );
+};
+
+const pickWeighted = (pool: CaseItem[]): CaseItem => {
+  const total = pool.reduce((s, i) => s + i.weight, 0);
+  let r = Math.random() * total;
+  for (const item of pool) {
+    r -= item.weight;
+    if (r <= 0) return item;
+  }
+  return pool[pool.length - 1];
+};
+
+const buildStrip = (pool: CaseItem[], winner: CaseItem, length = 60, winnerIndex = 50): CaseItem[] => {
+  const strip: CaseItem[] = [];
+  for (let i = 0; i < length; i++) {
+    strip.push(i === winnerIndex ? winner : pickWeighted(pool));
+  }
+  return strip;
+};
+
+const ITEM_W = 140;
+const ITEM_GAP = 12;
+
+const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void }) => {
+  const [phase, setPhase] = useState<"idle" | "spinning" | "done">("idle");
+  const [winner, setWinner] = useState<CaseItem | null>(null);
+  const [strip, setStrip] = useState<CaseItem[]>([]);
+  const [offset, setOffset] = useState(0);
+  const [selectingChar, setSelectingChar] = useState(false);
+
+  const winnerIndex = 50;
+
+  const startOpen = () => {
+    if (phase === "spinning") return;
+    const w = pickWeighted(box.pool);
+    const s = buildStrip(box.pool, w, 60, winnerIndex);
+    setWinner(w);
+    setStrip(s);
+    setPhase("spinning");
+    setOffset(0);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const itemFull = ITEM_W + ITEM_GAP;
+        const jitter = (Math.random() - 0.5) * (ITEM_W * 0.6);
+        const target = winnerIndex * itemFull + ITEM_W / 2 + jitter;
+        setOffset(target);
+      });
+    });
+
+    window.setTimeout(() => {
+      setPhase("done");
+      toast.success(`Laimėjai: ${w.name}!`);
+    }, 6200);
+  };
+
+  const reset = () => {
+    setPhase("idle");
+    setWinner(null);
+    setStrip([]);
+    setOffset(0);
+    setSelectingChar(false);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4"
+      onClick={() => phase !== "spinning" && onClose()}
+    >
+      <div
+        className="relative w-full max-w-3xl rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl p-6 md:p-8 shadow-[0_30px_80px_rgba(0,0,0,0.6)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-30 pointer-events-none"
+          style={{ background: `radial-gradient(120% 60% at 50% 0%, hsl(${box.accent} / 0.4), transparent 70%)` }}
+        />
+
+        <div className="relative flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-xl md:text-2xl font-bold">{box.name}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
+          </div>
+          {phase !== "spinning" && (
+            <button
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Uždaryti"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+
+        <div className="relative h-44 rounded-xl overflow-hidden bg-background/60 border border-border/50">
+          <div aria-hidden className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-card via-card/70 to-transparent z-10" />
+          <div aria-hidden className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-card via-card/70 to-transparent z-10" />
+
+          <div aria-hidden className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 pointer-events-none">
+            <div className="h-full w-0.5" style={{ background: `hsl(${box.accent})`, boxShadow: `0 0 20px hsl(${box.accent})` }} />
+            <div
+              className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0"
+              style={{ borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: `10px solid hsl(${box.accent})` }}
+            />
+            <div
+              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0"
+              style={{ borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderBottom: `10px solid hsl(${box.accent})` }}
+            />
+          </div>
+
+          {strip.length > 0 ? (
+            <div
+              className="absolute top-1/2 flex items-center"
+              style={{
+                gap: `${ITEM_GAP}px`,
+                left: "50%",
+                transform: `translate3d(${-offset}px, -50%, 0)`,
+                transition: phase === "spinning" ? "transform 6s cubic-bezier(0.05, 0.7, 0.1, 1)" : "none",
+              }}
+            >
+              {strip.map((item, idx) => (
+                <RouletteItem key={idx} item={item} width={ITEM_W} />
+              ))}
+            </div>
+          ) : (
+            <div className="absolute inset-0 grid place-items-center">
+              <p className="text-sm text-muted-foreground">Spausk „Atidaryti" kad pradėtum.</p>
+            </div>
+          )}
+        </div>
+
+        {phase === "done" && winner && (
+          <div className="mt-6 rounded-xl p-5 border" style={{
+            background: `linear-gradient(135deg, hsl(${box.accent} / 0.12), transparent 70%)`,
+            borderColor: `hsl(${box.accent} / 0.4)`,
+          }}>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Tu laimėjai</p>
+            <div className="mt-1 flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <h4 className={`text-2xl font-black ${rarityStyles[winner.rarity].text}`}
+                    style={{ textShadow: `0 0 20px ${rarityStyles[winner.rarity].glow}` }}>
+                  {winner.name}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">
+                  {rarityStyles[winner.rarity].label}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectingChar(true)}
+                  className="h-10 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
+                >
+                  Atsiimti
+                </button>
+                <button
+                  onClick={reset}
+                  className="h-10 px-4 rounded-md text-sm font-semibold bg-secondary hover:bg-secondary/80 transition"
+                >
+                  Atidaryti dar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {phase === "idle" && (
+          <div className="mt-6 flex items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground">
+              Dėžės kaina: <span className="text-foreground font-semibold">{box.price} €</span>
+            </p>
+            <button
+              onClick={startOpen}
+              className="h-11 px-6 rounded-md text-sm font-bold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
+            >
+              <Package className="h-4 w-4" />
+              Atidaryti už {box.price} €
+            </button>
+          </div>
+        )}
+
+        {phase === "spinning" && (
+          <p className="mt-6 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground animate-pulse">
+            Sukama…
+          </p>
+        )}
+
+        {selectingChar && winner && (
+          <div
+            className="absolute inset-0 z-30 grid place-items-center bg-background/85 backdrop-blur-md p-6 rounded-2xl"
+            onClick={() => setSelectingChar(false)}
+          >
+            <div
+              className="w-full max-w-md rounded-xl border border-border/60 bg-card p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-lg font-bold">Pasirink veikėją</h3>
+                <button onClick={() => setSelectingChar(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                Į kurio veikėjo paskyrą pristatyti{" "}
+                <span className="text-foreground font-medium">{winner.name}</span>?
+              </p>
+              {mockCharacters.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">Veikėjų nėra.</p>
+              ) : (
+                <div className="space-y-2">
+                  {mockCharacters.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        toast.success(`${winner.name} priskirtas: ${c.firstName} ${c.lastName}`);
+                        setSelectingChar(false);
+                        reset();
+                        onClose();
+                      }}
+                      className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {c.firstName} {c.lastName}
+                        </p>
+                        <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                          <Briefcase className="h-3 w-3" />
+                          {c.job}
+                        </p>
+                      </div>
+                      <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                        <Wallet className="h-3 w-3 text-primary" />
+                        {formatMoney(c.bank)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const RouletteItem = ({ item, width }: { item: CaseItem; width: number }) => {
+  const r = rarityStyles[item.rarity];
+  const Icon = rarityIcon(item.kind);
+  return (
+    <div
+      className={`shrink-0 h-36 rounded-lg bg-gradient-to-b ${r.bg} ring-2 ${r.ring} grid place-items-center p-3 relative overflow-hidden`}
+      style={{ width: `${width}px`, boxShadow: `0 4px 20px -6px ${r.glow}` }}
+    >
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-40"
+        style={{ background: `radial-gradient(80% 60% at 50% 0%, ${r.glow}, transparent 70%)` }}
+      />
+      <div className="relative text-center">
+        <Icon className={`h-8 w-8 mx-auto ${r.text}`} />
+        <p className="mt-2 text-xs font-bold leading-tight">{item.name}</p>
+        <p className={`mt-1 text-[9px] uppercase tracking-wider font-bold ${r.text}`}>
+          {r.label}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export default PlayerDashboard;
