@@ -113,20 +113,29 @@ const Index = () => {
         <section className="relative border-t border-border/40 overflow-hidden">
           {/* Map background (left side) */}
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-1/2"
-            style={{
-              WebkitMaskImage:
-                "linear-gradient(to right, transparent 0%, black 30%, black 70%, transparent 100%)",
-              maskImage:
-                "linear-gradient(to right, transparent 0%, black 30%, black 70%, transparent 100%)",
-            }}
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-1/2 flex items-center justify-center"
             aria-hidden
           >
-            <img
-              src={mapBg}
-              alt=""
-              className="h-full w-full object-cover opacity-60"
-            />
+            <div
+              className="relative h-[85%] w-[85%]"
+              style={{
+                WebkitMaskImage:
+                  "radial-gradient(ellipse at center, black 40%, transparent 80%)",
+                maskImage:
+                  "radial-gradient(ellipse at center, black 40%, transparent 80%)",
+              }}
+            >
+              {/* Brand glow behind map */}
+              <div
+                className="absolute inset-0 blur-3xl opacity-40"
+                style={{ background: "var(--gradient-brand)" }}
+              />
+              <img
+                src={mapBg}
+                alt=""
+                className="relative h-full w-full object-contain opacity-70"
+              />
+            </div>
           </div>
 
           <div className="relative container grid lg:grid-cols-2 gap-12 items-center py-24">
