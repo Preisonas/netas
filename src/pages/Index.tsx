@@ -72,11 +72,10 @@ const Index = () => {
 
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
-              <div className="absolute -inset-10 bg-primary/20 blur-3xl rounded-full" aria-hidden />
               <img
                 src={logoHero}
                 alt="Dynamic Roleplay logo"
-                className="relative h-64 md:h-80 w-auto drop-shadow-[0_0_30px_hsl(var(--primary)/0.5)]"
+                className="h-32 md:h-40 w-auto"
               />
             </div>
           </div>
