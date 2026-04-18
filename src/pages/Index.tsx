@@ -20,21 +20,21 @@ const Index = () => {
           style={{
             backgroundImage: `url(${palmsBg})`,
             WebkitMaskImage:
-              "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+              "linear-gradient(to bottom, black 0%, black 30%, transparent 95%)",
             maskImage:
-              "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+              "linear-gradient(to bottom, black 0%, black 30%, transparent 95%)",
           }}
         />
         <div
           className="absolute inset-0 bg-background/60"
           style={{
             WebkitMaskImage:
-              "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+              "linear-gradient(to bottom, black 0%, black 30%, transparent 95%)",
             maskImage:
-              "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+              "linear-gradient(to bottom, black 0%, black 30%, transparent 95%)",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
       </div>
 
       <div className="relative z-10">
