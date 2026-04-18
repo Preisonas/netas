@@ -17,9 +17,23 @@ const Index = () => {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-screen" aria-hidden>
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${palmsBg})` }}
+          style={{
+            backgroundImage: `url(${palmsBg})`,
+            WebkitMaskImage:
+              "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+            maskImage:
+              "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+          }}
         />
-        <div className="absolute inset-0 bg-background/60" />
+        <div
+          className="absolute inset-0 bg-background/60"
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+            maskImage:
+              "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
       </div>
 
