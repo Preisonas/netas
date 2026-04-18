@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { ImageIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import palmsBg from "@/assets/palms-bg.png";
 import logo from "@/assets/logo.png";
 import logoHero from "@/assets/logo-hero.gif";
+import news1 from "@/assets/news-1.png";
+import news2 from "@/assets/news-2.png";
+import news3 from "@/assets/news-3.png";
 
 const navItems = ["Home", "Shop", "Wiki", "Terms"];
 
