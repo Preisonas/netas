@@ -201,7 +201,17 @@ interface Character {
   playtimeMinutes: number;
 }
 
-const mockCharacters: Character[] = [];
+const mockCharacters: Character[] = [
+  {
+    id: "1",
+    firstName: "Jonas",
+    lastName: "Jonaitis",
+    money: 12500,
+    bank: 87400,
+    job: "Policininkas",
+    playtimeMinutes: 742,
+  },
+];
 
 const ProfileSection = ({
   username,
@@ -426,9 +436,6 @@ const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
           </div>
         )}
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
-        <span className={`absolute top-3 right-3 text-xs font-bold uppercase tracking-wider ${tier.text} drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]`}>
-          {tier.label}
-        </span>
       </div>
 
       <div className="p-4">
