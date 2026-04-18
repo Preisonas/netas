@@ -127,12 +127,12 @@ const Index = () => {
         <section className="relative overflow-hidden">
           <div className="relative container grid lg:grid-cols-2 gap-4 items-center py-24">
             {/* Ped image */}
-            <div className="hidden lg:flex justify-end pr-0">
+            <div className="hidden lg:flex justify-end pr-0 group">
               <img
                 src={pedHero}
                 alt=""
                 aria-hidden
-                className="h-[560px] w-auto object-contain object-right -mr-8"
+                className="h-[720px] w-auto object-contain object-right -mr-16 grayscale transition-all duration-500 ease-out group-hover:grayscale-0"
               />
             </div>
 
