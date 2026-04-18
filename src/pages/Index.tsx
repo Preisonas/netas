@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ImageIcon } from "lucide-react";
 import palmsBg from "@/assets/palms-bg.png";
 import logo from "@/assets/logo.png";
+import logoHero from "@/assets/logo-hero.gif";
 
 const navItems = ["Home", "Loja", "Wiki", "Termos"];
 
@@ -72,14 +73,11 @@ const Index = () => {
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
               <div className="absolute -inset-10 bg-primary/20 blur-3xl rounded-full" aria-hidden />
-              <div className="relative font-bold text-center">
-                <div className="text-6xl md:text-7xl tracking-tighter text-foreground drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
-                  DYNAMIC
-                </div>
-                <div className="text-4xl md:text-5xl italic bg-[image:var(--gradient-brand)] bg-clip-text text-transparent -mt-2">
-                  Roleplay
-                </div>
-              </div>
+              <img
+                src={logoHero}
+                alt="Dynamic Roleplay logo"
+                className="relative h-64 md:h-80 w-auto drop-shadow-[0_0_30px_hsl(var(--primary)/0.5)]"
+              />
             </div>
           </div>
         </section>
