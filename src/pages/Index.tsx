@@ -111,7 +111,7 @@ const Index = () => {
 
         {/* How to start */}
         <section className="relative overflow-hidden">
-          {/* Map background (left side) — soft fade on all edges */}
+          {/* Map background (left side) — clean blend, no masks */}
           <div
             className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[55%]"
             aria-hidden
@@ -119,15 +119,7 @@ const Index = () => {
             <img
               src={mapBg}
               alt=""
-              className="h-full w-full object-cover opacity-20"
-              style={{
-                WebkitMaskImage:
-                  "linear-gradient(to right, transparent 0%, black 25%, black 70%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)",
-                maskImage:
-                  "linear-gradient(to right, transparent 0%, black 25%, black 70%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)",
-                WebkitMaskComposite: "source-in",
-                maskComposite: "intersect",
-              }}
+              className="h-full w-full object-cover opacity-15"
             />
           </div>
 
