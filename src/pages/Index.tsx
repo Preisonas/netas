@@ -127,7 +127,7 @@ const Index = () => {
         <section className="relative overflow-hidden">
           {/* Map background (left side) — clean blend, no masks */}
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[45%] opacity-60"
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[40%] opacity-25"
             aria-hidden
           >
             <img
@@ -136,10 +136,10 @@ const Index = () => {
               className="h-full w-full object-contain object-left scale-105"
               style={{
                 WebkitMaskImage:
-                  "radial-gradient(ellipse 70% 75% at 25% 50%, black 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.4) 55%, transparent 80%)",
+                  "radial-gradient(ellipse 55% 60% at 22% 55%, black 0%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.2) 55%, transparent 78%)",
                 maskImage:
-                  "radial-gradient(ellipse 70% 75% at 25% 50%, black 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.4) 55%, transparent 80%)",
-                filter: "blur(0.5px)",
+                  "radial-gradient(ellipse 55% 60% at 22% 55%, black 0%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.2) 55%, transparent 78%)",
+                filter: "blur(2px) contrast(0.8)",
               }}
             />
           </div>
@@ -149,7 +149,7 @@ const Index = () => {
             aria-hidden
             style={{
               background:
-                "radial-gradient(ellipse 60% 70% at 22% 50%, transparent 0%, transparent 40%, hsl(var(--background) / 0.5) 70%, hsl(var(--background)) 100%)",
+                "radial-gradient(ellipse 50% 60% at 22% 55%, transparent 0%, transparent 30%, hsl(var(--background) / 0.7) 70%, hsl(var(--background)) 100%)",
             }}
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background" aria-hidden />
