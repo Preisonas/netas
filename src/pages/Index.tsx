@@ -1,4 +1,15 @@
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import palmsBg from "@/assets/palms-bg.png";
 import logo from "@/assets/logo.png";
 import logoHero from "@/assets/logo-hero.gif";
@@ -7,9 +18,30 @@ import news2 from "@/assets/news-2.png";
 import news3 from "@/assets/news-3.png";
 import pedHero from "@/assets/ped-hero.png";
 import { FolderOpen, ExternalLink, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
+const JOIN_URL = "https://cfx.re/join/lkzrzv";
+
+const JoinDialog = ({ children }: { children: ReactNode }) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Ar tikrai nori prisijungti?</AlertDialogTitle>
+        <AlertDialogDescription>
+          Būsi nukreiptas į FiveM klientą ir prisijungsi prie Speed Roleplay serverio.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+        <AlertDialogAction onClick={() => { window.location.href = JOIN_URL; }}>
+          Taip, jungtis
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+);
 
 const Index = () => {
   const [players, setPlayers] = useState<{ clients: number; max: number } | null>(null);
@@ -115,9 +147,11 @@ const Index = () => {
               riba.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-7">
-                <a href="https://cfx.re/join/lkzrzv">Žaisti dabar</a>
-              </Button>
+              <JoinDialog>
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-7">
+                  Žaisti dabar
+                </Button>
+              </JoinDialog>
               <Button variant="outline" className="rounded-sm border-white/30 bg-transparent text-white/70 hover:bg-white/10 hover:text-white/90 h-10 px-10">
                 Registruoti paskyrą
               </Button>
@@ -245,16 +279,15 @@ const Index = () => {
                   <br />
                   Tada prisijunk su paskyra, kurią susikūrei svetainėje.
                 </p>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="mt-4 rounded-sm border-transparent bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-12 gap-2"
-                >
-                  <a href="https://cfx.re/join/lkzrzv">
+                <JoinDialog>
+                  <Button
+                    variant="outline"
+                    className="mt-4 rounded-sm border-transparent bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-12 gap-2"
+                  >
                     <ExternalLink className="h-4 w-4" />
                     Žaisti
-                  </a>
-                </Button>
+                  </Button>
+                </JoinDialog>
               </div>
             </div>
           </div>
