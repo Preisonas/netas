@@ -127,21 +127,22 @@ const Index = () => {
         <section className="relative overflow-hidden">
           {/* Map background (left side) — clean blend, no masks */}
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[55%] opacity-80"
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[50%] opacity-40"
             aria-hidden
           >
             <img
               src={mapBg}
               alt=""
-              className="h-full w-full object-contain object-left scale-125"
+              className="h-full w-full object-contain object-left scale-110"
               style={{
                 WebkitMaskImage:
-                  "radial-gradient(ellipse at 35% 50%, black 0%, black 15%, transparent 65%)",
+                  "radial-gradient(ellipse at 30% 50%, black 0%, transparent 60%)",
                 maskImage:
-                  "radial-gradient(ellipse at 35% 50%, black 0%, black 15%, transparent 65%)",
+                  "radial-gradient(ellipse at 30% 50%, black 0%, transparent 60%)",
               }}
             />
           </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-background/40 to-background" aria-hidden />
 
           <div className="relative container grid lg:grid-cols-2 gap-12 items-center py-24">
             {/* Spacer for map column on desktop */}
@@ -172,21 +173,14 @@ const Index = () => {
                   Pirmas žingsnis
                 </h4>
                 <p className="mt-2 text-muted-foreground">
-                  Įsidiek{" "}
+                  Įsigyk{" "}
                   <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent font-medium">
-                    MTA: San Andreas
+                    GTA V
                   </span>{" "}
-                  į savo kompiuterį.
+                  kopiją į savo kompiuterį.
                   <br />
-                  Jis būtinas norint prisijungti prie serverio.
+                  Ji būtina norint prisijungti prie serverio.
                 </p>
-                <Button
-                  variant="outline"
-                  className="mt-4 rounded-sm border-white/20 bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-4 gap-2"
-                >
-                  <FolderOpen className="h-4 w-4" />
-                  Įdiegti MTA
-                </Button>
               </div>
 
               {/* Step 2 */}
@@ -196,7 +190,7 @@ const Index = () => {
                   Antras žingsnis
                 </h4>
                 <p className="mt-2 text-muted-foreground">
-                  Užregistruok paskyrą oficialioje{" "}
+                  Užsiregistruok paskyrą oficialioje{" "}
                   <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent font-medium">
                     Speed Roleplay
                   </span>{" "}
@@ -213,11 +207,11 @@ const Index = () => {
                   Trečias žingsnis
                 </h4>
                 <p className="mt-2 text-muted-foreground">
-                  Spausk mygtuką žemiau, kad{" "}
+                  Atsisiųsk{" "}
                   <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent font-medium">
-                    atvertum MTA
+                    FiveM
                   </span>{" "}
-                  tiesiai mūsų serveryje.
+                  ir prisijunk paspaudęs mygtuką „Žaisti“.
                   <br />
                   Tada prisijunk su paskyra, kurią susikūrei svetainėje.
                 </p>
@@ -226,7 +220,7 @@ const Index = () => {
                   className="mt-4 rounded-sm border-white/20 bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-4 gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  Atverti MTA
+                  Žaisti
                 </Button>
               </div>
             </div>
