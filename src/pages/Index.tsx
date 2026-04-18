@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { ImageIcon } from "lucide-react";
 import palmsBg from "@/assets/palms-bg.png";
 import logo from "@/assets/logo.png";
 import logoHero from "@/assets/logo-hero.gif";
+import news1 from "@/assets/news-1.png";
+import news2 from "@/assets/news-2.png";
+import news3 from "@/assets/news-3.png";
 
 const navItems = ["Home", "Shop", "Wiki", "Terms"];
 
@@ -90,12 +92,16 @@ const Index = () => {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
+            {[news1, news2, news3].map((src, i) => (
               <article
                 key={i}
-                className="aspect-[4/3] rounded-lg border border-border/60 bg-card/40 backdrop-blur flex items-center justify-center hover:border-primary/50 transition-colors"
+                className="aspect-[4/3] rounded-lg border border-border/60 bg-card/40 backdrop-blur overflow-hidden hover:border-primary/50 transition-colors"
               >
-                <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
+                <img
+                  src={src}
+                  alt={`News ${i + 1}`}
+                  className="h-full w-full object-cover"
+                />
               </article>
             ))}
           </div>
