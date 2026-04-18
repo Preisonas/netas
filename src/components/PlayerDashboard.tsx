@@ -426,7 +426,7 @@ const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
           </div>
         )}
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
-        <span className={`absolute top-3 right-3 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-md ${tier.bg} ${tier.text} shadow-lg`}>
+        <span className={`absolute top-3 right-3 text-xs font-bold uppercase tracking-wider ${tier.text} drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]`}>
           {tier.label}
         </span>
       </div>
