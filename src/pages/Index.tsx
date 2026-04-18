@@ -250,9 +250,8 @@ const Index = () => {
           <div className="border-t border-border/40">
             <div className="container py-5 flex items-center justify-between text-xs text-muted-foreground">
               <span>Copyright © 2026 · Speed Roleplay.</span>
-              <span>
-                Sprendimas: <span className="text-foreground">Ather</span> &{" "}
-                <span className="text-primary">Mkk</span>
+              <span className="text-foreground">
+                Sprendimas: Ather & Mkk
               </span>
             </div>
           </div>
