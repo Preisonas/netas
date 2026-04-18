@@ -39,12 +39,7 @@ type SectionKey =
   | "auction"
   | "lottery"
   | "leaderboard"
-  | "invites"
-  | "applications"
-  | "team"
-  | "server-unban"
-  | "discord-unban"
-  | "faction-leader";
+  | "invites";
 
 const navGroups: { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] }[] = [
   {
@@ -58,16 +53,6 @@ const navGroups: { label: string; items: { key: SectionKey; title: string; icon:
       { key: "lottery", title: "Loterija", icon: Ticket },
       { key: "leaderboard", title: "Lyderių sąrašas", icon: Trophy },
       { key: "invites", title: "Pakvietimai", icon: UserPlus },
-    ],
-  },
-  {
-    label: "Apeliacijos",
-    items: [
-      { key: "applications", title: "Mano anketos", icon: FileText, badge: "0" },
-      { key: "team", title: "Atranka į komandą", icon: Users },
-      { key: "server-unban", title: "Serverio atsiblokavimas", icon: ServerOff },
-      { key: "discord-unban", title: "Discord atsiblokavimas", icon: MessageSquare },
-      { key: "faction-leader", title: "Frakcijų vadų atrankos", icon: Crown, badge: "17" },
     ],
   },
 ];

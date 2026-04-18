@@ -90,8 +90,9 @@ Deno.serve(async (req) => {
     return htmlRedirect(`${targetBase}#discord_error=no_email`, "Discord account has no verified email.");
   }
 
+  const avatarExt = dUser.avatar?.startsWith("a_") ? "gif" : "png";
   const avatarUrl = dUser.avatar
-    ? `https://cdn.discordapp.com/avatars/${dUser.id}/${dUser.avatar}.png`
+    ? `https://cdn.discordapp.com/avatars/${dUser.id}/${dUser.avatar}.${avatarExt}?size=256`
     : null;
   const username = dUser.global_name ?? dUser.username;
 
