@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, LogOut } from "lucide-react";
 import { toast } from "sonner";
@@ -22,15 +21,14 @@ const PlayerPanel = ({ onClose }: PlayerPanelProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleGoogleLogin = async () => {
+  const handleDiscordLogin = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "discord",
+      options: { redirectTo: window.location.origin },
     });
-    if (result.error) {
-      toast.error("Nepavyko prisijungti per Google", {
-        description: result.error instanceof Error ? result.error.message : String(result.error),
-      });
+    if (error) {
+      toast.error("Nepavyko prisijungti per Discord", { description: error.message });
       setLoading(false);
     }
   };
@@ -63,20 +61,17 @@ const PlayerPanel = ({ onClose }: PlayerPanelProps) => {
         {!session ? (
           <>
             <p className="mt-3 text-muted-foreground">
-              Prisijunk per Google, kad pasiektum savo paskyrą.
+              Prisijunk per Discord, kad pasiektum savo paskyrą.
             </p>
             <Button
-              onClick={handleGoogleLogin}
+              onClick={handleDiscordLogin}
               disabled={loading}
-              className="mt-8 w-full h-12 rounded-sm bg-white text-black hover:bg-white/90 gap-2"
+              className="mt-8 w-full h-12 rounded-sm bg-[#5865F2] text-white hover:bg-[#4752C4] gap-2"
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"/>
-                <path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.46 1.18 4.93l3.66-2.83Z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38Z"/>
+              <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden>
+                <path d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3a13.94 13.94 0 0 0-.617 1.265 18.27 18.27 0 0 0-5.482 0A13.51 13.51 0 0 0 9.842 3a19.74 19.74 0 0 0-3.76 1.369C2.68 9.464 1.79 14.43 2.235 19.323A19.9 19.9 0 0 0 8.27 22.5c.485-.66.92-1.36 1.293-2.094-.71-.267-1.39-.595-2.04-.98.171-.126.338-.257.5-.392 3.927 1.83 8.18 1.83 12.06 0 .163.137.33.27.5.392-.65.385-1.33.715-2.04.98.374.733.808 1.434 1.293 2.094a19.85 19.85 0 0 0 6.036-3.177c.522-5.66-.892-10.58-3.555-14.954ZM9.5 16.13c-1.18 0-2.15-1.085-2.15-2.42 0-1.335.95-2.42 2.15-2.42 1.21 0 2.17 1.095 2.15 2.42 0 1.335-.95 2.42-2.15 2.42Zm5.07 0c-1.18 0-2.15-1.085-2.15-2.42 0-1.335.95-2.42 2.15-2.42 1.21 0 2.17 1.095 2.15 2.42 0 1.335-.94 2.42-2.15 2.42Z" />
               </svg>
-              {loading ? "Nukreipiama..." : "Prisijungti su Google"}
+              {loading ? "Nukreipiama..." : "Prisijungti su Discord"}
             </Button>
           </>
         ) : (
