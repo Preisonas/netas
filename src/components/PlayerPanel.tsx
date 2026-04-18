@@ -18,6 +18,14 @@ const PlayerPanel = ({ onClose }: PlayerPanelProps) => {
       setSession(sess);
     });
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
+
+    if (window.location.hash.includes("discord_error=")) {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const err = params.get("discord_error");
+      if (err) toast.error("Discord prisijungimas nepavyko", { description: err });
+      history.replaceState(null, "", window.location.pathname);
+    }
+
     return () => subscription.unsubscribe();
   }, []);
 
