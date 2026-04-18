@@ -1094,23 +1094,75 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
   );
 };
 
-const RouletteItem = ({ item, width }: { item: CaseItem; width: number }) => {
+const FlipCard = ({
+  item,
+  index,
+  flipped,
+  picked,
+  phase,
+  onPick,
+}: {
+  item: CaseItem;
+  index: number;
+  flipped: boolean;
+  picked: boolean;
+  phase: Phase;
+  onPick: () => void;
+}) => {
   const r = rarityStyles[item.rarity];
   const Icon = rarityIcon(item.kind);
+  const interactive = phase === "picking";
+  const dimmed = (phase === "revealing" || phase === "done") && !picked;
+  const shuffleAnim =
+    phase === "shuffling"
+      ? { animation: `cardShuffle 1s cubic-bezier(0.4, 0, 0.2, 1) ${index * 60}ms both` }
+      : undefined;
+
   return (
-    <div
-      className={`shrink-0 h-36 rounded-lg bg-secondary/40 ring-1 ${r.ring} grid place-items-center p-3 relative overflow-hidden`}
-      style={{ width: `${width}px` }}
+    <button
+      type="button"
+      onClick={onPick}
+      disabled={!interactive}
+      className={`group relative h-44 w-32 md:h-52 md:w-36 [perspective:1000px] outline-none transition-all duration-500 ${
+        interactive ? "hover:-translate-y-2 cursor-pointer" : "cursor-default"
+      } ${dimmed ? "opacity-40 scale-95" : ""} ${picked && phase === "done" ? "scale-105" : ""}`}
+      style={shuffleAnim}
+      aria-label={interactive ? `Pick card ${index + 1}` : item.name}
     >
-      <span aria-hidden className={`absolute bottom-0 left-0 right-0 h-1 ${r.bar}`} />
-      <div className="text-center">
-        <Icon className="h-8 w-8 mx-auto text-foreground/90" strokeWidth={1.5} />
-        <p className="mt-2 text-xs font-semibold leading-tight text-foreground">{item.name}</p>
-        <span className={`mt-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[8px] tracking-wider font-bold ${r.badge}`}>
-          {r.label}
-        </span>
+      <div
+        className="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]"
+        style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
+        {/* Back face */}
+        <div className="absolute inset-0 rounded-xl border border-border/60 bg-secondary/40 [backface-visibility:hidden] grid place-items-center overflow-hidden">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary))_0%,transparent_60%)]" />
+          <div className="absolute inset-2 rounded-lg border border-border/40" />
+          <div className="relative grid place-items-center gap-2">
+            <Package className={`h-8 w-8 ${interactive ? "group-hover:text-primary" : ""} text-foreground/70 transition-colors`} strokeWidth={1.5} />
+            <span className="text-[10px] tracking-[0.3em] text-muted-foreground font-bold">PICK</span>
+          </div>
+          {interactive && (
+            <span aria-hidden className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+          )}
+        </div>
+
+        {/* Front face */}
+        <div
+          className={`absolute inset-0 rounded-xl border bg-card [backface-visibility:hidden] [transform:rotateY(180deg)] grid place-items-center p-3 overflow-hidden ${
+            picked ? "border-primary" : "border-border/60"
+          }`}
+        >
+          <span aria-hidden className={`absolute top-0 left-0 right-0 h-1 ${r.bar}`} />
+          <div className="text-center">
+            <Icon className="h-9 w-9 mx-auto text-foreground/90" strokeWidth={1.5} />
+            <p className="mt-2 text-xs font-semibold leading-tight text-foreground line-clamp-2">{item.name}</p>
+            <span className={`mt-2 inline-flex items-center px-1.5 py-0.5 rounded text-[8px] tracking-wider font-bold ${r.badge}`}>
+              {r.label}
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
+    </button>
   );
 };
 
