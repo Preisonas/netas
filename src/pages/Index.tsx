@@ -127,13 +127,19 @@ const Index = () => {
         <section className="relative overflow-hidden">
           {/* Map background (left side) — clean blend, no masks */}
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[55%]"
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[60%]"
             aria-hidden
           >
             <img
               src={mapBg}
               alt=""
               className="h-full w-full object-cover"
+              style={{
+                WebkitMaskImage:
+                  "radial-gradient(ellipse at 30% 50%, black 0%, black 30%, transparent 75%)",
+                maskImage:
+                  "radial-gradient(ellipse at 30% 50%, black 0%, black 30%, transparent 75%)",
+              }}
             />
           </div>
 
