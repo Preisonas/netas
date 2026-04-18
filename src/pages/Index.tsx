@@ -14,8 +14,8 @@ const Index = () => {
         aria-hidden
       />
       {/* Blur + dark overlay */}
-      <div className="absolute inset-0 bg-black/30" aria-hidden />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black" aria-hidden />
+      <div className="absolute inset-0 bg-black/70" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black" aria-hidden />
 
       <div className="relative z-10">
         {/* Nav */}
