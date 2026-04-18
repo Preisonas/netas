@@ -828,61 +828,41 @@ const BoxesSection = () => {
 const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
   const Icon = box.icon;
   return (
-    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 p-6">
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-30 pointer-events-none"
-        style={{ background: `radial-gradient(120% 80% at 50% 0%, hsl(${box.accent} / 0.45), transparent 60%)` }}
-      />
-      <div
-        aria-hidden
-        className="absolute -bottom-20 -right-20 h-56 w-56 rounded-full opacity-20 blur-3xl pointer-events-none"
-        style={{ background: `hsl(${box.accent})` }}
-      />
-
-      <div className="relative">
-        <div className="flex items-start justify-between">
-          <div
-            className="h-16 w-16 rounded-xl grid place-items-center"
-            style={{
-              background: `linear-gradient(135deg, hsl(${box.accent} / 0.4), hsl(${box.accent} / 0.1))`,
-              boxShadow: `0 10px 30px -10px hsl(${box.accent} / 0.6)`,
-            }}
-          >
-            <Icon className="h-8 w-8" style={{ color: `hsl(${box.accent})` }} />
-          </div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-bold">
-            <Coins className="h-3.5 w-3.5" />
-            {box.price} €
-          </span>
+    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-colors hover:bg-secondary/50 p-6">
+      <div className="flex items-start justify-between">
+        <div className="h-14 w-14 rounded-lg grid place-items-center bg-background/40">
+          <Icon className="h-7 w-7 text-primary" />
         </div>
-
-        <h3 className="mt-4 text-lg font-bold leading-tight">{box.name}</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
-
-        <div className="mt-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Galimi prizai</p>
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
-              <span
-                key={r}
-                className={`text-[10px] uppercase tracking-wider font-bold ${rarityStyles[r].text}`}
-                style={{ textShadow: `0 0 12px ${rarityStyles[r].glow}` }}
-              >
-                {rarityStyles[r].label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <button
-          onClick={onOpen}
-          className="mt-5 w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
-        >
-          <Package className="h-4 w-4" />
-          Atidaryti už {box.price} €
-        </button>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-bold">
+          <Coins className="h-3.5 w-3.5" />
+          {box.price} €
+        </span>
       </div>
+
+      <h3 className="mt-4 text-lg font-bold leading-tight">{box.name}</h3>
+      <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
+
+      <div className="mt-4">
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Galimi prizai</p>
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
+            <span
+              key={r}
+              className={`text-[10px] uppercase tracking-wider font-semibold ${rarityStyles[r].text}`}
+            >
+              {rarityStyles[r].label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <button
+        onClick={onOpen}
+        className="mt-5 w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
+      >
+        <Package className="h-4 w-4" />
+        Atidaryti už {box.price} €
+      </button>
     </article>
   );
 };
