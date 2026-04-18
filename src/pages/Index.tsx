@@ -63,7 +63,7 @@ const Index = () => {
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-10">
                 Jogar agora
               </Button>
-              <Button variant="outline" className="rounded-sm border-white/80 bg-transparent text-white hover:bg-white/10 hover:text-white h-10 px-10">
+              <Button variant="outline" className="rounded-sm border-white/30 bg-transparent text-white/70 hover:bg-white/10 hover:text-white/90 h-10 px-10">
                 Registar Conta
               </Button>
             </div>
