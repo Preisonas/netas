@@ -8,10 +8,6 @@ import {
   User,
   ShoppingBag,
   Package,
-  Gavel,
-  Ticket,
-  Trophy,
-  UserPlus,
   Coins,
   Search,
   Gauge,
@@ -43,10 +39,6 @@ type SectionKey =
   | "profile"
   | "shop"
   | "boxes"
-  | "auction"
-  | "lottery"
-  | "leaderboard"
-  | "invites"
   | "credits";
 
 const navGroups: { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] }[] = [
@@ -56,10 +48,6 @@ const navGroups: { label: string; items: { key: SectionKey; title: string; icon:
       { key: "profile", title: "Profilis", icon: User },
       { key: "shop", title: "Parduotuvė", icon: ShoppingBag },
       { key: "boxes", title: "Dėžės", icon: Package },
-      { key: "auction", title: "Aukcionas", icon: Gavel },
-      { key: "lottery", title: "Loterija", icon: Ticket },
-      { key: "leaderboard", title: "Lyderių sąrašas", icon: Trophy },
-      { key: "invites", title: "Pakvietimai", icon: UserPlus },
     ],
   },
 ];
@@ -739,13 +727,13 @@ interface LootBox {
   pool: CaseItem[];
 }
 
-// Neutral, on-brand rarity scale. Only the top tier uses the primary accent.
-const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; bar: string }> = {
-  common:    { text: "text-muted-foreground", ring: "ring-border/60",     label: "Įprastas",   bar: "bg-muted-foreground/40" },
-  rare:      { text: "text-foreground/80",    ring: "ring-border",        label: "Retas",      bar: "bg-foreground/40" },
-  epic:      { text: "text-foreground",       ring: "ring-foreground/30", label: "Epinis",     bar: "bg-foreground/60" },
-  legendary: { text: "text-foreground",       ring: "ring-foreground/50", label: "Legendinis", bar: "bg-foreground/80" },
-  mythic:    { text: "text-primary",          ring: "ring-primary/50",    label: "Mitinis",    bar: "bg-primary" },
+// English rarity labels with subtle badge colors. One hue family per tier, no glows.
+const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; bar: string; badge: string }> = {
+  common:    { text: "text-muted-foreground",   ring: "ring-border/60",             label: "COMMON",    bar: "bg-muted-foreground/50",       badge: "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/20" },
+  rare:      { text: "text-[hsl(210_80%_70%)]", ring: "ring-[hsl(210_80%_55%)]/40", label: "RARE",      bar: "bg-[hsl(210_80%_55%)]",        badge: "bg-[hsl(210_80%_55%)]/15 text-[hsl(210_80%_75%)] border border-[hsl(210_80%_55%)]/30" },
+  epic:      { text: "text-[hsl(265_75%_72%)]", ring: "ring-[hsl(265_75%_60%)]/45", label: "EPIC",      bar: "bg-[hsl(265_75%_60%)]",        badge: "bg-[hsl(265_75%_60%)]/15 text-[hsl(265_75%_75%)] border border-[hsl(265_75%_60%)]/30" },
+  legendary: { text: "text-[hsl(38_95%_65%)]",  ring: "ring-[hsl(38_95%_55%)]/45",  label: "LEGENDARY", bar: "bg-[hsl(38_95%_55%)]",         badge: "bg-[hsl(38_95%_55%)]/15 text-[hsl(38_95%_70%)] border border-[hsl(38_95%_55%)]/30" },
+  mythic:    { text: "text-primary",            ring: "ring-primary/50",            label: "MYTHIC",    bar: "bg-primary",                   badge: "bg-primary/15 text-primary border border-primary/30" },
 };
 
 const lootBoxes: LootBox[] = [
@@ -830,9 +818,7 @@ const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-colors hover:bg-secondary/50 p-6">
       <div className="flex items-start justify-between">
-        <div className="h-14 w-14 rounded-lg grid place-items-center bg-background/40">
-          <Icon className="h-7 w-7 text-primary" />
-        </div>
+        <Icon className="h-9 w-9 text-primary" />
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-bold">
           <Coins className="h-3.5 w-3.5" />
           {box.price} €
@@ -843,12 +829,12 @@ const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
       <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
 
       <div className="mt-4">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Galimi prizai</p>
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Possible drops</p>
+        <div className="flex flex-wrap gap-1.5">
           {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
             <span
               key={r}
-              className={`text-[10px] uppercase tracking-wider font-semibold ${rarityStyles[r].text}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[r].badge}`}
             >
               {rarityStyles[r].label}
             </span>
@@ -917,8 +903,8 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
 
     window.setTimeout(() => {
       setPhase("done");
-      toast.success(`Laimėjai: ${w.name}!`);
-    }, 6200);
+      toast.success(`You won: ${w.name}!`);
+    }, 7400);
   };
 
   const reset = () => {
@@ -954,30 +940,38 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
           )}
         </div>
 
-        <div className="relative h-44 rounded-xl overflow-hidden bg-background/60 border border-border/50">
-          <div aria-hidden className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-card via-card/70 to-transparent z-10" />
-          <div aria-hidden className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-card via-card/70 to-transparent z-10" />
+        <div className="relative h-44 rounded-xl overflow-hidden bg-background/40 border border-border/50">
+          {/* Edge fades */}
+          <div aria-hidden className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-card via-card/80 to-transparent z-10" />
+          <div aria-hidden className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-card via-card/80 to-transparent z-10" />
 
+          {/* Center pointer */}
           <div aria-hidden className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 pointer-events-none">
             <div className="h-full w-px bg-primary" />
             <div
               className="absolute -top-px left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "8px solid hsl(var(--primary))" }}
+              style={{ borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderTop: "9px solid hsl(var(--primary))" }}
             />
             <div
               className="absolute -bottom-px left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "8px solid hsl(var(--primary))" }}
+              style={{ borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderBottom: "9px solid hsl(var(--primary))" }}
             />
           </div>
 
+          {/* Vertical center accent line that pulses on done */}
+          {phase === "done" && (
+            <div aria-hidden className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-[140px] z-[5] pointer-events-none animate-pulse"
+                 style={{ background: "radial-gradient(60% 100% at 50% 50%, hsl(var(--primary) / 0.25), transparent 70%)" }} />
+          )}
+
           {strip.length > 0 ? (
             <div
-              className="absolute top-1/2 flex items-center"
+              className="absolute top-1/2 flex items-center will-change-transform"
               style={{
                 gap: `${ITEM_GAP}px`,
                 left: "50%",
                 transform: `translate3d(${-offset}px, -50%, 0)`,
-                transition: phase === "spinning" ? "transform 6s cubic-bezier(0.05, 0.7, 0.1, 1)" : "none",
+                transition: phase === "spinning" ? "transform 7s cubic-bezier(0.16, 0.84, 0.18, 1)" : "none",
               }}
             >
               {strip.map((item, idx) => (
@@ -986,22 +980,20 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
             </div>
           ) : (
             <div className="absolute inset-0 grid place-items-center">
-              <p className="text-sm text-muted-foreground">Spausk „Atidaryti" kad pradėtum.</p>
+              <p className="text-sm text-muted-foreground">Press „Open" to begin.</p>
             </div>
           )}
         </div>
 
         {phase === "done" && winner && (
-          <div className="mt-6 rounded-xl p-5 border border-border/50 bg-secondary/30">
+          <div className="mt-6 rounded-xl p-5 border border-border/50 bg-secondary/30 animate-fade-in">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Tu laimėjai</p>
             <div className="mt-1 flex items-center justify-between gap-4 flex-wrap">
               <div>
-                <h4 className={`text-2xl font-black ${rarityStyles[winner.rarity].text}`}>
-                  {winner.name}
-                </h4>
-                <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">
+                <h4 className="text-2xl font-black text-foreground">{winner.name}</h4>
+                <span className={`inline-flex items-center mt-2 px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[winner.rarity].badge}`}>
                   {rarityStyles[winner.rarity].label}
-                </p>
+                </span>
               </div>
               <div className="flex gap-2">
                 <button
@@ -1106,16 +1098,16 @@ const RouletteItem = ({ item, width }: { item: CaseItem; width: number }) => {
   const Icon = rarityIcon(item.kind);
   return (
     <div
-      className={`shrink-0 h-36 rounded-lg bg-secondary/50 ring-1 ${r.ring} grid place-items-center p-3 relative overflow-hidden`}
+      className={`shrink-0 h-36 rounded-lg bg-secondary/40 ring-1 ${r.ring} grid place-items-center p-3 relative overflow-hidden`}
       style={{ width: `${width}px` }}
     >
-      <span aria-hidden className={`absolute top-0 left-0 right-0 h-0.5 ${r.bar}`} />
+      <span aria-hidden className={`absolute bottom-0 left-0 right-0 h-1 ${r.bar}`} />
       <div className="text-center">
-        <Icon className={`h-8 w-8 mx-auto ${r.text}`} />
+        <Icon className="h-8 w-8 mx-auto text-foreground/90" strokeWidth={1.5} />
         <p className="mt-2 text-xs font-semibold leading-tight text-foreground">{item.name}</p>
-        <p className={`mt-1 text-[9px] uppercase tracking-wider font-semibold ${r.text}`}>
+        <span className={`mt-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[8px] tracking-wider font-bold ${r.badge}`}>
           {r.label}
-        </p>
+        </span>
       </div>
     </div>
   );
