@@ -992,15 +992,11 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
         </div>
 
         {phase === "done" && winner && (
-          <div className="mt-6 rounded-xl p-5 border" style={{
-            background: `linear-gradient(135deg, hsl(${box.accent} / 0.12), transparent 70%)`,
-            borderColor: `hsl(${box.accent} / 0.4)`,
-          }}>
+          <div className="mt-6 rounded-xl p-5 border border-border/50 bg-secondary/30">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Tu laimėjai</p>
             <div className="mt-1 flex items-center justify-between gap-4 flex-wrap">
               <div>
-                <h4 className={`text-2xl font-black ${rarityStyles[winner.rarity].text}`}
-                    style={{ textShadow: `0 0 20px ${rarityStyles[winner.rarity].glow}` }}>
+                <h4 className={`text-2xl font-black ${rarityStyles[winner.rarity].text}`}>
                   {winner.name}
                 </h4>
                 <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">
