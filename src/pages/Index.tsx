@@ -25,7 +25,7 @@ const Index = () => {
         {/* Nav */}
         <header className="container flex items-center justify-between py-6">
           <a href="#" className="flex items-center gap-2">
-            <img src={logo} alt="Dynamic Roleplay logo" className="h-9 w-9" />
+            <img src={logo} alt="Speed Roleplay logo" className="h-9 w-9" />
           </a>
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item, i) => (
@@ -53,7 +53,7 @@ const Index = () => {
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
               JOIN{" "}
               <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
-                DYNAMIC ROLEPLAY
+                SPEED ROLEPLAY
               </span>
               <br />
               AND CREATE YOUR STORY!
@@ -76,7 +76,7 @@ const Index = () => {
             <div className="relative">
               <img
                 src={logoHero}
-                alt="Dynamic Roleplay logo"
+                alt="Speed Roleplay logo"
                 className="h-32 md:h-40 w-auto"
               />
             </div>
