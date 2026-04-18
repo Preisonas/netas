@@ -243,19 +243,17 @@ const Index = () => {
                   <br /><br />
                   Pirkimai žaidimo viduje, sąveika tarp vartotojų.
                 </p>
-                <div className="flex flex-col items-center gap-1 border border-border/60 rounded-sm px-3 py-2 shrink-0">
-                  <span className="text-[10px] font-semibold tracking-wider text-muted-foreground">MATURE 17+</span>
-                  <span className="text-3xl font-bold leading-none">M</span>
-                  <span className="text-[8px] tracking-widest text-muted-foreground">ESRB</span>
-                </div>
               </div>
             </div>
           </div>
 
           <div className="border-t border-border/40">
             <div className="container py-5 flex items-center justify-between text-xs text-muted-foreground">
-              <span>Copyright © 2025 · Speed Roleplay.</span>
-              <a href="#" className="hover:text-foreground transition-colors">Naudojimo sąlygos</a>
+              <span>Copyright © 2026 · Speed Roleplay.</span>
+              <span>
+                Sprendimas: <span className="text-foreground">Ather</span> &{" "}
+                <span className="text-primary">Mkk</span>
+              </span>
             </div>
           </div>
         </footer>
