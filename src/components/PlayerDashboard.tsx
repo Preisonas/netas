@@ -24,6 +24,12 @@ import {
   Tag,
   CreditCard,
   X,
+  Sparkles,
+  Shirt,
+  Car,
+  Crown,
+  Flame,
+  Gift,
 } from "lucide-react";
 import { toast } from "sonner";
 import shopMclaren from "@/assets/shop-mclaren.png";
