@@ -110,7 +110,15 @@ const Index = () => {
         </section>
 
         {/* How to start */}
-        <section className="relative border-t border-border/40 overflow-hidden">
+        <section
+          className="relative overflow-hidden"
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+            maskImage:
+              "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+          }}
+        >
           {/* Map background (left side) */}
           <div
             className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-1/2 flex items-center justify-center"
