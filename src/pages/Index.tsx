@@ -9,7 +9,7 @@ const Index = () => {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       {/* Background image */}
       <div
-        className="absolute inset-0 bg-cover bg-center scale-105 blur-md"
+        className="absolute inset-0 bg-cover bg-center scale-105 blur-sm"
         style={{ backgroundImage: `url(${palmsBg})` }}
         aria-hidden
       />
