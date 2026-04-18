@@ -180,7 +180,8 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
             <ProfileSection username={username} avatarUrl={avatarUrl} discordId={discordId} email={session.user.email ?? ""} />
           )}
           {active === "shop" && <ShopSection />}
-          {active !== "profile" && active !== "shop" && <Placeholder title={titleFor(active)} />}
+          {active === "credits" && <CreditsSection />}
+          {active !== "profile" && active !== "shop" && active !== "credits" && <Placeholder title={titleFor(active)} />}
         </main>
       </div>
     </section>
