@@ -127,7 +127,7 @@ const Index = () => {
         <section className="relative overflow-hidden">
           {/* Map background (left side) — clean blend, no masks */}
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[45%] opacity-70 mix-blend-screen"
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[45%] opacity-60"
             aria-hidden
           >
             <img
@@ -136,15 +136,23 @@ const Index = () => {
               className="h-full w-full object-contain object-left scale-105"
               style={{
                 WebkitMaskImage:
-                  "radial-gradient(ellipse at 25% 50%, black 0%, rgba(0,0,0,0.6) 25%, transparent 65%)",
+                  "radial-gradient(ellipse 70% 75% at 25% 50%, black 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.4) 55%, transparent 80%)",
                 maskImage:
-                  "radial-gradient(ellipse at 25% 50%, black 0%, rgba(0,0,0,0.6) 25%, transparent 65%)",
-                filter: "blur(0.4px)",
+                  "radial-gradient(ellipse 70% 75% at 25% 50%, black 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.4) 55%, transparent 80%)",
+                filter: "blur(0.5px)",
               }}
             />
           </div>
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/30 via-background/20 to-background" aria-hidden />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/60" aria-hidden />
+          {/* Soft background-colored vignette to clean fade edges */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            aria-hidden
+            style={{
+              background:
+                "radial-gradient(ellipse 60% 70% at 22% 50%, transparent 0%, transparent 40%, hsl(var(--background) / 0.5) 70%, hsl(var(--background)) 100%)",
+            }}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background" aria-hidden />
 
           <div className="relative container grid lg:grid-cols-2 gap-12 items-center py-24">
             {/* Spacer for map column on desktop */}
