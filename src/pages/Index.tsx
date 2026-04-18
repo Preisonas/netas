@@ -13,15 +13,15 @@ const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
 const Index = () => {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${palmsBg})` }}
-        aria-hidden
-      />
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-background/60" aria-hidden />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" aria-hidden />
+      {/* Background image — hero only */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-screen" aria-hidden>
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${palmsBg})` }}
+        />
+        <div className="absolute inset-0 bg-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
+      </div>
 
       <div className="relative z-10">
         {/* Nav */}
