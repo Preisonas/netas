@@ -739,12 +739,13 @@ interface LootBox {
   pool: CaseItem[];
 }
 
-const rarityStyles: Record<Rarity, { text: string; ring: string; glow: string; label: string; bg: string }> = {
-  common:    { text: "text-[hsl(220_10%_75%)]", ring: "ring-[hsl(220_10%_55%)]/40",  glow: "hsl(220 10% 55% / 0.35)",  label: "Įprastas",   bg: "from-[hsl(220_15%_25%)] to-[hsl(220_15%_15%)]" },
-  rare:      { text: "text-[hsl(210_90%_70%)]", ring: "ring-[hsl(210_90%_55%)]/50",  glow: "hsl(210 90% 55% / 0.45)",  label: "Retas",      bg: "from-[hsl(210_60%_25%)] to-[hsl(210_60%_12%)]" },
-  epic:      { text: "text-[hsl(280_85%_72%)]", ring: "ring-[hsl(280_85%_60%)]/55",  glow: "hsl(280 85% 60% / 0.50)",  label: "Epinis",     bg: "from-[hsl(280_60%_25%)] to-[hsl(280_60%_12%)]" },
-  legendary: { text: "text-[hsl(35_100%_65%)]", ring: "ring-[hsl(35_100%_55%)]/60",  glow: "hsl(35 100% 55% / 0.55)",  label: "Legendinis", bg: "from-[hsl(35_80%_25%)] to-[hsl(35_80%_12%)]" },
-  mythic:    { text: "text-[hsl(330_95%_68%)]", ring: "ring-[hsl(330_95%_60%)]/65",  glow: "hsl(330 95% 60% / 0.65)",  label: "Mitinis",    bg: "from-[hsl(330_70%_28%)] to-[hsl(330_70%_12%)]" },
+// Neutral, on-brand rarity scale. Only the top tier uses the primary accent.
+const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; bar: string }> = {
+  common:    { text: "text-muted-foreground", ring: "ring-border/60",     label: "Įprastas",   bar: "bg-muted-foreground/40" },
+  rare:      { text: "text-foreground/80",    ring: "ring-border",        label: "Retas",      bar: "bg-foreground/40" },
+  epic:      { text: "text-foreground",       ring: "ring-foreground/30", label: "Epinis",     bar: "bg-foreground/60" },
+  legendary: { text: "text-foreground",       ring: "ring-foreground/50", label: "Legendinis", bar: "bg-foreground/80" },
+  mythic:    { text: "text-primary",          ring: "ring-primary/50",    label: "Mitinis",    bar: "bg-primary" },
 };
 
 const lootBoxes: LootBox[] = [
