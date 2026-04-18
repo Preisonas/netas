@@ -823,19 +823,6 @@ const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
         <h3 className="text-lg font-bold leading-tight">{box.name}</h3>
         <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
 
-        <div className="mt-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Galimi prizai</p>
-          <div className="flex flex-wrap gap-1.5">
-            {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
-              <span
-                key={r}
-                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[r].badge}`}
-              >
-                {rarityStyles[r].label}
-              </span>
-            ))}
-          </div>
-        </div>
 
         <button
           onClick={onOpen}
