@@ -9,13 +9,13 @@ const Index = () => {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       {/* Background image */}
       <div
-        className="absolute inset-0 bg-cover bg-center scale-105 blur-sm"
+        className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${palmsBg})` }}
         aria-hidden
       />
-      {/* Blur + dark overlay */}
-      <div className="absolute inset-0 bg-black/70" aria-hidden />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black" aria-hidden />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-background/60" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" aria-hidden />
 
       <div className="relative z-10">
         {/* Nav */}
