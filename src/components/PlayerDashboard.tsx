@@ -28,6 +28,11 @@ import {
   Gift,
 } from "lucide-react";
 import { toast } from "sonner";
+import caseStarterImg from "@/assets/cases/starter.png";
+import caseVehicleImg from "@/assets/cases/vehicle.png";
+import caseVipImg from "@/assets/cases/vip.png";
+import casePremiumImg from "@/assets/cases/premium.png";
+import caseLegendaryImg from "@/assets/cases/legendary.png";
 import shopMclaren from "@/assets/shop-mclaren.png";
 
 interface PlayerDashboardProps {
@@ -724,6 +729,7 @@ interface LootBox {
   price: number;
   icon: typeof Package;
   accent: string;
+  image?: string;
   pool: CaseItem[];
 }
 
@@ -738,7 +744,7 @@ const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; 
 
 const lootBoxes: LootBox[] = [
   {
-    id: "starter", name: "Pradedančiojo dėžė", tagline: "Geras startas naujokams", price: 5, icon: Gift, accent: "210 90% 60%",
+    id: "starter", name: "Pradedančiojo dėžė", tagline: "Geras startas naujokams", price: 5, icon: Gift, accent: "210 90% 60%", image: caseStarterImg,
     pool: [
       { id: "c5",   name: "5 kreditai",    rarity: "common", weight: 60, kind: "credits", value: 5 },
       { id: "c10",  name: "10 kreditų",    rarity: "common", weight: 30, kind: "credits", value: 10 },
@@ -747,7 +753,7 @@ const lootBoxes: LootBox[] = [
     ],
   },
   {
-    id: "vehicle", name: "Transporto dėžė", tagline: "Šansas laimėti automobilį", price: 25, icon: Car, accent: "160 75% 55%",
+    id: "vehicle", name: "Transporto dėžė", tagline: "Šansas laimėti automobilį", price: 25, icon: Car, accent: "160 75% 55%", image: caseVehicleImg,
     pool: [
       { id: "c10",   name: "10 kreditų",   rarity: "common",    weight: 50, kind: "credits", value: 10 },
       { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 25, kind: "credits", value: 25 },
@@ -757,7 +763,7 @@ const lootBoxes: LootBox[] = [
     ],
   },
   {
-    id: "vip", name: "VIP dėžė", tagline: "Tik geri prizai", price: 50, icon: Crown, accent: "35 100% 60%",
+    id: "vip", name: "VIP dėžė", tagline: "Tik geri prizai", price: 50, icon: Crown, accent: "35 100% 60%", image: caseVipImg,
     pool: [
       { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 40, kind: "credits", value: 25 },
       { id: "c50",   name: "50 kreditų",   rarity: "epic",      weight: 30, kind: "credits", value: 50 },
@@ -767,7 +773,7 @@ const lootBoxes: LootBox[] = [
     ],
   },
   {
-    id: "premium", name: "Premium dėžė", tagline: "Aukštesnė klasė", price: 100, icon: Sparkles, accent: "280 85% 65%",
+    id: "premium", name: "Premium dėžė", tagline: "Aukštesnė klasė", price: 100, icon: Sparkles, accent: "280 85% 65%", image: casePremiumImg,
     pool: [
       { id: "c50",   name: "50 kreditų",   rarity: "rare",      weight: 35, kind: "credits", value: 50 },
       { id: "c100",  name: "100 kreditų",  rarity: "epic",      weight: 30, kind: "credits", value: 100 },
@@ -777,7 +783,7 @@ const lootBoxes: LootBox[] = [
     ],
   },
   {
-    id: "legendary", name: "Legendinė dėžė", tagline: "Tik mitiniai prizai", price: 250, icon: Flame, accent: "330 95% 65%",
+    id: "legendary", name: "Legendinė dėžė", tagline: "Tik mitiniai prizai", price: 250, icon: Flame, accent: "330 95% 65%", image: caseLegendaryImg,
     pool: [
       { id: "c100",  name: "100 kreditų",  rarity: "epic",      weight: 30, kind: "credits", value: 100 },
       { id: "c250",  name: "250 kreditų",  rarity: "legendary", weight: 25, kind: "credits", value: 250 },
@@ -816,39 +822,56 @@ const BoxesSection = () => {
 const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
   const Icon = box.icon;
   return (
-    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-colors hover:bg-secondary/50 p-6">
-      <div className="flex items-start justify-between">
-        <Icon className="h-9 w-9 text-primary" />
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-bold">
+    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-colors hover:bg-secondary/50 flex flex-col h-full">
+      {/* Image header — fixed aspect ratio so all cards align */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-background/40">
+        {box.image ? (
+          <img
+            src={box.image}
+            alt={box.name}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Icon className="h-12 w-12 text-primary/70" />
+          </div>
+        )}
+        <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-background/80 backdrop-blur text-primary text-xs font-bold">
           <Coins className="h-3.5 w-3.5" />
           {box.price} €
         </span>
       </div>
 
-      <h3 className="mt-4 text-lg font-bold leading-tight">{box.name}</h3>
-      <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
+      {/* Body — flex-1 so all cards match height regardless of badge count */}
+      <div className="flex flex-col flex-1 p-5">
+        <h3 className="text-lg font-bold leading-tight">{box.name}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
 
-      <div className="mt-4">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Possible drops</p>
-        <div className="flex flex-wrap gap-1.5">
-          {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
-            <span
-              key={r}
-              className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[r].badge}`}
-            >
-              {rarityStyles[r].label}
-            </span>
-          ))}
+        <div className="mt-4">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Possible drops</p>
+          <div className="flex flex-wrap gap-1.5">
+            {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
+              <span
+                key={r}
+                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[r].badge}`}
+              >
+                {rarityStyles[r].label}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <button
-        onClick={onOpen}
-        className="mt-5 w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
-      >
-        <Package className="h-4 w-4" />
-        Atidaryti už {box.price} €
-      </button>
+        <button
+          onClick={onOpen}
+          className="mt-auto pt-5 w-full"
+        >
+          <span className="flex items-center justify-center gap-2 h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition">
+            <Package className="h-4 w-4" />
+            Atidaryti už {box.price} €
+          </span>
+        </button>
+      </div>
     </article>
   );
 };
