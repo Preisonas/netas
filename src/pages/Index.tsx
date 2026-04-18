@@ -110,24 +110,28 @@ const Index = () => {
         </section>
 
         {/* How to start */}
-        <section className="relative border-t border-border/40">
-          <div className="container grid lg:grid-cols-2 gap-12 items-center py-24">
-            {/* Map */}
-            <div
-              className="relative"
-              style={{
-                WebkitMaskImage:
-                  "linear-gradient(to right, transparent 0%, black 45%, black 100%)",
-                maskImage:
-                  "linear-gradient(to right, transparent 0%, black 45%, black 100%)",
-              }}
-            >
-              <img
-                src={mapBg}
-                alt="Speed Roleplay miesto žemėlapis"
-                className="w-full h-auto opacity-90"
-              />
-            </div>
+        <section className="relative border-t border-border/40 overflow-hidden">
+          {/* Map background (left side) */}
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-1/2"
+            style={{
+              WebkitMaskImage:
+                "linear-gradient(to right, transparent 0%, black 30%, black 70%, transparent 100%)",
+              maskImage:
+                "linear-gradient(to right, transparent 0%, black 30%, black 70%, transparent 100%)",
+            }}
+            aria-hidden
+          >
+            <img
+              src={mapBg}
+              alt=""
+              className="h-full w-full object-cover opacity-60"
+            />
+          </div>
+
+          <div className="relative container grid lg:grid-cols-2 gap-12 items-center py-24">
+            {/* Spacer for map column on desktop */}
+            <div className="hidden lg:block" />
 
             {/* Steps */}
             <div className="max-w-xl">
