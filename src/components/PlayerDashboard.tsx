@@ -938,12 +938,6 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
         className="relative w-full max-w-3xl rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl p-6 md:p-8 shadow-[0_30px_80px_rgba(0,0,0,0.6)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-30 pointer-events-none"
-          style={{ background: `radial-gradient(120% 60% at 50% 0%, hsl(${box.accent} / 0.4), transparent 70%)` }}
-        />
-
         <div className="relative flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl md:text-2xl font-bold">{box.name}</h3>
@@ -965,14 +959,14 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
           <div aria-hidden className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-card via-card/70 to-transparent z-10" />
 
           <div aria-hidden className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 pointer-events-none">
-            <div className="h-full w-0.5" style={{ background: `hsl(${box.accent})`, boxShadow: `0 0 20px hsl(${box.accent})` }} />
+            <div className="h-full w-px bg-primary" />
             <div
-              className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: `10px solid hsl(${box.accent})` }}
+              className="absolute -top-px left-1/2 -translate-x-1/2 w-0 h-0"
+              style={{ borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "8px solid hsl(var(--primary))" }}
             />
             <div
-              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderBottom: `10px solid hsl(${box.accent})` }}
+              className="absolute -bottom-px left-1/2 -translate-x-1/2 w-0 h-0"
+              style={{ borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "8px solid hsl(var(--primary))" }}
             />
           </div>
 
