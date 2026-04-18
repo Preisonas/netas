@@ -744,7 +744,7 @@ const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; 
 
 const lootBoxes: LootBox[] = [
   {
-    id: "starter", name: "Pradedančiojo dėžė", tagline: "Geras startas naujokams", price: 5, icon: Gift, accent: "210 90% 60%",
+    id: "starter", name: "Pradedančiojo dėžė", tagline: "Geras startas naujokams", price: 5, icon: Gift, accent: "210 90% 60%", image: caseStarterImg,
     pool: [
       { id: "c5",   name: "5 kreditai",    rarity: "common", weight: 60, kind: "credits", value: 5 },
       { id: "c10",  name: "10 kreditų",    rarity: "common", weight: 30, kind: "credits", value: 10 },
@@ -753,7 +753,7 @@ const lootBoxes: LootBox[] = [
     ],
   },
   {
-    id: "vehicle", name: "Transporto dėžė", tagline: "Šansas laimėti automobilį", price: 25, icon: Car, accent: "160 75% 55%",
+    id: "vehicle", name: "Transporto dėžė", tagline: "Šansas laimėti automobilį", price: 25, icon: Car, accent: "160 75% 55%", image: caseVehicleImg,
     pool: [
       { id: "c10",   name: "10 kreditų",   rarity: "common",    weight: 50, kind: "credits", value: 10 },
       { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 25, kind: "credits", value: 25 },
@@ -763,7 +763,7 @@ const lootBoxes: LootBox[] = [
     ],
   },
   {
-    id: "vip", name: "VIP dėžė", tagline: "Tik geri prizai", price: 50, icon: Crown, accent: "35 100% 60%",
+    id: "vip", name: "VIP dėžė", tagline: "Tik geri prizai", price: 50, icon: Crown, accent: "35 100% 60%", image: caseVipImg,
     pool: [
       { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 40, kind: "credits", value: 25 },
       { id: "c50",   name: "50 kreditų",   rarity: "epic",      weight: 30, kind: "credits", value: 50 },
@@ -773,7 +773,7 @@ const lootBoxes: LootBox[] = [
     ],
   },
   {
-    id: "premium", name: "Premium dėžė", tagline: "Aukštesnė klasė", price: 100, icon: Sparkles, accent: "280 85% 65%",
+    id: "premium", name: "Premium dėžė", tagline: "Aukštesnė klasė", price: 100, icon: Sparkles, accent: "280 85% 65%", image: casePremiumImg,
     pool: [
       { id: "c50",   name: "50 kreditų",   rarity: "rare",      weight: 35, kind: "credits", value: 50 },
       { id: "c100",  name: "100 kreditų",  rarity: "epic",      weight: 30, kind: "credits", value: 100 },
@@ -783,7 +783,7 @@ const lootBoxes: LootBox[] = [
     ],
   },
   {
-    id: "legendary", name: "Legendinė dėžė", tagline: "Tik mitiniai prizai", price: 250, icon: Flame, accent: "330 95% 65%",
+    id: "legendary", name: "Legendinė dėžė", tagline: "Tik mitiniai prizai", price: 250, icon: Flame, accent: "330 95% 65%", image: caseLegendaryImg,
     pool: [
       { id: "c100",  name: "100 kreditų",  rarity: "epic",      weight: 30, kind: "credits", value: 100 },
       { id: "c250",  name: "250 kreditų",  rarity: "legendary", weight: 25, kind: "credits", value: 250 },
