@@ -34,6 +34,7 @@ import caseVipImg from "@/assets/cases/vip.png";
 import casePremiumImg from "@/assets/cases/premium.png";
 import caseLegendaryImg from "@/assets/cases/legendary.png";
 import shopMclaren from "@/assets/shop-mclaren.png";
+import cardBackImg from "@/assets/cases/card-back.png";
 
 interface PlayerDashboardProps {
   session: Session;
@@ -1124,15 +1125,15 @@ const FlipCard = ({
         style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
       >
         {/* Back face */}
-        <div className="absolute inset-0 rounded-xl border border-border/60 bg-secondary/40 [backface-visibility:hidden] grid place-items-center overflow-hidden">
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary))_0%,transparent_60%)]" />
-          <div className="absolute inset-2 rounded-lg border border-border/40" />
-          <div className="relative grid place-items-center gap-2">
-            <Package className={`h-8 w-8 ${interactive ? "group-hover:text-primary" : ""} text-foreground/70 transition-colors`} strokeWidth={1.5} />
-            <span className="text-[10px] tracking-[0.3em] text-muted-foreground font-bold">PICK</span>
-          </div>
+        <div className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden]">
+          <img
+            src={cardBackImg}
+            alt=""
+            aria-hidden
+            className={`h-full w-full object-cover transition-transform duration-500 ${interactive ? "group-hover:scale-105" : ""}`}
+          />
           {interactive && (
-            <span aria-hidden className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+            <span aria-hidden className="absolute inset-0 rounded-xl ring-2 ring-primary/0 group-hover:ring-primary/60 transition-all duration-300" />
           )}
         </div>
 
