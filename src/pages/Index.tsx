@@ -125,11 +125,6 @@ const Index = () => {
                   "radial-gradient(ellipse at center, black 40%, transparent 80%)",
               }}
             >
-              {/* Brand glow behind map */}
-              <div
-                className="absolute inset-0 blur-3xl opacity-40"
-                style={{ background: "var(--gradient-brand)" }}
-              />
               <img
                 src={mapBg}
                 alt=""
