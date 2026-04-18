@@ -39,7 +39,7 @@ const Index = () => {
               </a>
             ))}
           </nav>
-          <Button variant="outline" className="rounded-sm border-transparent bg-white text-black hover:bg-white/90 hover:text-black">
+          <Button className="rounded-sm bg-white text-black hover:bg-white/90 h-9 px-6">
             Entrar
           </Button>
         </header>
@@ -60,10 +60,10 @@ const Index = () => {
               criatividade é o limite.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-10">
                 Jogar agora
               </Button>
-              <Button size="lg" variant="outline" className="rounded-sm border-white/80 bg-transparent text-white hover:bg-white/10 hover:text-white">
+              <Button variant="outline" className="rounded-sm border-white/80 bg-transparent text-white hover:bg-white/10 hover:text-white h-10 px-10">
                 Registar Conta
               </Button>
             </div>
