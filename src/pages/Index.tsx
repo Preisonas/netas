@@ -20,6 +20,9 @@ import pedHero from "@/assets/ped-hero.png";
 import { FolderOpen, ExternalLink, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import PlayerPanel from "@/components/PlayerPanel";
+import PlayerDashboard from "@/components/PlayerDashboard";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
 const JOIN_URL = "https://cfx.re/join/lkzrzv";
@@ -47,6 +50,13 @@ const JoinDialog = ({ children }: { children: ReactNode }) => (
 const Index = () => {
   const [players, setPlayers] = useState<{ clients: number; max: number } | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => setSession(sess));
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,7 +144,11 @@ const Index = () => {
         </header>
 
         {panelOpen ? (
-          <PlayerPanel onClose={() => setPanelOpen(false)} />
+          session ? (
+            <PlayerDashboard session={session} onClose={() => setPanelOpen(false)} />
+          ) : (
+            <PlayerPanel onClose={() => setPanelOpen(false)} />
+          )
         ) : (
         <>
         {/* Hero */}
