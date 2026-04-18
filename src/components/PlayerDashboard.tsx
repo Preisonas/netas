@@ -744,12 +744,16 @@ const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; 
 
 const lootBoxes: LootBox[] = [
   {
-    id: "starter", name: "Pradedančiojo dėžė", tagline: "Geras startas naujokams", price: 5, icon: Gift, accent: "210 90% 60%", image: caseStarterImg,
+    id: "starter", name: "Pinigų dėžė", tagline: "Atsitiktinė pinigų suma", price: 5, icon: Gift, accent: "210 90% 60%", image: caseStarterImg,
     pool: [
-      { id: "c5",   name: "5 kreditai",    rarity: "common", weight: 60, kind: "credits", value: 5 },
-      { id: "c10",  name: "10 kreditų",    rarity: "common", weight: 30, kind: "credits", value: 10 },
-      { id: "tshirt", name: "Marškinėliai", rarity: "rare",  weight: 8,  kind: "cosmetic" },
-      { id: "c50",  name: "50 kreditų",    rarity: "epic",   weight: 2,  kind: "credits", value: 50 },
+      { id: "m5",    name: "5 €",     rarity: "common",    weight: 35, kind: "credits", value: 5 },
+      { id: "m10",   name: "10 €",    rarity: "common",    weight: 25, kind: "credits", value: 10 },
+      { id: "m25",   name: "25 €",    rarity: "rare",      weight: 18, kind: "credits", value: 25 },
+      { id: "m50",   name: "50 €",    rarity: "rare",      weight: 12, kind: "credits", value: 50 },
+      { id: "m100",  name: "100 €",   rarity: "epic",      weight: 6,  kind: "credits", value: 100 },
+      { id: "m250",  name: "250 €",   rarity: "epic",      weight: 3,  kind: "credits", value: 250 },
+      { id: "m500",  name: "500 €",   rarity: "legendary", weight: 0.8, kind: "credits", value: 500 },
+      { id: "m1000", name: "1000 €",  rarity: "mythic",    weight: 0.2, kind: "credits", value: 1000 },
     ],
   },
   {
