@@ -17,6 +17,8 @@ import {
   Gauge,
   Briefcase,
   Check,
+  Clock,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import shopMclaren from "@/assets/shop-mclaren.png";
@@ -189,6 +191,18 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle?: string }
   </div>
 );
 
+interface Character {
+  id: string;
+  firstName: string;
+  lastName: string;
+  money: number;
+  bank: number;
+  job: string;
+  playtimeMinutes: number;
+}
+
+const mockCharacters: Character[] = [];
+
 const ProfileSection = ({
   username,
   avatarUrl,
@@ -196,36 +210,95 @@ const ProfileSection = ({
   email,
 }: { username: string; avatarUrl?: string | null; discordId?: string | null; email: string }) => (
   <>
-    <SectionHeader title="Profilis" subtitle="Tavo paskyros informacija." />
-    <div className="grid md:grid-cols-[auto_1fr] gap-6 items-start">
-      <div className="relative">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="h-32 w-32 rounded-xl object-cover" />
-        ) : (
-          <div className="h-32 w-32 rounded-xl bg-secondary grid place-items-center">
-            <User className="h-10 w-10 text-muted-foreground" />
-          </div>
-        )}
+    <SectionHeader title="Profilis" subtitle="Tavo paskyra ir veikėjai." />
+
+    <div className="flex items-center gap-4 mb-8">
+      {avatarUrl ? (
+        <img src={avatarUrl} alt="" className="h-20 w-20 rounded-full object-cover" />
+      ) : (
+        <div className="h-20 w-20 rounded-full bg-secondary grid place-items-center">
+          <User className="h-8 w-8 text-muted-foreground" />
+        </div>
+      )}
+      <div>
+        <p className="text-xl font-bold">{username}</p>
+        <p className="text-sm text-muted-foreground">{email}</p>
+        <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">Discord ID: {discordId ?? "—"}</p>
       </div>
-      <div className="space-y-3">
-        <Field label="Vartotojo vardas" value={username} />
-        <Field label="El. paštas" value={email} />
-        <Field label="Discord ID" value={discordId ?? "—"} mono />
-        <div className="pt-2">
-          <p className="text-sm text-muted-foreground">
-            Veikėjų informacija (FiveM) bus sinchronizuojama vėliau pagal tavo Discord ID.
+    </div>
+
+    <div className="mb-3 flex items-baseline justify-between">
+      <h3 className="text-lg font-semibold">Veikėjai</h3>
+      <span className="text-xs text-muted-foreground">{mockCharacters.length} / 3</span>
+    </div>
+
+    {mockCharacters.length === 0 ? (
+      <div className="rounded-xl bg-secondary/30 p-10 text-center">
+        <p className="text-sm text-muted-foreground">
+          Veikėjų dar nėra. Kai prisijungsi prie serverio, jie atsiras čia automatiškai.
+        </p>
+      </div>
+    ) : (
+      <div className="grid sm:grid-cols-2 gap-4">
+        {mockCharacters.map((c) => (
+          <CharacterCard key={c.id} character={c} />
+        ))}
+      </div>
+    )}
+  </>
+);
+
+const formatMoney = (n: number) =>
+  new Intl.NumberFormat("lt-LT").format(n) + " $";
+
+const formatPlaytime = (minutes: number) => {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+};
+
+const CharacterCard = ({ character: c }: { character: Character }) => (
+  <article className="group relative rounded-xl overflow-hidden bg-secondary/30 hover:bg-secondary/50 transition-colors p-5">
+    <div
+      aria-hidden
+      className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-15 blur-3xl"
+      style={{ background: "var(--gradient-brand)" }}
+    />
+    <div className="relative">
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-lg font-bold leading-tight">
+            {c.firstName} {c.lastName}
+          </h4>
+          <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1.5">
+            <Briefcase className="h-3.5 w-3.5" />
+            {c.job}
+          </p>
+        </div>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {formatPlaytime(c.playtimeMinutes)}
+        </span>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="rounded-lg bg-background/40 p-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Grynais</p>
+          <p className="mt-1 text-sm font-bold inline-flex items-center gap-1.5">
+            <Coins className="h-3.5 w-3.5 text-primary" />
+            {formatMoney(c.money)}
+          </p>
+        </div>
+        <div className="rounded-lg bg-background/40 p-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Banke</p>
+          <p className="mt-1 text-sm font-bold inline-flex items-center gap-1.5">
+            <Wallet className="h-3.5 w-3.5 text-primary" />
+            {formatMoney(c.bank)}
           </p>
         </div>
       </div>
     </div>
-  </>
-);
-
-const Field = ({ label, value, mono }: { label: string; value: string; mono?: boolean }) => (
-  <div>
-    <p className="text-xs uppercase tracking-wider text-muted-foreground/70">{label}</p>
-    <p className={`mt-1 text-sm ${mono ? "font-mono" : ""}`}>{value}</p>
-  </div>
+  </article>
 );
 
 type Tier = "gold" | "silver" | "bronze";
@@ -260,10 +333,10 @@ const shopVehicles: ShopVehicle[] = [
     features: ["Dirt map", "Ray Tracing Ready", "Universalas", "5 sėdimos vietos"] },
 ];
 
-const tierStyles: Record<Tier, { bg: string; text: string; label: string }> = {
-  gold:   { bg: "bg-[hsl(330_85%_55%)]", text: "text-white", label: "gold" },
-  silver: { bg: "bg-[hsl(160_70%_45%)]", text: "text-white", label: "silver" },
-  bronze: { bg: "bg-[hsl(30_85%_55%)]",  text: "text-white", label: "bronze" },
+const tierStyles: Record<Tier, { text: string; label: string }> = {
+  gold:   { text: "text-[hsl(330_90%_65%)]", label: "gold" },
+  silver: { text: "text-[hsl(160_75%_55%)]", label: "silver" },
+  bronze: { text: "text-[hsl(30_90%_60%)]",  label: "bronze" },
 };
 
 const categories: Category[] = ["Visi", "Transportas", "Paslaugos", "Daiktai", "Ratai", "Kita"];
@@ -337,7 +410,7 @@ const ShopSection = () => {
 const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
   const tier = tierStyles[v.tier];
   return (
-    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 border border-border/60 hover:border-primary/40 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
+    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
         {v.image ? (
           <img
@@ -353,7 +426,7 @@ const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
           </div>
         )}
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
-        <span className={`absolute top-3 right-3 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-md ${tier.bg} ${tier.text} shadow-lg`}>
+        <span className={`absolute top-3 right-3 text-xs font-bold uppercase tracking-wider ${tier.text} drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]`}>
           {tier.label}
         </span>
       </div>
