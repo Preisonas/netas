@@ -125,34 +125,17 @@ const Index = () => {
 
         {/* How to start */}
         <section className="relative overflow-hidden">
-          {/* Map background (left side) — clean blend, no masks */}
+          {/* Map background (left side) — no fades */}
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[40%] opacity-25"
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[45%]"
             aria-hidden
           >
             <img
               src={mapBg}
               alt=""
-              className="h-full w-full object-contain object-left scale-105"
-              style={{
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 55% 60% at 22% 55%, black 0%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.2) 55%, transparent 78%)",
-                maskImage:
-                  "radial-gradient(ellipse 55% 60% at 22% 55%, black 0%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.2) 55%, transparent 78%)",
-                filter: "blur(2px) contrast(0.8)",
-              }}
+              className="h-full w-full object-contain object-left"
             />
           </div>
-          {/* Soft background-colored vignette to clean fade edges */}
-          <div
-            className="pointer-events-none absolute inset-0"
-            aria-hidden
-            style={{
-              background:
-                "radial-gradient(ellipse 50% 60% at 22% 55%, transparent 0%, transparent 30%, hsl(var(--background) / 0.7) 70%, hsl(var(--background)) 100%)",
-            }}
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background" aria-hidden />
 
           <div className="relative container grid lg:grid-cols-2 gap-12 items-center py-24">
             {/* Spacer for map column on desktop */}
