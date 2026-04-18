@@ -132,7 +132,7 @@ const Index = () => {
                 src={pedHero}
                 alt=""
                 aria-hidden
-                className="absolute right-8 top-1/2 -translate-y-1/2 h-[860px] w-auto max-w-none object-contain grayscale transition-all duration-500 ease-out group-hover:grayscale-0 pointer-events-none"
+                className="absolute right-8 top-1/2 -translate-y-1/2 h-[860px] w-auto max-w-none object-contain grayscale hover:grayscale-0 transition-all duration-500 ease-out"
               />
             </div>
 
