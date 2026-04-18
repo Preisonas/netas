@@ -35,7 +35,8 @@ type SectionKey =
   | "auction"
   | "lottery"
   | "leaderboard"
-  | "invites";
+  | "invites"
+  | "credits";
 
 const navGroups: { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] }[] = [
   {
