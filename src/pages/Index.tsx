@@ -237,11 +237,7 @@ const Index = () => {
             <div className="flex lg:justify-end">
               <div className="flex items-start gap-5 max-w-md">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Kraujas ir grafinis smurtas, intensyvus smurtas,
-                  brandus humoras, nuogybės, stiprus žodynas,
-                  intensyvus seksualinis turinys, narkotikų ir alkoholio vartojimas.
-                  <br /><br />
-                  Pirkimai žaidimo viduje, sąveika tarp vartotojų.
+                  Pirkimai žaidime nėra gražinami.
                 </p>
               </div>
             </div>
