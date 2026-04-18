@@ -1006,14 +1006,14 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
         {phase === "idle" && (
           <div className="mt-6 flex items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground">
-              Case price: <span className="text-foreground font-semibold">{box.price} €</span>
+              Dėžės kaina: <span className="text-foreground font-semibold">{box.price} €</span>
             </p>
             <button
               onClick={startOpen}
               className="h-11 px-6 rounded-md text-sm font-bold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
             >
               <Package className="h-4 w-4" />
-              Open for {box.price} €
+              Atidaryti už {box.price} €
             </button>
           </div>
         )}
