@@ -17,6 +17,8 @@ import {
   Gauge,
   Briefcase,
   Check,
+  Clock,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import shopMclaren from "@/assets/shop-mclaren.png";
