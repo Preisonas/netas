@@ -220,6 +220,45 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="border-t border-border/40 mt-12">
+          <div className="container py-12 grid lg:grid-cols-2 gap-10">
+            <div className="max-w-xl">
+              <img src={logo} alt="Speed Roleplay logo" className="h-10 w-auto" />
+              <p className="mt-5 text-sm text-muted-foreground leading-relaxed">
+                Speed Roleplay nėra susijęs su Take-Two Interactive Software,
+                Rockstar North Interactive ar kitais teisių turėtojais. Grand Theft Auto,
+                Grand Theft Auto: V ir Grand Theft Auto: San Andreas yra prekės ženklai,
+                priklausantys jų atitinkamiems savininkams.
+              </p>
+            </div>
+
+            <div className="flex lg:justify-end">
+              <div className="flex items-start gap-5 max-w-md">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Kraujas ir grafinis smurtas, intensyvus smurtas,
+                  brandus humoras, nuogybės, stiprus žodynas,
+                  intensyvus seksualinis turinys, narkotikų ir alkoholio vartojimas.
+                  <br /><br />
+                  Pirkimai žaidimo viduje, sąveika tarp vartotojų.
+                </p>
+                <div className="flex flex-col items-center gap-1 border border-border/60 rounded-sm px-3 py-2 shrink-0">
+                  <span className="text-[10px] font-semibold tracking-wider text-muted-foreground">MATURE 17+</span>
+                  <span className="text-3xl font-bold leading-none">M</span>
+                  <span className="text-[8px] tracking-widest text-muted-foreground">ESRB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-border/40">
+            <div className="container py-5 flex items-center justify-between text-xs text-muted-foreground">
+              <span>Copyright © 2025 · Speed Roleplay.</span>
+              <a href="#" className="hover:text-foreground transition-colors">Naudojimo sąlygos</a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
