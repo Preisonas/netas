@@ -570,7 +570,7 @@ const CreditsSection = () => {
   const applyCode = () => {
     const c = code.trim().toUpperCase();
     if (!c) return;
-    const codes: Record<string, number> = { WELCOME10: 0.1 };
+    const codes: Record<string, number> = { MKKAHUJIENAS30: 0.3 };
     if (codes[c] !== undefined) {
       setDiscount(codes[c]);
       toast.success(`Pritaikyta nuolaida -${codes[c] * 100}%`);
@@ -644,7 +644,7 @@ const CreditsSection = () => {
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="pvz. WELCOME10"
+                placeholder="pvz. MKKAHUJIENAS30"
                 className="flex-1 h-10 px-3 rounded-md bg-background/60 border border-border/60 text-sm outline-none focus:border-primary/60 transition placeholder:text-muted-foreground"
               />
               <button
