@@ -187,7 +187,8 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
           )}
           {active === "shop" && <ShopSection />}
           {active === "credits" && <CreditsSection />}
-          {active !== "profile" && active !== "shop" && active !== "credits" && <Placeholder title={titleFor(active)} />}
+          {active === "boxes" && <BoxesSection />}
+          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && <Placeholder title={titleFor(active)} />}
         </main>
       </div>
     </section>
