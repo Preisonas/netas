@@ -43,10 +43,6 @@ type SectionKey =
   | "profile"
   | "shop"
   | "boxes"
-  | "auction"
-  | "lottery"
-  | "leaderboard"
-  | "invites"
   | "credits";
 
 const navGroups: { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] }[] = [
@@ -56,10 +52,6 @@ const navGroups: { label: string; items: { key: SectionKey; title: string; icon:
       { key: "profile", title: "Profilis", icon: User },
       { key: "shop", title: "Parduotuvė", icon: ShoppingBag },
       { key: "boxes", title: "Dėžės", icon: Package },
-      { key: "auction", title: "Aukcionas", icon: Gavel },
-      { key: "lottery", title: "Loterija", icon: Ticket },
-      { key: "leaderboard", title: "Lyderių sąrašas", icon: Trophy },
-      { key: "invites", title: "Pakvietimai", icon: UserPlus },
     ],
   },
 ];
