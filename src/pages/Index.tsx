@@ -1,4 +1,15 @@
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import palmsBg from "@/assets/palms-bg.png";
 import logo from "@/assets/logo.png";
 import logoHero from "@/assets/logo-hero.gif";
@@ -7,9 +18,30 @@ import news2 from "@/assets/news-2.png";
 import news3 from "@/assets/news-3.png";
 import pedHero from "@/assets/ped-hero.png";
 import { FolderOpen, ExternalLink, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
+const JOIN_URL = "https://cfx.re/join/lkzrzv";
+
+const JoinDialog = ({ children }: { children: ReactNode }) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Ar tikrai nori prisijungti?</AlertDialogTitle>
+        <AlertDialogDescription>
+          Būsi nukreiptas į FiveM klientą ir prisijungsi prie Speed Roleplay serverio.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Atšaukti</AlertDialogCancel>
+        <AlertDialogAction onClick={() => { window.location.href = JOIN_URL; }}>
+          Taip, jungtis
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+);
 
 const Index = () => {
   const [players, setPlayers] = useState<{ clients: number; max: number } | null>(null);
