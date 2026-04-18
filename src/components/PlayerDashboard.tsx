@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,19 +7,19 @@ import {
   LogOut,
   User,
   ShoppingBag,
-  Repeat,
   Package,
   Gavel,
   Ticket,
   Trophy,
   UserPlus,
   Coins,
-  Crown as CrownIcon,
-  Car,
-  Coins as CoinsIcon,
-  Sparkles,
+  Search,
+  Gauge,
+  Briefcase,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
+import shopMclaren from "@/assets/shop-mclaren.png";
 
 interface PlayerDashboardProps {
   session: Session;
@@ -29,7 +29,6 @@ interface PlayerDashboardProps {
 type SectionKey =
   | "profile"
   | "shop"
-  | "trade"
   | "boxes"
   | "auction"
   | "lottery"
@@ -42,7 +41,6 @@ const navGroups: { label: string; items: { key: SectionKey; title: string; icon:
     items: [
       { key: "profile", title: "Profilis", icon: User },
       { key: "shop", title: "Parduotuvė", icon: ShoppingBag },
-      { key: "trade", title: "Automobilių mainai", icon: Repeat },
       { key: "boxes", title: "Dėžės", icon: Package },
       { key: "auction", title: "Aukcionas", icon: Gavel },
       { key: "lottery", title: "Loterija", icon: Ticket },
@@ -230,57 +228,184 @@ const Field = ({ label, value, mono }: { label: string; value: string; mono?: bo
   </div>
 );
 
-const shopItems = [
-  { id: 1, name: "1 000 kreditų", price: "4.99 €", icon: CoinsIcon, tag: "Populiaru" },
-  { id: 2, name: "5 500 kreditų", price: "19.99 €", icon: CoinsIcon, tag: "+10%" },
-  { id: 3, name: "12 000 kreditų", price: "39.99 €", icon: CoinsIcon, tag: "+20%" },
-  { id: 4, name: "VIP – 30 dienų", price: "9.99 €", icon: CrownIcon, tag: "VIP" },
-  { id: 5, name: "VIP+ – 30 dienų", price: "19.99 €", icon: Sparkles, tag: "VIP+" },
-  { id: 6, name: "Garažo +1 vieta", price: "2.99 €", icon: Car, tag: "Naujas" },
+type Tier = "gold" | "silver" | "bronze";
+type Category = "Visi" | "Transportas" | "Paslaugos" | "Daiktai" | "Ratai" | "Kita";
+
+interface ShopVehicle {
+  id: number;
+  brand: string;
+  model: string;
+  price: number;
+  grid: number;
+  speed: number;
+  trunk?: number;
+  tier: Tier;
+  category: Exclude<Category, "Visi">;
+  image?: string;
+  features: string[];
+}
+
+const shopVehicles: ShopVehicle[] = [
+  { id: 1, brand: "McLaren", model: "Senna", price: 220, grid: 30, speed: 340, trunk: 145, tier: "gold", category: "Transportas", image: shopMclaren,
+    features: ["Dirt map", "Ray Tracing Ready", "Custom airbrush", "4 sėdimos vietos"] },
+  { id: 2, brand: "BMW", model: "M5 F10", price: 140, grid: 20, speed: 310, tier: "gold", category: "Transportas",
+    features: ["Dirt map", "Ray Tracing Ready", "Vossen HF 5 Ratai", "Veikiantis spidometras", "4 sėdimos vietos"] },
+  { id: 3, brand: "BMW", model: "M4 CSL", price: 180, grid: 25, speed: 320, tier: "gold", category: "Transportas",
+    features: ["Dirt map", "Ray Tracing Ready", "Vossen HF 5 Ratai", "Veikiantis custom spidometras", "4 sėdimos vietos"] },
+  { id: 4, brand: "BMW", model: "M3 G81", price: 160, grid: 20, speed: 320, tier: "silver", category: "Transportas",
+    features: ["Dirt map", "Ray Tracing Ready", "Forgiato Flow 002 Ratai", "Veikiantis custom spidometras", "4 sėdimos vietos"] },
+  { id: 5, brand: "Pagani", model: "Huayra", price: 140, grid: 0, speed: 310, trunk: 248, tier: "silver", category: "Transportas",
+    features: ["Greitas pagreitėjimas", "Lengva valdyti"] },
+  { id: 6, brand: "Audi", model: "RS6 Avant", price: 170, grid: 22, speed: 305, tier: "bronze", category: "Transportas",
+    features: ["Dirt map", "Ray Tracing Ready", "Universalas", "5 sėdimos vietos"] },
 ];
 
-const ShopSection = () => (
-  <>
-    <SectionHeader title="Parduotuvė" subtitle="Įsigyk kreditų, VIP statusą ir kitas privilegijas." />
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {shopItems.map((it) => (
-        <article
-          key={it.id}
-          className="group relative rounded-lg border border-border/60 bg-secondary/30 hover:bg-secondary/50 p-5 transition-colors overflow-hidden"
-        >
-          <div
-            aria-hidden
-            className="absolute -top-12 -right-12 h-32 w-32 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40"
-            style={{ background: "var(--gradient-brand)" }}
+const tierStyles: Record<Tier, { bg: string; text: string; label: string }> = {
+  gold:   { bg: "bg-[hsl(330_85%_55%)]", text: "text-white", label: "gold" },
+  silver: { bg: "bg-[hsl(160_70%_45%)]", text: "text-white", label: "silver" },
+  bronze: { bg: "bg-[hsl(30_85%_55%)]",  text: "text-white", label: "bronze" },
+};
+
+const categories: Category[] = ["Visi", "Transportas", "Paslaugos", "Daiktai", "Ratai", "Kita"];
+
+const ShopSection = () => {
+  const [query, setQuery] = useState("");
+  const [cat, setCat] = useState<Category>("Visi");
+  const [sortByPrice, setSortByPrice] = useState(false);
+
+  const filtered = useMemo(() => {
+    let list = shopVehicles.filter((v) => {
+      const matchesCat = cat === "Visi" || v.category === cat;
+      const q = query.trim().toLowerCase();
+      const matchesQuery = !q || `${v.brand} ${v.model}`.toLowerCase().includes(q);
+      return matchesCat && matchesQuery;
+    });
+    if (sortByPrice) list = [...list].sort((a, b) => a.price - b.price);
+    return list;
+  }, [query, cat, sortByPrice]);
+
+  return (
+    <>
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold lg:mr-auto">Parduotuvė</h2>
+
+        <div className="relative w-full lg:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Paieška..."
+            className="w-full h-9 pl-9 pr-3 rounded-md bg-secondary/60 border border-border/60 text-sm outline-none focus:border-primary/60 transition-colors placeholder:text-muted-foreground"
           />
-          <div className="relative">
-            <div className="flex items-start justify-between">
-              <div className="h-11 w-11 rounded-md bg-background/60 grid place-items-center border border-border/60">
-                <it.icon className="h-5 w-5 text-primary" />
-              </div>
-              <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-background/60 border border-border/60 text-muted-foreground">
-                {it.tag}
-              </span>
-            </div>
-            <h3 className="mt-4 font-semibold">{it.name}</h3>
-            <p className="text-xs text-muted-foreground mt-1">Akimirksniu pristatoma į žaidimą.</p>
-            <div className="mt-5 flex items-center justify-between">
-              <span className="text-lg font-bold bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
-                {it.price}
-              </span>
-              <button
-                onClick={() => toast.info("Greitai bus galima pirkti")}
-                className="text-xs font-semibold px-3 py-1.5 rounded-md bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
-              >
-                Pirkti
-              </button>
-            </div>
+        </div>
+
+        <div className="flex items-center gap-1 rounded-md bg-secondary/40 border border-border/60 p-1 overflow-x-auto">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCat(c)}
+              className={`shrink-0 px-3 h-7 rounded text-xs font-medium transition-colors ${
+                cat === c ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+          <button
+            onClick={() => setSortByPrice((s) => !s)}
+            className={`shrink-0 ml-1 px-3 h-7 rounded text-xs font-medium transition-colors border-l border-border/60 ${
+              sortByPrice ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Kaina
+          </button>
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {filtered.map((v) => (
+          <VehicleCard key={v.id} vehicle={v} />
+        ))}
+        {filtered.length === 0 && (
+          <p className="col-span-full text-center text-muted-foreground py-12">Nieko nerasta.</p>
+        )}
+      </div>
+    </>
+  );
+};
+
+const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
+  const tier = tierStyles[v.tier];
+  return (
+    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 border border-border/60 hover:border-primary/40 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
+      <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
+        {v.image ? (
+          <img
+            src={v.image}
+            alt={`${v.brand} ${v.model}`}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center">
+            <span className="text-[80px] font-black text-foreground/5 tracking-tighter select-none">
+              {v.brand.slice(0, 3).toUpperCase()}
+            </span>
           </div>
-        </article>
-      ))}
-    </div>
-  </>
-);
+        )}
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+        <span className={`absolute top-3 right-3 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-md ${tier.bg} ${tier.text} shadow-lg`}>
+          {tier.label}
+        </span>
+      </div>
+
+      <div className="p-4">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground/80">{v.brand}</p>
+        <h3 className="text-lg font-bold leading-tight">{v.model}</h3>
+
+        <div className="mt-3 flex items-center flex-wrap gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/15 text-primary font-semibold">
+            <Coins className="h-3.5 w-3.5" />
+            {v.price} €
+          </span>
+          {v.grid > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/60 text-muted-foreground">
+              Grid: <span className="text-foreground font-medium">{v.grid}€</span>
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/60 text-muted-foreground">
+            <Gauge className="h-3.5 w-3.5" />
+            ~ {v.speed} km/h
+          </span>
+          {v.trunk && (
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/60 text-muted-foreground">
+              <Briefcase className="h-3.5 w-3.5" />
+              {v.trunk} kg
+            </span>
+          )}
+        </div>
+
+        <div className="mt-3">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5">Modelio informacija</p>
+          <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {v.features.slice(0, 4).map((f) => (
+              <li key={f} className="inline-flex items-center gap-1">
+                <Check className="h-3 w-3 text-primary" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <button
+          onClick={() => toast.info(`${v.brand} ${v.model} — pirkimas greitai`)}
+          className="mt-4 w-full h-9 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
+        >
+          Pirkti
+        </button>
+      </div>
+    </article>
+  );
+};
 
 const Placeholder = ({ title }: { title: string }) => (
   <div className="h-full grid place-items-center min-h-[500px] text-center">
