@@ -28,6 +28,11 @@ import {
   Gift,
 } from "lucide-react";
 import { toast } from "sonner";
+import caseStarterImg from "@/assets/cases/starter.png";
+import caseVehicleImg from "@/assets/cases/vehicle.png";
+import caseVipImg from "@/assets/cases/vip.png";
+import casePremiumImg from "@/assets/cases/premium.png";
+import caseLegendaryImg from "@/assets/cases/legendary.png";
 import shopMclaren from "@/assets/shop-mclaren.png";
 
 interface PlayerDashboardProps {
