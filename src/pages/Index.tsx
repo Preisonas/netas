@@ -115,8 +115,8 @@ const Index = () => {
               riba.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-7">
-                Žaisti dabar
+              <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-7">
+                <a href="https://cfx.re/join/lkzrzv">Žaisti dabar</a>
               </Button>
               <Button variant="outline" className="rounded-sm border-white/30 bg-transparent text-white/70 hover:bg-white/10 hover:text-white/90 h-10 px-10">
                 Registruoti paskyrą
@@ -246,11 +246,14 @@ const Index = () => {
                   Tada prisijunk su paskyra, kurią susikūrei svetainėje.
                 </p>
                 <Button
+                  asChild
                   variant="outline"
                   className="mt-4 rounded-sm border-transparent bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-12 gap-2"
                 >
-                  <ExternalLink className="h-4 w-4" />
-                  Žaisti
+                  <a href="https://cfx.re/join/lkzrzv">
+                    <ExternalLink className="h-4 w-4" />
+                    Žaisti
+                  </a>
                 </Button>
               </div>
             </div>
