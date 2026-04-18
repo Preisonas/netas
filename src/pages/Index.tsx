@@ -72,7 +72,7 @@ const Index = () => {
               <img src={logo} alt="Speed Roleplay logo" className="h-9 w-9" />
             </a>
             <div className="flex items-center gap-2 rounded-[2px] bg-secondary/60 border border-transparent px-3 py-1.5 text-sm">
-              <Users className="h-4 w-4 text-primary" />
+              <Users className="h-4 w-4 text-foreground" />
               <span className="text-foreground font-medium">
                 {players ? `${players.clients} / ${players.max}` : "— / —"}
               </span>
