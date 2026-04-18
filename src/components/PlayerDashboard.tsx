@@ -728,12 +728,6 @@ interface LootBox {
   pool: CaseItem[];
 }
 
-import caseStarterImg from "@/assets/cases/starter.png";
-import caseVehicleImg from "@/assets/cases/vehicle.png";
-import caseVipImg from "@/assets/cases/vip.png";
-import casePremiumImg from "@/assets/cases/premium.png";
-import caseLegendaryImg from "@/assets/cases/legendary.png";
-
 // English rarity labels with subtle badge colors. One hue family per tier, no glows.
 const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; bar: string; badge: string }> = {
   common:    { text: "text-muted-foreground",   ring: "ring-border/60",             label: "COMMON",    bar: "bg-muted-foreground/50",       badge: "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/20" },
