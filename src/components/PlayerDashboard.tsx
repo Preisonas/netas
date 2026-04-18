@@ -766,36 +766,6 @@ const lootBoxes: LootBox[] = [
       { id: "senna", name: "McLaren Senna",rarity: "mythic",    weight: 2,  kind: "vehicle" },
     ],
   },
-  {
-    id: "vip", name: "VIP dėžė", tagline: "Tik geri prizai", price: 50, icon: Crown, accent: "35 100% 60%", image: caseVipImg,
-    pool: [
-      { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 40, kind: "credits", value: 25 },
-      { id: "c50",   name: "50 kreditų",   rarity: "epic",      weight: 30, kind: "credits", value: 50 },
-      { id: "shirt", name: "VIP rūbai",    rarity: "epic",      weight: 15, kind: "cosmetic" },
-      { id: "bmwm5", name: "BMW M5 F10",   rarity: "legendary", weight: 12, kind: "vehicle" },
-      { id: "csl",   name: "BMW M4 CSL",   rarity: "mythic",    weight: 3,  kind: "vehicle" },
-    ],
-  },
-  {
-    id: "premium", name: "Premium dėžė", tagline: "Aukštesnė klasė", price: 100, icon: Sparkles, accent: "280 85% 65%", image: casePremiumImg,
-    pool: [
-      { id: "c50",   name: "50 kreditų",   rarity: "rare",      weight: 35, kind: "credits", value: 50 },
-      { id: "c100",  name: "100 kreditų",  rarity: "epic",      weight: 30, kind: "credits", value: 100 },
-      { id: "huayra",name: "Pagani Huayra",rarity: "legendary", weight: 20, kind: "vehicle" },
-      { id: "csl",   name: "BMW M4 CSL",   rarity: "legendary", weight: 10, kind: "vehicle" },
-      { id: "senna", name: "McLaren Senna",rarity: "mythic",    weight: 5,  kind: "vehicle" },
-    ],
-  },
-  {
-    id: "legendary", name: "Legendinė dėžė", tagline: "Tik mitiniai prizai", price: 250, icon: Flame, accent: "330 95% 65%", image: caseLegendaryImg,
-    pool: [
-      { id: "c100",  name: "100 kreditų",  rarity: "epic",      weight: 30, kind: "credits", value: 100 },
-      { id: "c250",  name: "250 kreditų",  rarity: "legendary", weight: 25, kind: "credits", value: 250 },
-      { id: "huayra",name: "Pagani Huayra",rarity: "legendary", weight: 20, kind: "vehicle" },
-      { id: "senna", name: "McLaren Senna",rarity: "mythic",    weight: 15, kind: "vehicle" },
-      { id: "csl",   name: "BMW M4 CSL",   rarity: "mythic",    weight: 10, kind: "vehicle" },
-    ],
-  },
 ];
 
 const rarityIcon = (kind: CaseItem["kind"]) => {
