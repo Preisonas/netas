@@ -570,7 +570,7 @@ const CreditsSection = () => {
   const applyCode = () => {
     const c = code.trim().toUpperCase();
     if (!c) return;
-    const codes: Record<string, number> = { WELCOME10: 0.1, VIP20: 0.2, TEST50: 0.5 };
+    const codes: Record<string, number> = { WELCOME10: 0.1 };
     if (codes[c] !== undefined) {
       setDiscount(codes[c]);
       toast.success(`Pritaikyta nuolaida -${codes[c] * 100}%`);
