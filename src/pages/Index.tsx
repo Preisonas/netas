@@ -19,6 +19,7 @@ import news3 from "@/assets/news-3.png";
 import pedHero from "@/assets/ped-hero.png";
 import { FolderOpen, ExternalLink, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import PlayerPanel from "@/components/PlayerPanel";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
 const JOIN_URL = "https://cfx.re/join/lkzrzv";
@@ -45,6 +46,7 @@ const JoinDialog = ({ children }: { children: ReactNode }) => (
 
 const Index = () => {
   const [players, setPlayers] = useState<{ clients: number; max: number } | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +100,7 @@ const Index = () => {
 
       <div className="relative z-10">
         {/* Nav */}
-        <header className="container flex items-center justify-between py-6">
+        <header className="relative z-[60] container flex items-center justify-between py-6">
           <div className="flex items-center gap-3">
             <a href="#" className="flex items-center gap-2">
               <img src={logo} alt="Speed Roleplay logo" className="h-9 w-9" />
@@ -126,7 +128,7 @@ const Index = () => {
               </a>
             ))}
           </nav>
-          <Button className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
+          <Button onClick={() => setPanelOpen(true)} className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
             Žaidėjo panelė
           </Button>
         </header>
@@ -152,7 +154,7 @@ const Index = () => {
                   Žaisti dabar
                 </Button>
               </JoinDialog>
-              <Button variant="outline" className="rounded-sm border-white/30 bg-transparent text-white/70 hover:bg-white/10 hover:text-white/90 h-10 px-10">
+              <Button onClick={() => setPanelOpen(true)} variant="outline" className="rounded-sm border-white/30 bg-transparent text-white/70 hover:bg-white/10 hover:text-white/90 h-10 px-10">
                 Atidaryti žaidėjo panelę
               </Button>
             </div>
@@ -325,6 +327,7 @@ const Index = () => {
           </div>
         </footer>
       </div>
+      <PlayerPanel open={panelOpen} onClose={() => setPanelOpen(false)} />
     </div>
   );
 };
