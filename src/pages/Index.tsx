@@ -73,8 +73,9 @@ const Index = () => {
             </a>
             <div className="flex items-center gap-2 rounded-[2px] bg-secondary/60 border border-transparent px-3 py-1.5 text-sm">
               <Users className="h-4 w-4 text-primary" />
-              <span className="text-foreground font-medium">
-                {players ? `${players.clients} / ${players.max}` : "— / —"}
+              <span className="font-medium">
+                <span className="text-foreground">{players ? players.clients : "—"}</span>
+                <span className="text-muted-foreground"> / {players ? players.max : "—"}</span>
               </span>
             </div>
           </div>
