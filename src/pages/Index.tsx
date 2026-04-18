@@ -59,8 +59,8 @@ const Index = () => {
               IR SUKURK SAVO ISTORIJĄ!
             </h1>
             <p className="mt-5 text-lg text-muted-foreground max-w-lg">
-              Kurk dinamiškas istorijas interaktyvioje aplinkoje, kur tik tavo
-              kūrybiškumas yra riba.
+              Kurk savo istorijas mūsų mieste, kur tik tavo kūrybiškumas yra
+              riba.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-7">
