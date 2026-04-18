@@ -18,19 +18,22 @@ const PlayerPanel = ({ onClose }: PlayerPanelProps) => {
       setSession(sess);
     });
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
+
+    if (window.location.hash.includes("discord_error=")) {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const err = params.get("discord_error");
+      if (err) toast.error("Discord prisijungimas nepavyko", { description: err });
+      history.replaceState(null, "", window.location.pathname);
+    }
+
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleDiscordLogin = async () => {
+  const handleDiscordLogin = () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "discord",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) {
-      toast.error("Nepavyko prisijungti per Discord", { description: error.message });
-      setLoading(false);
-    }
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const returnTo = encodeURIComponent(window.location.origin);
+    window.location.href = `https://${projectId}.supabase.co/functions/v1/discord-auth-start?return_to=${returnTo}`;
   };
 
   const handleLogout = async () => {
