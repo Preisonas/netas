@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,6 @@ import {
   Ticket,
   Trophy,
   UserPlus,
-  FileText,
-  Users,
-  ServerOff,
-  MessageSquare,
-  Crown,
   Coins,
   Crown as CrownIcon,
   Car,
@@ -39,12 +34,7 @@ type SectionKey =
   | "auction"
   | "lottery"
   | "leaderboard"
-  | "invites"
-  | "applications"
-  | "team"
-  | "server-unban"
-  | "discord-unban"
-  | "faction-leader";
+  | "invites";
 
 const navGroups: { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] }[] = [
   {
@@ -58,16 +48,6 @@ const navGroups: { label: string; items: { key: SectionKey; title: string; icon:
       { key: "lottery", title: "Loterija", icon: Ticket },
       { key: "leaderboard", title: "Lyderių sąrašas", icon: Trophy },
       { key: "invites", title: "Pakvietimai", icon: UserPlus },
-    ],
-  },
-  {
-    label: "Apeliacijos",
-    items: [
-      { key: "applications", title: "Mano anketos", icon: FileText, badge: "0" },
-      { key: "team", title: "Atranka į komandą", icon: Users },
-      { key: "server-unban", title: "Serverio atsiblokavimas", icon: ServerOff },
-      { key: "discord-unban", title: "Discord atsiblokavimas", icon: MessageSquare },
-      { key: "faction-leader", title: "Frakcijų vadų atrankos", icon: Crown, badge: "17" },
     ],
   },
 ];
@@ -118,7 +98,7 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
           <div className="rounded-lg border border-border/50 bg-card/40 backdrop-blur-xl p-4 shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
             <div className="flex items-center gap-3">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="h-11 w-11 rounded-full ring-2 ring-primary/40" />
+                <img src={avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
               ) : (
                 <div className="h-11 w-11 rounded-full bg-secondary grid place-items-center">
                   <User className="h-5 w-5 text-muted-foreground" />
@@ -143,13 +123,6 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
               </button>
             </div>
 
-            <button
-              onClick={() => toast.info("VIP greitai")}
-              className="mt-3 w-full rounded-md py-2.5 text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
-            >
-              <CrownIcon className="h-4 w-4" />
-              Tapk VIP nariu!
-            </button>
           </div>
 
           {/* Nav groups */}
@@ -229,7 +202,7 @@ const ProfileSection = ({
     <div className="grid md:grid-cols-[auto_1fr] gap-6 items-start">
       <div className="relative">
         {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="h-32 w-32 rounded-xl object-cover ring-2 ring-primary/40" />
+          <img src={avatarUrl} alt="" className="h-32 w-32 rounded-xl object-cover" />
         ) : (
           <div className="h-32 w-32 rounded-xl bg-secondary grid place-items-center">
             <User className="h-10 w-10 text-muted-foreground" />
