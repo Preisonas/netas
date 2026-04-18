@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,6 @@ import {
   Ticket,
   Trophy,
   UserPlus,
-  FileText,
-  Users,
-  ServerOff,
-  MessageSquare,
-  Crown,
   Coins,
   Crown as CrownIcon,
   Car,
@@ -207,7 +202,7 @@ const ProfileSection = ({
     <div className="grid md:grid-cols-[auto_1fr] gap-6 items-start">
       <div className="relative">
         {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="h-32 w-32 rounded-xl object-cover ring-2 ring-primary/40" />
+          <img src={avatarUrl} alt="" className="h-32 w-32 rounded-xl object-cover" />
         ) : (
           <div className="h-32 w-32 rounded-xl bg-secondary grid place-items-center">
             <User className="h-10 w-10 text-muted-foreground" />
