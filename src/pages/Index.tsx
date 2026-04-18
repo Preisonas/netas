@@ -5,6 +5,8 @@ import logoHero from "@/assets/logo-hero.gif";
 import news1 from "@/assets/news-1.png";
 import news2 from "@/assets/news-2.png";
 import news3 from "@/assets/news-3.png";
+import mapBg from "@/assets/map-bg.png";
+import { FolderOpen, ExternalLink } from "lucide-react";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
 
@@ -104,6 +106,104 @@ const Index = () => {
                 />
               </article>
             ))}
+          </div>
+        </section>
+
+        {/* How to start */}
+        <section className="relative border-t border-border/40">
+          <div className="container grid lg:grid-cols-2 gap-12 items-center py-24">
+            {/* Map */}
+            <div className="relative">
+              <img
+                src={mapBg}
+                alt="Speed Roleplay miesto žemėlapis"
+                className="w-full h-auto opacity-80"
+              />
+            </div>
+
+            {/* Steps */}
+            <div className="max-w-xl">
+              <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+                Kaip pradėti žaisti Speed Roleplay
+              </h2>
+              <h3 className="text-2xl md:text-3xl font-bold leading-tight mt-1">
+                Sek žingsnis po žingsnio ir sukurk savo istoriją!
+              </h3>
+              <p className="mt-5 text-muted-foreground">
+                Speed Roleplay serveryje turi visišką laisvę kurti savo istoriją,
+                bendrauti su kitais žaidėjais ir tapti tuo, kuo nori. Vienintelė
+                riba — tavo kūrybiškumas! Sek žingsnius, kad teisingai
+                prisijungtum prie serverio, o jei kils klausimų — kreipkis į mūsų
+                pagalbos komandą.
+              </p>
+
+              <div className="mt-8 h-px bg-border/60" />
+
+              {/* Step 1 */}
+              <div className="mt-8">
+                <h4 className="text-lg font-semibold">
+                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">1.</span>{" "}
+                  Pirmas žingsnis
+                </h4>
+                <p className="mt-2 text-muted-foreground">
+                  Įsidiek{" "}
+                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent font-medium">
+                    MTA: San Andreas
+                  </span>{" "}
+                  į savo kompiuterį.
+                  <br />
+                  Jis būtinas norint prisijungti prie serverio.
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4 rounded-sm border-white/20 bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-4 gap-2"
+                >
+                  <FolderOpen className="h-4 w-4" />
+                  Įdiegti MTA
+                </Button>
+              </div>
+
+              {/* Step 2 */}
+              <div className="mt-8">
+                <h4 className="text-lg font-semibold">
+                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">2.</span>{" "}
+                  Antras žingsnis
+                </h4>
+                <p className="mt-2 text-muted-foreground">
+                  Užregistruok paskyrą oficialioje{" "}
+                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent font-medium">
+                    Speed Roleplay
+                  </span>{" "}
+                  svetainėje.
+                  <br />
+                  Ši paskyra bus naudojama prisijungti prie serverio.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="mt-8">
+                <h4 className="text-lg font-semibold">
+                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">3.</span>{" "}
+                  Trečias žingsnis
+                </h4>
+                <p className="mt-2 text-muted-foreground">
+                  Spausk mygtuką žemiau, kad{" "}
+                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent font-medium">
+                    atvertum MTA
+                  </span>{" "}
+                  tiesiai mūsų serveryje.
+                  <br />
+                  Tada prisijunk su paskyra, kurią susikūrei svetainėje.
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4 rounded-sm border-white/20 bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-4 gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Atverti MTA
+                </Button>
+              </div>
+            </div>
           </div>
         </section>
       </div>
