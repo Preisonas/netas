@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
 import palmsBg from "@/assets/palms-bg.png";
 import logo from "@/assets/logo.png";
 import logoHero from "@/assets/logo-hero.gif";
