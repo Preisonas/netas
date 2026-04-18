@@ -1100,16 +1100,16 @@ const RouletteItem = ({ item, width }: { item: CaseItem; width: number }) => {
   const Icon = rarityIcon(item.kind);
   return (
     <div
-      className={`shrink-0 h-36 rounded-lg bg-secondary/50 ring-1 ${r.ring} grid place-items-center p-3 relative overflow-hidden`}
+      className={`shrink-0 h-36 rounded-lg bg-secondary/40 ring-1 ${r.ring} grid place-items-center p-3 relative overflow-hidden`}
       style={{ width: `${width}px` }}
     >
-      <span aria-hidden className={`absolute top-0 left-0 right-0 h-0.5 ${r.bar}`} />
+      <span aria-hidden className={`absolute bottom-0 left-0 right-0 h-1 ${r.bar}`} />
       <div className="text-center">
-        <Icon className={`h-8 w-8 mx-auto ${r.text}`} />
+        <Icon className="h-8 w-8 mx-auto text-foreground/90" strokeWidth={1.5} />
         <p className="mt-2 text-xs font-semibold leading-tight text-foreground">{item.name}</p>
-        <p className={`mt-1 text-[9px] uppercase tracking-wider font-semibold ${r.text}`}>
+        <span className={`mt-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[8px] tracking-wider font-bold ${r.badge}`}>
           {r.label}
-        </p>
+        </span>
       </div>
     </div>
   );
