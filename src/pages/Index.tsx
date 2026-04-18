@@ -23,15 +23,15 @@ const Index = () => {
           <a href="#" className="flex items-center gap-2 text-primary">
             <Play className="h-6 w-6 fill-primary" />
           </a>
-          <nav className="hidden md:flex items-center gap-2 rounded-full border border-border/60 bg-card/40 px-2 py-1 backdrop-blur">
+          <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item, i) => (
               <a
                 key={item}
                 href="#"
-                className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
+                className={`px-4 py-1.5 text-sm rounded-sm transition-colors ${
                   i === 0
                     ? "bg-secondary text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                 }`}
               >
                 {item}
