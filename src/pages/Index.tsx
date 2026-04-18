@@ -100,7 +100,7 @@ const Index = () => {
 
       <div className="relative z-10">
         {/* Nav */}
-        <header className="container flex items-center justify-between py-6">
+        <header className="relative z-[60] container flex items-center justify-between py-6">
           <div className="flex items-center gap-3">
             <a href="#" className="flex items-center gap-2">
               <img src={logo} alt="Speed Roleplay logo" className="h-9 w-9" />
@@ -327,6 +327,7 @@ const Index = () => {
           </div>
         </footer>
       </div>
+      <PlayerPanel open={panelOpen} onClose={() => setPanelOpen(false)} />
     </div>
   );
 };
