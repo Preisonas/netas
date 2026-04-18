@@ -964,7 +964,7 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
 
         {phase === "done" && winner && (
           <div className="mt-6 rounded-xl p-5 border border-border/50 bg-secondary/30 animate-fade-in">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">You won</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Laimėjai</p>
             <div className="mt-1 flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <h4 className="text-2xl font-black text-foreground">{winner.name}</h4>
@@ -1130,7 +1130,7 @@ const FlipCard = ({
             picked ? "border-primary" : "border-border/60"
           }`}
         >
-          <span aria-hidden className={`absolute top-0 left-0 right-0 h-1 ${r.bar}`} />
+          
           <div className="text-center">
             <Icon className="h-9 w-9 mx-auto text-foreground/90" strokeWidth={1.5} />
             <p className="mt-2 text-xs font-semibold leading-tight text-foreground line-clamp-2">{item.name}</p>
