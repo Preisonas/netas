@@ -19,6 +19,11 @@ import {
   Check,
   Clock,
   Wallet,
+  Minus,
+  Plus,
+  Tag,
+  CreditCard,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import shopMclaren from "@/assets/shop-mclaren.png";
@@ -117,7 +122,7 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
                 <span className="font-semibold">0 €</span>
               </span>
               <button
-                onClick={() => setActive("shop")}
+                onClick={() => setActive("credits")}
                 className="text-xs font-medium px-2.5 py-1 rounded bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
               >
                 Gauti kreditų
