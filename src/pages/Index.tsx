@@ -97,7 +97,7 @@ const Index = () => {
             {[news1, news2, news3].map((src, i) => (
               <article
                 key={i}
-                className="aspect-[4/3] rounded-lg border border-border/60 bg-card/40 backdrop-blur overflow-hidden hover:border-primary/50 transition-colors"
+                className="aspect-[4/3] rounded-lg overflow-hidden"
               >
                 <img
                   src={src}
