@@ -940,30 +940,38 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
           )}
         </div>
 
-        <div className="relative h-44 rounded-xl overflow-hidden bg-background/60 border border-border/50">
-          <div aria-hidden className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-card via-card/70 to-transparent z-10" />
-          <div aria-hidden className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-card via-card/70 to-transparent z-10" />
+        <div className="relative h-44 rounded-xl overflow-hidden bg-background/40 border border-border/50">
+          {/* Edge fades */}
+          <div aria-hidden className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-card via-card/80 to-transparent z-10" />
+          <div aria-hidden className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-card via-card/80 to-transparent z-10" />
 
+          {/* Center pointer */}
           <div aria-hidden className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 pointer-events-none">
             <div className="h-full w-px bg-primary" />
             <div
               className="absolute -top-px left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "8px solid hsl(var(--primary))" }}
+              style={{ borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderTop: "9px solid hsl(var(--primary))" }}
             />
             <div
               className="absolute -bottom-px left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "8px solid hsl(var(--primary))" }}
+              style={{ borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderBottom: "9px solid hsl(var(--primary))" }}
             />
           </div>
 
+          {/* Vertical center accent line that pulses on done */}
+          {phase === "done" && (
+            <div aria-hidden className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-[140px] z-[5] pointer-events-none animate-pulse"
+                 style={{ background: "radial-gradient(60% 100% at 50% 50%, hsl(var(--primary) / 0.25), transparent 70%)" }} />
+          )}
+
           {strip.length > 0 ? (
             <div
-              className="absolute top-1/2 flex items-center"
+              className="absolute top-1/2 flex items-center will-change-transform"
               style={{
                 gap: `${ITEM_GAP}px`,
                 left: "50%",
                 transform: `translate3d(${-offset}px, -50%, 0)`,
-                transition: phase === "spinning" ? "transform 6s cubic-bezier(0.05, 0.7, 0.1, 1)" : "none",
+                transition: phase === "spinning" ? "transform 7s cubic-bezier(0.16, 0.84, 0.18, 1)" : "none",
               }}
             >
               {strip.map((item, idx) => (
@@ -972,7 +980,7 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
             </div>
           ) : (
             <div className="absolute inset-0 grid place-items-center">
-              <p className="text-sm text-muted-foreground">Spausk „Atidaryti" kad pradėtum.</p>
+              <p className="text-sm text-muted-foreground">Press „Open" to begin.</p>
             </div>
           )}
         </div>
