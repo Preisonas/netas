@@ -1139,7 +1139,7 @@ const FlipCard = ({
       type="button"
       onClick={onPick}
       disabled={!interactive}
-      className={`group relative h-44 w-32 md:h-52 md:w-36 [perspective:1000px] outline-none transition-all duration-500 ${
+      className={`group relative w-28 md:w-36 aspect-[2/3] [perspective:1000px] outline-none transition-all duration-500 ${
         interactive ? "hover:-translate-y-2 cursor-pointer" : "cursor-default"
       } ${dimmed ? "opacity-40 scale-95" : ""} ${picked && phase === "done" ? "scale-105" : ""}`}
       style={shuffleAnim}
