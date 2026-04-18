@@ -39,7 +39,7 @@ const Index = () => {
               </a>
             ))}
           </nav>
-          <Button className="rounded-sm bg-white text-black hover:bg-white/90 h-9 px-6">
+          <Button className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
             Entrar
           </Button>
         </header>
@@ -60,7 +60,7 @@ const Index = () => {
               criatividade é o limite.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-10">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-sm h-10 px-7">
                 Jogar agora
               </Button>
               <Button variant="outline" className="rounded-sm border-white/30 bg-transparent text-white/70 hover:bg-white/10 hover:text-white/90 h-10 px-10">
