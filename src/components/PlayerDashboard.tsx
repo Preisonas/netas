@@ -863,13 +863,6 @@ const pickWeighted = (pool: CaseItem[]): CaseItem => {
   return pool[pool.length - 1];
 };
 
-const buildStrip = (pool: CaseItem[], winner: CaseItem, length = 60, winnerIndex = 50): CaseItem[] => {
-  const strip: CaseItem[] = [];
-  for (let i = 0; i < length; i++) {
-    strip.push(i === winnerIndex ? winner : pickWeighted(pool));
-  }
-  return strip;
-};
 
 const CARD_COUNT = 5;
 
