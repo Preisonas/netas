@@ -871,123 +871,122 @@ const buildStrip = (pool: CaseItem[], winner: CaseItem, length = 60, winnerIndex
   return strip;
 };
 
-const ITEM_W = 140;
-const ITEM_GAP = 12;
+const CARD_COUNT = 5;
+
+type Phase = "idle" | "shuffling" | "picking" | "revealing" | "done";
 
 const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void }) => {
-  const [phase, setPhase] = useState<"idle" | "spinning" | "done">("idle");
-  const [winner, setWinner] = useState<CaseItem | null>(null);
-  const [strip, setStrip] = useState<CaseItem[]>([]);
-  const [offset, setOffset] = useState(0);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [cards, setCards] = useState<CaseItem[]>([]);
+  const [winnerIdx, setWinnerIdx] = useState<number>(-1);
+  const [pickedIdx, setPickedIdx] = useState<number>(-1);
+  const [flipped, setFlipped] = useState<Record<number, boolean>>({});
   const [selectingChar, setSelectingChar] = useState(false);
 
-  const winnerIndex = 50;
+  const winner = winnerIdx >= 0 ? cards[winnerIdx] : null;
 
   const startOpen = () => {
-    if (phase === "spinning") return;
+    if (phase !== "idle") return;
     const w = pickWeighted(box.pool);
-    const s = buildStrip(box.pool, w, 60, winnerIndex);
-    setWinner(w);
-    setStrip(s);
-    setPhase("spinning");
-    setOffset(0);
+    const wIndex = Math.floor(Math.random() * CARD_COUNT);
+    const c: CaseItem[] = [];
+    for (let i = 0; i < CARD_COUNT; i++) {
+      c.push(i === wIndex ? w : pickWeighted(box.pool));
+    }
+    setCards(c);
+    setWinnerIdx(wIndex);
+    setPickedIdx(-1);
+    setFlipped({});
+    setPhase("shuffling");
+    window.setTimeout(() => setPhase("picking"), 1100);
+  };
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const itemFull = ITEM_W + ITEM_GAP;
-        const jitter = (Math.random() - 0.5) * (ITEM_W * 0.6);
-        const target = winnerIndex * itemFull + ITEM_W / 2 + jitter;
-        setOffset(target);
+  const handlePick = (idx: number) => {
+    if (phase !== "picking") return;
+    setPickedIdx(idx);
+    setPhase("revealing");
+    setFlipped((f) => ({ ...f, [idx]: true }));
+    window.setTimeout(() => {
+      // Reveal the rest with stagger
+      setFlipped(() => {
+        const all: Record<number, boolean> = {};
+        for (let i = 0; i < CARD_COUNT; i++) all[i] = true;
+        return all;
       });
-    });
-
+    }, 900);
     window.setTimeout(() => {
       setPhase("done");
-      toast.success(`You won: ${w.name}!`);
-    }, 7400);
+      const w = cards[winnerIdx];
+      // Force the winner to be the picked card visually
+      toast.success(`You won: ${cards[idx].name}!`);
+      // Update the actual winner reference to picked card so payouts match what user sees
+      setWinnerIdx(idx);
+      void w;
+    }, 1700);
   };
 
   const reset = () => {
     setPhase("idle");
-    setWinner(null);
-    setStrip([]);
-    setOffset(0);
+    setCards([]);
+    setWinnerIdx(-1);
+    setPickedIdx(-1);
+    setFlipped({});
     setSelectingChar(false);
   };
 
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-sm p-4"
-      onClick={() => phase !== "spinning" && onClose()}
+      onClick={() => phase !== "shuffling" && phase !== "revealing" && onClose()}
     >
       <div
-        className="relative w-full max-w-3xl rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl p-6 md:p-8 shadow-[0_30px_80px_rgba(0,0,0,0.6)] overflow-hidden"
+        className="relative w-full max-w-4xl rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl p-6 md:p-8 shadow-[0_30px_80px_rgba(0,0,0,0.6)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl md:text-2xl font-bold">{box.name}</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {phase === "picking" ? "Pick a card" : phase === "shuffling" ? "Shuffling…" : box.tagline}
+            </p>
           </div>
-          {phase !== "spinning" && (
+          {phase !== "shuffling" && phase !== "revealing" && (
             <button
               onClick={onClose}
               className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Uždaryti"
+              aria-label="Close"
             >
               <X className="h-5 w-5" />
             </button>
           )}
         </div>
 
-        <div className="relative h-44 rounded-xl overflow-hidden bg-background/40 border border-border/50">
-          {/* Edge fades */}
-          <div aria-hidden className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-card via-card/80 to-transparent z-10" />
-          <div aria-hidden className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-card via-card/80 to-transparent z-10" />
-
-          {/* Center pointer */}
-          <div aria-hidden className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 pointer-events-none">
-            <div className="h-full w-px bg-primary" />
-            <div
-              className="absolute -top-px left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderTop: "9px solid hsl(var(--primary))" }}
-            />
-            <div
-              className="absolute -bottom-px left-1/2 -translate-x-1/2 w-0 h-0"
-              style={{ borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderBottom: "9px solid hsl(var(--primary))" }}
-            />
-          </div>
-
-          {/* Vertical center accent line that pulses on done */}
-          {phase === "done" && (
-            <div aria-hidden className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-[140px] z-[5] pointer-events-none animate-pulse"
-                 style={{ background: "radial-gradient(60% 100% at 50% 50%, hsl(var(--primary) / 0.25), transparent 70%)" }} />
-          )}
-
-          {strip.length > 0 ? (
-            <div
-              className="absolute top-1/2 flex items-center will-change-transform"
-              style={{
-                gap: `${ITEM_GAP}px`,
-                left: "50%",
-                transform: `translate3d(${-offset}px, -50%, 0)`,
-                transition: phase === "spinning" ? "transform 7s cubic-bezier(0.16, 0.84, 0.18, 1)" : "none",
-              }}
-            >
-              {strip.map((item, idx) => (
-                <RouletteItem key={idx} item={item} width={ITEM_W} />
-              ))}
+        <div className="relative min-h-[280px] rounded-xl bg-background/40 border border-border/50 px-4 py-8 grid place-items-center overflow-hidden">
+          {phase === "idle" ? (
+            <div className="text-center space-y-1">
+              <Package className="h-10 w-10 mx-auto text-muted-foreground" strokeWidth={1.25} />
+              <p className="text-sm text-muted-foreground">Press „Open" to reveal {CARD_COUNT} cards.</p>
             </div>
           ) : (
-            <div className="absolute inset-0 grid place-items-center">
-              <p className="text-sm text-muted-foreground">Press „Open" to begin.</p>
+            <div className="flex items-center justify-center gap-3 md:gap-4 flex-wrap">
+              {cards.map((item, idx) => (
+                <FlipCard
+                  key={idx}
+                  item={item}
+                  index={idx}
+                  flipped={!!flipped[idx]}
+                  picked={pickedIdx === idx}
+                  phase={phase}
+                  onPick={() => handlePick(idx)}
+                />
+              ))}
             </div>
           )}
         </div>
 
         {phase === "done" && winner && (
           <div className="mt-6 rounded-xl p-5 border border-border/50 bg-secondary/30 animate-fade-in">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Tu laimėjai</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">You won</p>
             <div className="mt-1 flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <h4 className="text-2xl font-black text-foreground">{winner.name}</h4>
@@ -1000,13 +999,13 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
                   onClick={() => setSelectingChar(true)}
                   className="h-10 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
                 >
-                  Atsiimti
+                  Claim
                 </button>
                 <button
                   onClick={reset}
                   className="h-10 px-4 rounded-md text-sm font-semibold bg-secondary hover:bg-secondary/80 transition"
                 >
-                  Atidaryti dar
+                  Open again
                 </button>
               </div>
             </div>
@@ -1016,21 +1015,23 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
         {phase === "idle" && (
           <div className="mt-6 flex items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground">
-              Dėžės kaina: <span className="text-foreground font-semibold">{box.price} €</span>
+              Case price: <span className="text-foreground font-semibold">{box.price} €</span>
             </p>
             <button
               onClick={startOpen}
               className="h-11 px-6 rounded-md text-sm font-bold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
             >
               <Package className="h-4 w-4" />
-              Atidaryti už {box.price} €
+              Open for {box.price} €
             </button>
           </div>
         )}
 
-        {phase === "spinning" && (
-          <p className="mt-6 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground animate-pulse">
-            Sukama…
+        {(phase === "shuffling" || phase === "picking" || phase === "revealing") && (
+          <p className="mt-6 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            {phase === "shuffling" && "Shuffling…"}
+            {phase === "picking" && "Choose your card"}
+            {phase === "revealing" && "Revealing…"}
           </p>
         )}
 
