@@ -23,7 +23,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         duration: 4000,
         classNames: {
           toast:
-            "!bg-card/95 !border-border/60 !text-foreground !backdrop-blur-xl !shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)] !rounded-lg !px-4 !py-3.5 !w-full relative overflow-hidden before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-border data-[type=success]:before:bg-primary data-[type=error]:before:bg-destructive data-[type=warning]:before:bg-[hsl(38_95%_55%)] data-[type=info]:before:bg-[hsl(210_80%_55%)]",
+            "!bg-card/95 !border-border/60 !text-foreground !backdrop-blur-xl !shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)] !rounded-lg !pl-4 !pr-10 !py-3.5 !w-full relative overflow-hidden before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-border data-[type=success]:before:bg-primary data-[type=error]:before:bg-destructive data-[type=warning]:before:bg-[hsl(38_95%_55%)] data-[type=info]:before:bg-[hsl(210_80%_55%)]",
           title: "!text-sm !font-semibold !leading-tight !text-foreground",
           description: "!text-xs !text-muted-foreground !mt-0.5 !leading-relaxed",
           actionButton:
@@ -31,7 +31,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           cancelButton:
             "!bg-secondary !text-foreground !text-xs !font-semibold !h-8 !px-3 !rounded-md hover:!bg-secondary/80 !transition",
           closeButton:
-            "!bg-card !border !border-border/60 !text-muted-foreground hover:!text-foreground hover:!bg-secondary !transition !left-auto !right-2 !top-2",
+            "!opacity-100 !left-auto !right-2 !top-2 !translate-x-0 !translate-y-0 !h-6 !w-6 !rounded-md !bg-secondary/60 hover:!bg-secondary !border !border-border/60 !text-muted-foreground hover:!text-foreground !transition !grid !place-items-center [&>svg]:!h-3.5 [&>svg]:!w-3.5",
           icon: "!self-start !mt-0.5",
         },
       }}
