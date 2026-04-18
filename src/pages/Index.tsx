@@ -19,6 +19,7 @@ import news3 from "@/assets/news-3.png";
 import pedHero from "@/assets/ped-hero.png";
 import { FolderOpen, ExternalLink, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import PlayerPanel from "@/components/PlayerPanel";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
 const JOIN_URL = "https://cfx.re/join/lkzrzv";
