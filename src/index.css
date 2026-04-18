@@ -98,3 +98,12 @@ All colors MUST be HSL.
     @apply bg-background text-foreground font-sans;
   }
 }
+
+@keyframes cardShuffle {
+  0%   { transform: translateX(0) translateY(0) rotate(0deg); opacity: 0; }
+  20%  { opacity: 1; }
+  35%  { transform: translateX(-40px) translateY(-12px) rotate(-6deg); }
+  55%  { transform: translateX(30px) translateY(8px) rotate(4deg); }
+  75%  { transform: translateX(-15px) translateY(-4px) rotate(-2deg); }
+  100% { transform: translateX(0) translateY(0) rotate(0deg); opacity: 1; }
+}
