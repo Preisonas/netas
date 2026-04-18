@@ -735,11 +735,11 @@ interface LootBox {
 
 // English rarity labels with subtle badge colors. One hue family per tier, no glows.
 const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; bar: string; badge: string }> = {
-  common:    { text: "text-muted-foreground",   ring: "ring-border/60",             label: "COMMON",    bar: "bg-muted-foreground/50",       badge: "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/20" },
-  rare:      { text: "text-[hsl(210_80%_70%)]", ring: "ring-[hsl(210_80%_55%)]/40", label: "RARE",      bar: "bg-[hsl(210_80%_55%)]",        badge: "bg-[hsl(210_80%_55%)]/15 text-[hsl(210_80%_75%)] border border-[hsl(210_80%_55%)]/30" },
-  epic:      { text: "text-[hsl(265_75%_72%)]", ring: "ring-[hsl(265_75%_60%)]/45", label: "EPIC",      bar: "bg-[hsl(265_75%_60%)]",        badge: "bg-[hsl(265_75%_60%)]/15 text-[hsl(265_75%_75%)] border border-[hsl(265_75%_60%)]/30" },
-  legendary: { text: "text-[hsl(38_95%_65%)]",  ring: "ring-[hsl(38_95%_55%)]/45",  label: "LEGENDARY", bar: "bg-[hsl(38_95%_55%)]",         badge: "bg-[hsl(38_95%_55%)]/15 text-[hsl(38_95%_70%)] border border-[hsl(38_95%_55%)]/30" },
-  mythic:    { text: "text-primary",            ring: "ring-primary/50",            label: "MYTHIC",    bar: "bg-primary",                   badge: "bg-primary/15 text-primary border border-primary/30" },
+  common:    { text: "text-muted-foreground",   ring: "ring-border/60",             label: "DAŽNAS",     bar: "bg-muted-foreground/50",       badge: "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/20" },
+  rare:      { text: "text-[hsl(210_80%_70%)]", ring: "ring-[hsl(210_80%_55%)]/40", label: "RETAS",      bar: "bg-[hsl(210_80%_55%)]",        badge: "bg-[hsl(210_80%_55%)]/15 text-[hsl(210_80%_75%)] border border-[hsl(210_80%_55%)]/30" },
+  epic:      { text: "text-[hsl(265_75%_72%)]", ring: "ring-[hsl(265_75%_60%)]/45", label: "EPINIS",     bar: "bg-[hsl(265_75%_60%)]",        badge: "bg-[hsl(265_75%_60%)]/15 text-[hsl(265_75%_75%)] border border-[hsl(265_75%_60%)]/30" },
+  legendary: { text: "text-[hsl(38_95%_65%)]",  ring: "ring-[hsl(38_95%_55%)]/45",  label: "LEGENDINIS", bar: "bg-[hsl(38_95%_55%)]",         badge: "bg-[hsl(38_95%_55%)]/15 text-[hsl(38_95%_70%)] border border-[hsl(38_95%_55%)]/30" },
+  mythic:    { text: "text-primary",            ring: "ring-primary/50",            label: "MITINIS",    bar: "bg-primary",                   badge: "bg-primary/15 text-primary border border-primary/30" },
 };
 
 const lootBoxes: LootBox[] = [
@@ -849,7 +849,7 @@ const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
         <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
 
         <div className="mt-4">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Possible drops</p>
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Galimi prizai</p>
           <div className="flex flex-wrap gap-1.5">
             {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
               <span
@@ -963,7 +963,7 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
           <div>
             <h3 className="text-xl md:text-2xl font-bold">{box.name}</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {phase === "picking" ? "Pick a card" : phase === "shuffling" ? "Shuffling…" : box.tagline}
+              {phase === "picking" ? "Pasirink kortelę" : phase === "shuffling" ? "Maišoma…" : box.tagline}
             </p>
           </div>
           {phase !== "shuffling" && phase !== "revealing" && (
@@ -1015,13 +1015,13 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
                   onClick={() => setSelectingChar(true)}
                   className="h-10 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
                 >
-                  Claim
+                  Atsiimti
                 </button>
                 <button
                   onClick={reset}
                   className="h-10 px-4 rounded-md text-sm font-semibold bg-secondary hover:bg-secondary/80 transition"
                 >
-                  Open again
+                  Atidaryti dar kartą
                 </button>
               </div>
             </div>
@@ -1045,9 +1045,9 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
 
         {(phase === "shuffling" || phase === "picking" || phase === "revealing") && (
           <p className="mt-6 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            {phase === "shuffling" && "Shuffling…"}
-            {phase === "picking" && "Choose your card"}
-            {phase === "revealing" && "Revealing…"}
+            {phase === "shuffling" && "Maišoma…"}
+            {phase === "picking" && "Pasirink savo kortelę"}
+            {phase === "revealing" && "Atskleidžiama…"}
           </p>
         )}
 
