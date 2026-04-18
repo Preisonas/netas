@@ -903,8 +903,8 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
 
     window.setTimeout(() => {
       setPhase("done");
-      toast.success(`Laimėjai: ${w.name}!`);
-    }, 6200);
+      toast.success(`You won: ${w.name}!`);
+    }, 7400);
   };
 
   const reset = () => {
