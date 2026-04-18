@@ -727,13 +727,13 @@ interface LootBox {
   pool: CaseItem[];
 }
 
-// Neutral, on-brand rarity scale. Only the top tier uses the primary accent.
-const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; bar: string }> = {
-  common:    { text: "text-muted-foreground", ring: "ring-border/60",     label: "Įprastas",   bar: "bg-muted-foreground/40" },
-  rare:      { text: "text-foreground/80",    ring: "ring-border",        label: "Retas",      bar: "bg-foreground/40" },
-  epic:      { text: "text-foreground",       ring: "ring-foreground/30", label: "Epinis",     bar: "bg-foreground/60" },
-  legendary: { text: "text-foreground",       ring: "ring-foreground/50", label: "Legendinis", bar: "bg-foreground/80" },
-  mythic:    { text: "text-primary",          ring: "ring-primary/50",    label: "Mitinis",    bar: "bg-primary" },
+// English rarity labels with subtle badge colors. One hue family per tier, no glows.
+const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; bar: string; badge: string }> = {
+  common:    { text: "text-muted-foreground",   ring: "ring-border/60",             label: "COMMON",    bar: "bg-muted-foreground/50",       badge: "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/20" },
+  rare:      { text: "text-[hsl(210_80%_70%)]", ring: "ring-[hsl(210_80%_55%)]/40", label: "RARE",      bar: "bg-[hsl(210_80%_55%)]",        badge: "bg-[hsl(210_80%_55%)]/15 text-[hsl(210_80%_75%)] border border-[hsl(210_80%_55%)]/30" },
+  epic:      { text: "text-[hsl(265_75%_72%)]", ring: "ring-[hsl(265_75%_60%)]/45", label: "EPIC",      bar: "bg-[hsl(265_75%_60%)]",        badge: "bg-[hsl(265_75%_60%)]/15 text-[hsl(265_75%_75%)] border border-[hsl(265_75%_60%)]/30" },
+  legendary: { text: "text-[hsl(38_95%_65%)]",  ring: "ring-[hsl(38_95%_55%)]/45",  label: "LEGENDARY", bar: "bg-[hsl(38_95%_55%)]",         badge: "bg-[hsl(38_95%_55%)]/15 text-[hsl(38_95%_70%)] border border-[hsl(38_95%_55%)]/30" },
+  mythic:    { text: "text-primary",            ring: "ring-primary/50",            label: "MYTHIC",    bar: "bg-primary",                   badge: "bg-primary/15 text-primary border border-primary/30" },
 };
 
 const lootBoxes: LootBox[] = [
