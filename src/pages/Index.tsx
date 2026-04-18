@@ -12,6 +12,32 @@ import { useEffect, useState } from "react";
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
 
 const Index = () => {
+  const [players, setPlayers] = useState<{ clients: number; max: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPlayers = async () => {
+      try {
+        const res = await fetch("https://servers-frontend.fivem.net/api/servers/single/lkzrzv");
+        const json = await res.json();
+        if (!cancelled && json?.Data) {
+          setPlayers({
+            clients: json.Data.clients ?? 0,
+            max: json.Data.svMaxclients ?? json.Data.sv_maxclients ?? 0,
+          });
+        }
+      } catch (e) {
+        console.error("Failed to fetch FiveM players", e);
+      }
+    };
+    fetchPlayers();
+    const id = setInterval(fetchPlayers, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       {/* Background image — hero only */}
