@@ -127,7 +127,7 @@ const Index = () => {
             ))}
           </nav>
           <Button className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
-            Atidaryti žaidėjo panelę
+            Žaidėjo panelė
           </Button>
         </header>
 
