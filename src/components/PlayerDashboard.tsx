@@ -818,9 +818,7 @@ const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-colors hover:bg-secondary/50 p-6">
       <div className="flex items-start justify-between">
-        <div className="h-14 w-14 rounded-lg grid place-items-center bg-background/40">
-          <Icon className="h-7 w-7 text-primary" />
-        </div>
+        <Icon className="h-9 w-9 text-primary" />
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-bold">
           <Coins className="h-3.5 w-3.5" />
           {box.price} €
@@ -831,12 +829,12 @@ const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
       <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
 
       <div className="mt-4">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Galimi prizai</p>
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Possible drops</p>
+        <div className="flex flex-wrap gap-1.5">
           {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
             <span
               key={r}
-              className={`text-[10px] uppercase tracking-wider font-semibold ${rarityStyles[r].text}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[r].badge}`}
             >
               {rarityStyles[r].label}
             </span>
