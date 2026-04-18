@@ -133,7 +133,7 @@ const Index = () => {
             <img
               src={mapBg}
               alt=""
-              className="h-full w-full object-cover opacity-15"
+              className="h-full w-full object-cover"
             />
           </div>
 
