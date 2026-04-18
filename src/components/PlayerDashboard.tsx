@@ -822,39 +822,56 @@ const BoxesSection = () => {
 const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
   const Icon = box.icon;
   return (
-    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-colors hover:bg-secondary/50 p-6">
-      <div className="flex items-start justify-between">
-        <Icon className="h-9 w-9 text-primary" />
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-bold">
+    <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-colors hover:bg-secondary/50 flex flex-col h-full">
+      {/* Image header — fixed aspect ratio so all cards align */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-background/40">
+        {box.image ? (
+          <img
+            src={box.image}
+            alt={box.name}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Icon className="h-12 w-12 text-primary/70" />
+          </div>
+        )}
+        <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-background/80 backdrop-blur text-primary text-xs font-bold">
           <Coins className="h-3.5 w-3.5" />
           {box.price} €
         </span>
       </div>
 
-      <h3 className="mt-4 text-lg font-bold leading-tight">{box.name}</h3>
-      <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
+      {/* Body — flex-1 so all cards match height regardless of badge count */}
+      <div className="flex flex-col flex-1 p-5">
+        <h3 className="text-lg font-bold leading-tight">{box.name}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
 
-      <div className="mt-4">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Possible drops</p>
-        <div className="flex flex-wrap gap-1.5">
-          {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
-            <span
-              key={r}
-              className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[r].badge}`}
-            >
-              {rarityStyles[r].label}
-            </span>
-          ))}
+        <div className="mt-4">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-2">Possible drops</p>
+          <div className="flex flex-wrap gap-1.5">
+            {Array.from(new Set(box.pool.map((i) => i.rarity))).map((r) => (
+              <span
+                key={r}
+                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[r].badge}`}
+              >
+                {rarityStyles[r].label}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <button
-        onClick={onOpen}
-        className="mt-5 w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
-      >
-        <Package className="h-4 w-4" />
-        Atidaryti už {box.price} €
-      </button>
+        <button
+          onClick={onOpen}
+          className="mt-auto pt-5 w-full"
+        >
+          <span className="flex items-center justify-center gap-2 h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition">
+            <Package className="h-4 w-4" />
+            Atidaryti už {box.price} €
+          </span>
+        </button>
+      </div>
     </article>
   );
 };
