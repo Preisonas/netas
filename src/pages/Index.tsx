@@ -111,20 +111,22 @@ const Index = () => {
 
         {/* How to start */}
         <section className="relative overflow-hidden">
-          {/* Map background (left side) — blended into page bg */}
+          {/* Map background (left side) — soft fade on all edges */}
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[55%] flex items-center justify-center"
+            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[55%]"
             aria-hidden
           >
             <img
               src={mapBg}
               alt=""
-              className="h-full w-full object-cover opacity-25"
+              className="h-full w-full object-cover opacity-20"
               style={{
                 WebkitMaskImage:
-                  "radial-gradient(ellipse 60% 70% at 50% 50%, black 30%, transparent 75%)",
+                  "linear-gradient(to right, transparent 0%, black 25%, black 70%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)",
                 maskImage:
-                  "radial-gradient(ellipse 60% 70% at 50% 50%, black 30%, transparent 75%)",
+                  "linear-gradient(to right, transparent 0%, black 25%, black 70%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)",
+                WebkitMaskComposite: "source-in",
+                maskComposite: "intersect",
               }}
             />
           </div>
