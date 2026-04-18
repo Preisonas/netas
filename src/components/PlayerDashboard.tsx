@@ -483,14 +483,218 @@ const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
           </ul>
         </div>
 
-        <button
-          onClick={() => toast.info(`${v.brand} ${v.model} — pirkimas greitai`)}
-          className="mt-4 w-full h-9 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
-        >
-          Pirkti
-        </button>
+        <BuyWithCharacter itemName={`${v.brand} ${v.model}`} />
       </div>
     </article>
+  );
+};
+
+const BuyWithCharacter = ({ itemName }: { itemName: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => {
+          if (mockCharacters.length === 0) {
+            toast.error("Neturite veikėjų. Prisijunk prie serverio.");
+            return;
+          }
+          setOpen(true);
+        }}
+        className="mt-4 w-full h-9 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
+      >
+        Pirkti
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-border/60 bg-card/90 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-lg font-bold">Pasirink veikėją</h3>
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Į kurio veikėjo paskyrą pristatyti{" "}
+              <span className="text-foreground font-medium">{itemName}</span>?
+            </p>
+            <div className="space-y-2">
+              {mockCharacters.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    toast.success(`${itemName} priskirtas: ${c.firstName} ${c.lastName}`);
+                    setOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left"
+                >
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {c.firstName} {c.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                      <Briefcase className="h-3 w-3" />
+                      {c.job}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                    <Wallet className="h-3 w-3 text-primary" />
+                    {formatMoney(c.bank)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+const CreditsSection = () => {
+  const [amount, setAmount] = useState(10);
+  const [code, setCode] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const presets = [5, 10, 25, 50, 100, 250];
+
+  const subtotal = amount;
+  const discountValue = +(subtotal * discount).toFixed(2);
+  const total = +(subtotal - discountValue).toFixed(2);
+
+  const applyCode = () => {
+    const c = code.trim().toUpperCase();
+    if (!c) return;
+    const codes: Record<string, number> = { WELCOME10: 0.1, VIP20: 0.2, TEST50: 0.5 };
+    if (codes[c] !== undefined) {
+      setDiscount(codes[c]);
+      toast.success(`Pritaikyta nuolaida -${codes[c] * 100}%`);
+    } else {
+      setDiscount(0);
+      toast.error("Nuolaidos kodas neegzistuoja");
+    }
+  };
+
+  return (
+    <>
+      <SectionHeader title="Gauti kreditų" subtitle="1 kreditas = 1 €. Naudok parduotuvėje, dėžėse ar aukcione." />
+
+      <div className="grid lg:grid-cols-[1fr_360px] gap-6">
+        <div className="rounded-xl bg-secondary/30 p-6">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground/80 mb-3">Pasirink sumą</p>
+
+          <div className="flex items-center justify-center gap-4 py-6">
+            <button
+              onClick={() => setAmount((a) => Math.max(1, a - 1))}
+              className="h-11 w-11 rounded-full bg-background/60 hover:bg-background transition grid place-items-center"
+              aria-label="Mažiau"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+
+            <div className="relative">
+              <input
+                type="number"
+                min={1}
+                value={amount}
+                onChange={(e) => setAmount(Math.max(1, Number(e.target.value) || 1))}
+                className="w-40 text-center text-4xl font-black bg-transparent outline-none border-b-2 border-border/60 focus:border-primary/60 transition pb-1"
+              />
+              <span className="block text-center text-xs uppercase tracking-wider text-muted-foreground mt-2">
+                kreditų (€)
+              </span>
+            </div>
+
+            <button
+              onClick={() => setAmount((a) => a + 1)}
+              className="h-11 w-11 rounded-full bg-background/60 hover:bg-background transition grid place-items-center"
+              aria-label="Daugiau"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-2">
+            {presets.map((p) => (
+              <button
+                key={p}
+                onClick={() => setAmount(p)}
+                className={`h-10 rounded-md text-sm font-semibold transition ${
+                  amount === p
+                    ? "bg-[image:var(--gradient-brand)] text-primary-foreground"
+                    : "bg-background/60 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {p}€
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-6">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground/80 mb-2 inline-flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              Nuolaidos kodas
+            </p>
+            <div className="flex gap-2">
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="pvz. WELCOME10"
+                className="flex-1 h-10 px-3 rounded-md bg-background/60 border border-border/60 text-sm outline-none focus:border-primary/60 transition placeholder:text-muted-foreground"
+              />
+              <button
+                onClick={applyCode}
+                className="h-10 px-4 rounded-md text-sm font-semibold bg-secondary hover:bg-secondary/80 transition"
+              >
+                Pritaikyti
+              </button>
+            </div>
+            {discount > 0 && (
+              <p className="text-xs text-primary mt-2">Nuolaida -{discount * 100}% pritaikyta.</p>
+            )}
+          </div>
+        </div>
+
+        <aside className="rounded-xl bg-secondary/30 p-6 h-fit">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground/80 mb-4">Užsakymo santrauka</p>
+
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Kreditai</span>
+              <span className="font-semibold">{amount} €</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex items-center justify-between text-primary">
+                <span>Nuolaida</span>
+                <span>-{discountValue.toFixed(2)} €</span>
+              </div>
+            )}
+            <div className="h-px bg-border/60 my-2" />
+            <div className="flex items-center justify-between text-base">
+              <span className="font-semibold">Iš viso</span>
+              <span className="text-xl font-black">{total.toFixed(2)} €</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => toast.info("Mokėjimo integracija greitai")}
+            className="mt-5 w-full h-11 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            Pirkti {total.toFixed(2)} €
+          </button>
+
+          <p className="text-[11px] text-muted-foreground/70 mt-3 text-center">
+            Saugus mokėjimas. Kreditai bus pridėti akimirksniu.
+          </p>
+        </aside>
+      </div>
+    </>
   );
 };
 
