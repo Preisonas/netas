@@ -103,7 +103,7 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
           <div className="rounded-lg border border-border/50 bg-card/40 backdrop-blur-xl p-4 shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
             <div className="flex items-center gap-3">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="h-11 w-11 rounded-full ring-2 ring-primary/40" />
+                <img src={avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
               ) : (
                 <div className="h-11 w-11 rounded-full bg-secondary grid place-items-center">
                   <User className="h-5 w-5 text-muted-foreground" />
@@ -128,13 +128,6 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
               </button>
             </div>
 
-            <button
-              onClick={() => toast.info("VIP greitai")}
-              className="mt-3 w-full rounded-md py-2.5 text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
-            >
-              <CrownIcon className="h-4 w-4" />
-              Tapk VIP nariu!
-            </button>
           </div>
 
           {/* Nav groups */}
