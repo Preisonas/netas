@@ -133,6 +133,10 @@ const Index = () => {
           </Button>
         </header>
 
+        {panelOpen ? (
+          <PlayerPanel onClose={() => setPanelOpen(false)} />
+        ) : (
+        <>
         {/* Hero */}
         <section className="container grid lg:grid-cols-2 gap-10 items-center pt-16 pb-28">
           <div>
@@ -326,8 +330,9 @@ const Index = () => {
             </div>
           </div>
         </footer>
+        </>
+        )}
       </div>
-      <PlayerPanel open={panelOpen} onClose={() => setPanelOpen(false)} />
     </div>
   );
 };
