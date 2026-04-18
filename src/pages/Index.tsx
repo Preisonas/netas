@@ -5,7 +5,7 @@ import logoHero from "@/assets/logo-hero.gif";
 import news1 from "@/assets/news-1.png";
 import news2 from "@/assets/news-2.png";
 import news3 from "@/assets/news-3.png";
-import mapBg from "@/assets/map-bg.png";
+import pedHero from "@/assets/ped-hero.png";
 import { FolderOpen, ExternalLink } from "lucide-react";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
@@ -125,21 +125,16 @@ const Index = () => {
 
         {/* How to start */}
         <section className="relative overflow-hidden">
-          {/* Map background (left side) — no fades */}
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-full lg:w-[45%]"
-            aria-hidden
-          >
-            <img
-              src={mapBg}
-              alt=""
-              className="h-full w-full object-contain object-left"
-            />
-          </div>
-
-          <div className="relative container grid lg:grid-cols-2 gap-12 items-center py-24">
-            {/* Spacer for map column on desktop */}
-            <div className="hidden lg:block" />
+          <div className="relative container grid lg:grid-cols-2 gap-4 items-center py-24">
+            {/* Ped image */}
+            <div className="hidden lg:flex justify-end pr-0">
+              <img
+                src={pedHero}
+                alt=""
+                aria-hidden
+                className="h-[560px] w-auto object-contain object-right -mr-8"
+              />
+            </div>
 
             {/* Steps */}
             <div className="max-w-xl">
