@@ -6,7 +6,8 @@ import news1 from "@/assets/news-1.png";
 import news2 from "@/assets/news-2.png";
 import news3 from "@/assets/news-3.png";
 import pedHero from "@/assets/ped-hero.png";
-import { FolderOpen, ExternalLink } from "lucide-react";
+import { FolderOpen, ExternalLink, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
 
@@ -40,9 +41,17 @@ const Index = () => {
       <div className="relative z-10">
         {/* Nav */}
         <header className="container flex items-center justify-between py-6">
-          <a href="#" className="flex items-center gap-2">
-            <img src={logo} alt="Speed Roleplay logo" className="h-9 w-9" />
-          </a>
+          <div className="flex items-center gap-3">
+            <a href="#" className="flex items-center gap-2">
+              <img src={logo} alt="Speed Roleplay logo" className="h-9 w-9" />
+            </a>
+            <div className="flex items-center gap-2 rounded-sm bg-secondary/60 border border-border/40 px-3 py-1.5 text-sm">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="text-foreground font-medium">
+                {players ? `${players.clients} / ${players.max}` : "— / —"}
+              </span>
+            </div>
+          </div>
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item, i) => (
               <a
