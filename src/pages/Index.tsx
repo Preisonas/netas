@@ -211,7 +211,7 @@ const Index = () => {
                 </p>
                 <Button
                   variant="outline"
-                  className="mt-4 rounded-sm border-white/20 bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-12 gap-2"
+                  className="mt-4 rounded-sm border-transparent bg-secondary/40 text-foreground hover:bg-secondary/60 h-9 px-12 gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
                   Žaisti
