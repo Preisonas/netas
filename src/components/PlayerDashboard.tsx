@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,19 +7,19 @@ import {
   LogOut,
   User,
   ShoppingBag,
-  Repeat,
   Package,
   Gavel,
   Ticket,
   Trophy,
   UserPlus,
   Coins,
-  Crown as CrownIcon,
-  Car,
-  Coins as CoinsIcon,
-  Sparkles,
+  Search,
+  Gauge,
+  Briefcase,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
+import shopMclaren from "@/assets/shop-mclaren.png";
 
 interface PlayerDashboardProps {
   session: Session;
@@ -29,7 +29,6 @@ interface PlayerDashboardProps {
 type SectionKey =
   | "profile"
   | "shop"
-  | "trade"
   | "boxes"
   | "auction"
   | "lottery"
@@ -42,7 +41,6 @@ const navGroups: { label: string; items: { key: SectionKey; title: string; icon:
     items: [
       { key: "profile", title: "Profilis", icon: User },
       { key: "shop", title: "Parduotuvė", icon: ShoppingBag },
-      { key: "trade", title: "Automobilių mainai", icon: Repeat },
       { key: "boxes", title: "Dėžės", icon: Package },
       { key: "auction", title: "Aukcionas", icon: Gavel },
       { key: "lottery", title: "Loterija", icon: Ticket },
