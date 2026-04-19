@@ -39,6 +39,8 @@ import casePremiumImg from "@/assets/cases/premium.png";
 import caseLegendaryImg from "@/assets/cases/legendary.png";
 import shopMclaren from "@/assets/shop-mclaren.png";
 import cardBackImg from "@/assets/cases/card-back.png";
+import CasesManager from "@/components/admin/CasesManager";
+import VehiclesManager from "@/components/admin/VehiclesManager";
 
 interface PlayerDashboardProps {
   session: Session;
