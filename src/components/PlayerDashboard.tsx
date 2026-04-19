@@ -349,7 +349,7 @@ const formatPlaytime = (minutes: number) => {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 };
 
-const CharacterCard = ({ character: c }: { character: Character }) => (
+const CharacterCard = ({ character: c }: { character: PlayerCharacter }) => (
   <article className="group relative rounded-xl overflow-hidden bg-secondary/30 hover:bg-secondary/50 transition-colors p-5">
     <div
       aria-hidden
@@ -378,7 +378,7 @@ const CharacterCard = ({ character: c }: { character: Character }) => (
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Grynais</p>
           <p className="mt-1 text-sm font-bold inline-flex items-center gap-1.5">
             <Coins className="h-3.5 w-3.5 text-primary" />
-            {formatMoney(c.money)}
+            {formatMoney(c.cash)}
           </p>
         </div>
         <div className="rounded-lg bg-background/40 p-3">
