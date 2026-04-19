@@ -161,8 +161,10 @@ function buildVehicleDeliveryMetadata({
   plate: string;
 }) {
   const modelHash = joaat(model);
+  // ESX owned_vehicles stores `vehicle` as JSON with the STRING model name,
+  // not the numeric hash. The game hashes it via GetHashKey(model) on spawn.
   const vehicleProps = {
-    model: modelHash,
+    model,   // string, e.g. "m50"
     plate,
   };
 
