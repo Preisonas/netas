@@ -635,7 +635,7 @@ const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehic
           </ul>
         </div>
 
-        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} itemName={v.model} discordId={discordId} userId={userId} ownedCharacters={ownedCharacters} />
+        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} vehicleId={v.id} discordId={discordId} userId={userId} ownedCharacters={ownedCharacters} />
       </div>
     </article>
   );
