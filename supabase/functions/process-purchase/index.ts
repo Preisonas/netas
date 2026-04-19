@@ -78,7 +78,25 @@ Deno.serve(async (req) => {
     const displayName = v.model;
     itemName = spawnName;
     label = `${v.brand} ${displayName}`;
-    plate = generatePlate();
+
+    // ----- Extras: custom plate (+5) and full tune (+5) -----
+    let customPlate: string | null = null;
+    if (typeof body.custom_plate === "string" && body.custom_plate.trim()) {
+      const cp = body.custom_plate.trim().toUpperCase();
+      if (!PLATE_REGEX.test(cp)) {
+        return json({ error: "Invalid plate. Use 2-8 chars: A-Z, 0-9, spaces." }, 400);
+      }
+      // Uniqueness check against pending + delivered plates we issued
+      const { data: existing } = await admin
+        .from("pending_deliveries").select("id").eq("plate", cp).maybeSingle();
+      if (existing) return json({ error: "Plate already taken" }, 409);
+      customPlate = cp;
+      price += PLATE_EXTRA_COST;
+    }
+    const fullTune = body.full_tune === true;
+    if (fullTune) price += TUNE_EXTRA_COST;
+
+    plate = customPlate ?? generatePlate();
     deliveryMetadata = buildVehicleDeliveryMetadata({
       characterIdentifier: character.identifier,
       characterName: `${character.first_name ?? ""} ${character.last_name ?? ""}`.trim() || null,
@@ -86,6 +104,8 @@ Deno.serve(async (req) => {
       model: spawnName,
       modelName: displayName,
       plate,
+      customPlate: customPlate !== null,
+      fullTune,
     });
   } else if (body.type === "case_item") {
     if (!body.case_id) return json({ error: "case_id required" }, 400);
