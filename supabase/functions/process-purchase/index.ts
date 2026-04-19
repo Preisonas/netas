@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
   let itemName = "";
   let label = "";
   let plate: string | null = null;
+  let deliveryMetadata: Record<string, unknown> | null = null;
 
   if (body.type === "vehicle") {
     if (!body.vehicle_id) return json({ error: "vehicle_id required" }, 400);
@@ -68,6 +69,14 @@ Deno.serve(async (req) => {
     itemName = v.model;
     label = `${v.brand} ${v.model_name || v.model}`;
     plate = generatePlate();
+    deliveryMetadata = buildVehicleDeliveryMetadata({
+      characterIdentifier: character.identifier,
+      characterName: `${character.first_name ?? ""} ${character.last_name ?? ""}`.trim() || null,
+      brand: v.brand,
+      model: v.model,
+      modelName: v.model_name || v.model,
+      plate,
+    });
   } else if (body.type === "case_item") {
     if (!body.case_id) return json({ error: "case_id required" }, 400);
     const { data: c, error: cErr } = await admin
@@ -109,6 +118,7 @@ Deno.serve(async (req) => {
       item_name: itemName,
       label,
       plate,
+      metadata: deliveryMetadata,
     }).select().single();
   if (delErr) {
     // refund
@@ -135,6 +145,51 @@ function pickWeighted<T extends { chance: number }>(items: T[]): T {
   return items[items.length - 1];
 }
 
+function buildVehicleDeliveryMetadata({
+  characterIdentifier,
+  characterName,
+  brand,
+  model,
+  modelName,
+  plate,
+}: {
+  characterIdentifier: string;
+  characterName: string | null;
+  brand: string;
+  model: string;
+  modelName: string;
+  plate: string;
+}) {
+  const modelHash = joaat(model);
+  const vehicleProps = {
+    model: modelHash,
+    plate,
+  };
+
+  return {
+    schema: "garage_vehicle_v1",
+    source: "panel_shop",
+    character_identifier: characterIdentifier,
+    character_name: characterName,
+    brand,
+    model,
+    model_name: modelName,
+    model_hash: modelHash,
+    vehicle_props: vehicleProps,
+    owned_vehicle: {
+      owner: characterIdentifier,
+      plate,
+      vehicle: vehicleProps,
+      type: "car",
+      stored: 1,
+      state: 1,
+      garage: null,
+      job: null,
+      pound: null,
+    },
+  };
+}
+
 function generatePlate(): string {
   const letters = "ABCDEFGHJKLMNPRSTUVWXYZ";
   const a = letters[Math.floor(Math.random() * letters.length)];
@@ -142,6 +197,19 @@ function generatePlate(): string {
   const c = letters[Math.floor(Math.random() * letters.length)];
   const n = String(Math.floor(100 + Math.random() * 900));
   return `${a}${b}${c} ${n}`;
+}
+
+function joaat(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash += value.charCodeAt(i);
+    hash += hash << 10;
+    hash ^= hash >>> 6;
+  }
+  hash += hash << 3;
+  hash ^= hash >>> 11;
+  hash += hash << 15;
+  return hash | 0;
 }
 
 function json(payload: unknown, status = 200) {
