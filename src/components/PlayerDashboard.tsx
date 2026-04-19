@@ -74,26 +74,44 @@ const ownerNavGroup: NavGroup = {
 
 const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const [active, setActive] = useState<SectionKey>("profile");
-  const [profile, setProfile] = useState<{ username: string | null; avatar_url: string | null; discord_id: string | null; email: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ username: string | null; avatar_url: string | null; discord_id: string | null; email: string | null; credits: number } | null>(null);
 
   const meta = session.user.user_metadata as { username?: string; full_name?: string; avatar_url?: string; discord_id?: string } | undefined;
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const load = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, avatar_url, discord_id, email")
+        .select("username, avatar_url, discord_id, email, credits")
         .eq("user_id", session.user.id)
         .maybeSingle();
       if (!cancelled && !error && data) setProfile(data);
-    })();
-    return () => { cancelled = true; };
+    };
+    load();
+
+    const channel = supabase
+      .channel(`profile-${session.user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${session.user.id}` },
+        (payload) => {
+          const n = payload.new as { username: string | null; avatar_url: string | null; discord_id: string | null; email: string | null; credits: number };
+          if (!cancelled) setProfile(n);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [session.user.id]);
 
   const username = profile?.username ?? meta?.username ?? meta?.full_name ?? session.user.email ?? "Žaidėjas";
   const avatarUrl = profile?.avatar_url ?? meta?.avatar_url;
   const discordId = profile?.discord_id ?? meta?.discord_id;
+  const credits = profile?.credits ?? 0;
   const isOwner = discordId === OWNER_DISCORD_ID;
   const navGroups = isOwner ? [...baseNavGroups, ownerNavGroup] : baseNavGroups;
 
