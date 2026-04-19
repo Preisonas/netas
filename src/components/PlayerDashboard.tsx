@@ -39,6 +39,8 @@ import casePremiumImg from "@/assets/cases/premium.png";
 import caseLegendaryImg from "@/assets/cases/legendary.png";
 import shopMclaren from "@/assets/shop-mclaren.png";
 import cardBackImg from "@/assets/cases/card-back.png";
+import CasesManager from "@/components/admin/CasesManager";
+import VehiclesManager from "@/components/admin/VehiclesManager";
 
 interface PlayerDashboardProps {
   session: Session;
@@ -50,7 +52,9 @@ type SectionKey =
   | "shop"
   | "boxes"
   | "credits"
-  | "admin-credits";
+  | "admin-credits"
+  | "admin-cases"
+  | "admin-vehicles";
 
 type NavGroup = { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] };
 
@@ -69,6 +73,8 @@ const ownerNavGroup: NavGroup = {
   label: "Owner",
   items: [
     { key: "admin-credits", title: "Duoti kreditų", icon: Shield },
+    { key: "admin-cases", title: "Dėžės (valdymas)", icon: Package },
+    { key: "admin-vehicles", title: "Transportas (valdymas)", icon: Car },
   ],
 };
 
@@ -217,7 +223,19 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
           {active === "credits" && <CreditsSection />}
           {active === "boxes" && <BoxesSection />}
           {active === "admin-credits" && isOwner && <AdminCreditsSection />}
-          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && active !== "admin-credits" && <Placeholder title={titleFor(active)} />}
+          {active === "admin-cases" && isOwner && (
+            <>
+              <SectionHeader title="Dėžės (valdymas)" subtitle="Kurk, redaguok ir trink dėžes." />
+              <CasesManager />
+            </>
+          )}
+          {active === "admin-vehicles" && isOwner && (
+            <>
+              <SectionHeader title="Transportas (valdymas)" subtitle="Kurk, redaguok ir trink transporto priemones." />
+              <VehiclesManager />
+            </>
+          )}
+          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && active !== "admin-credits" && active !== "admin-cases" && active !== "admin-vehicles" && <Placeholder title={titleFor(active)} />}
         </main>
       </div>
     </section>
@@ -344,61 +362,59 @@ const CharacterCard = ({ character: c }: { character: Character }) => (
   </article>
 );
 
-type Tier = "gold" | "silver" | "bronze";
-type Category = "Visi" | "Transportas" | "Paslaugos" | "Daiktai" | "Ratai" | "Kita";
-
 interface ShopVehicle {
-  id: number;
+  id: string;
   brand: string;
   model: string;
   price: number;
-  grid: number;
   speed: number;
   trunk?: number;
-  tier: Tier;
-  category: Exclude<Category, "Visi">;
   image?: string;
   features: string[];
 }
 
-const shopVehicles: ShopVehicle[] = [
-  { id: 1, brand: "McLaren", model: "Senna", price: 220, grid: 30, speed: 340, trunk: 145, tier: "gold", category: "Transportas", image: shopMclaren,
-    features: ["Dirt map", "Ray Tracing Ready", "Custom airbrush", "4 sėdimos vietos"] },
-  { id: 2, brand: "BMW", model: "M5 F10", price: 140, grid: 20, speed: 310, tier: "gold", category: "Transportas",
-    features: ["Dirt map", "Ray Tracing Ready", "Vossen HF 5 Ratai", "Veikiantis spidometras", "4 sėdimos vietos"] },
-  { id: 3, brand: "BMW", model: "M4 CSL", price: 180, grid: 25, speed: 320, tier: "gold", category: "Transportas",
-    features: ["Dirt map", "Ray Tracing Ready", "Vossen HF 5 Ratai", "Veikiantis custom spidometras", "4 sėdimos vietos"] },
-  { id: 4, brand: "BMW", model: "M3 G81", price: 160, grid: 20, speed: 320, tier: "silver", category: "Transportas",
-    features: ["Dirt map", "Ray Tracing Ready", "Forgiato Flow 002 Ratai", "Veikiantis custom spidometras", "4 sėdimos vietos"] },
-  { id: 5, brand: "Pagani", model: "Huayra", price: 140, grid: 0, speed: 310, trunk: 248, tier: "silver", category: "Transportas",
-    features: ["Greitas pagreitėjimas", "Lengva valdyti"] },
-  { id: 6, brand: "Audi", model: "RS6 Avant", price: 170, grid: 22, speed: 305, tier: "bronze", category: "Transportas",
-    features: ["Dirt map", "Ray Tracing Ready", "Universalas", "5 sėdimos vietos"] },
-];
-
-const tierStyles: Record<Tier, { text: string; label: string }> = {
-  gold:   { text: "text-[hsl(330_90%_65%)]", label: "gold" },
-  silver: { text: "text-[hsl(160_75%_55%)]", label: "silver" },
-  bronze: { text: "text-[hsl(30_90%_60%)]",  label: "bronze" },
-};
-
-const categories: Category[] = ["Visi", "Transportas", "Paslaugos", "Daiktai", "Ratai", "Kita"];
-
 const ShopSection = () => {
   const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<Category>("Visi");
   const [sortByPrice, setSortByPrice] = useState(false);
+  const [vehicles, setVehicles] = useState<ShopVehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("id, brand, model, price, top_speed, trunk, image_url, features")
+        .order("created_at", { ascending: false });
+      if (!cancelled) {
+        if (!error && data) {
+          setVehicles(
+            data.map((v) => ({
+              id: v.id,
+              brand: v.brand,
+              model: v.model,
+              price: v.price,
+              speed: v.top_speed,
+              trunk: v.trunk ?? undefined,
+              image: v.image_url ?? undefined,
+              features: v.features ?? [],
+            }))
+          );
+        }
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = useMemo(() => {
-    let list = shopVehicles.filter((v) => {
-      const matchesCat = cat === "Visi" || v.category === cat;
+    let list = vehicles.filter((v) => {
       const q = query.trim().toLowerCase();
-      const matchesQuery = !q || `${v.brand} ${v.model}`.toLowerCase().includes(q);
-      return matchesCat && matchesQuery;
+      return !q || `${v.brand} ${v.model}`.toLowerCase().includes(q);
     });
     if (sortByPrice) list = [...list].sort((a, b) => a.price - b.price);
     return list;
-  }, [query, cat, sortByPrice]);
+  }, [query, sortByPrice, vehicles]);
 
   return (
     <>
@@ -415,35 +431,23 @@ const ShopSection = () => {
           />
         </div>
 
-        <div className="flex items-center gap-1 rounded-md bg-secondary/40 border border-border/60 p-1 overflow-x-auto">
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCat(c)}
-              className={`shrink-0 px-3 h-7 rounded text-xs font-medium transition-colors ${
-                cat === c ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-          <button
-            onClick={() => setSortByPrice((s) => !s)}
-            className={`shrink-0 ml-1 px-3 h-7 rounded text-xs font-medium transition-colors border-l border-border/60 ${
-              sortByPrice ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Kaina
-          </button>
-        </div>
+        <button
+          onClick={() => setSortByPrice((s) => !s)}
+          className={`shrink-0 px-3 h-9 rounded-md text-xs font-medium transition-colors border border-border/60 ${
+            sortByPrice ? "bg-background text-foreground" : "bg-secondary/40 text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Rūšiuoti pagal kainą
+        </button>
       </div>
 
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-        {filtered.map((v) => (
-          <VehicleCard key={v.id} vehicle={v} />
-        ))}
-        {filtered.length === 0 && (
-          <p className="col-span-full text-center text-muted-foreground py-12">Nieko nerasta.</p>
+        {loading ? (
+          <p className="col-span-full text-center text-muted-foreground py-12">Kraunama…</p>
+        ) : filtered.length === 0 ? (
+          <p className="col-span-full text-center text-muted-foreground py-12">Nėra transporto.</p>
+        ) : (
+          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} />)
         )}
       </div>
     </>
@@ -451,7 +455,6 @@ const ShopSection = () => {
 };
 
 const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
-  const tier = tierStyles[v.tier];
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
@@ -763,31 +766,14 @@ const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; 
   mythic:    { text: "text-primary",            ring: "ring-primary/50",            label: "MITINIS",    bar: "bg-primary",                   badge: "bg-primary/15 text-primary border border-primary/30" },
 };
 
-const lootBoxes: LootBox[] = [
-  {
-    id: "starter", name: "Pinigų dėžė", tagline: "Atsitiktinė pinigų suma", price: 5, icon: Gift, accent: "210 90% 60%", image: caseStarterImg,
-    pool: [
-      { id: "m5",    name: "5 €",     rarity: "common",    weight: 35, kind: "credits", value: 5 },
-      { id: "m10",   name: "10 €",    rarity: "common",    weight: 25, kind: "credits", value: 10 },
-      { id: "m25",   name: "25 €",    rarity: "rare",      weight: 18, kind: "credits", value: 25 },
-      { id: "m50",   name: "50 €",    rarity: "rare",      weight: 12, kind: "credits", value: 50 },
-      { id: "m100",  name: "100 €",   rarity: "epic",      weight: 6,  kind: "credits", value: 100 },
-      { id: "m250",  name: "250 €",   rarity: "epic",      weight: 3,  kind: "credits", value: 250 },
-      { id: "m500",  name: "500 €",   rarity: "legendary", weight: 0.8, kind: "credits", value: 500 },
-      { id: "m1000", name: "1000 €",  rarity: "mythic",    weight: 0.2, kind: "credits", value: 1000 },
-    ],
-  },
-  {
-    id: "vehicle", name: "Transporto dėžė", tagline: "Šansas laimėti automobilį", price: 25, icon: Car, accent: "160 75% 55%", image: caseVehicleImg,
-    pool: [
-      { id: "c10",   name: "10 kreditų",   rarity: "common",    weight: 50, kind: "credits", value: 10 },
-      { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 25, kind: "credits", value: 25 },
-      { id: "audi",  name: "Audi RS6",     rarity: "epic",      weight: 15, kind: "vehicle" },
-      { id: "bmwm3", name: "BMW M3 G81",   rarity: "legendary", weight: 8,  kind: "vehicle" },
-      { id: "senna", name: "McLaren Senna",rarity: "mythic",    weight: 2,  kind: "vehicle" },
-    ],
-  },
-];
+// Auto-derive rarity from chance % for visual styling only
+const rarityFromChance = (chance: number): Rarity => {
+  if (chance >= 30) return "common";
+  if (chance >= 15) return "rare";
+  if (chance >= 5) return "epic";
+  if (chance >= 1) return "legendary";
+  return "mythic";
+};
 
 const rarityIcon = (kind: CaseItem["kind"]) => {
   if (kind === "vehicle") return Car;
@@ -797,15 +783,70 @@ const rarityIcon = (kind: CaseItem["kind"]) => {
 
 const BoxesSection = () => {
   const [openingBox, setOpeningBox] = useState<LootBox | null>(null);
+  const [boxes, setBoxes] = useState<LootBox[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: cases } = await supabase
+        .from("cases")
+        .select("id, name, image_url, price")
+        .order("created_at", { ascending: false });
+      const { data: items } = await supabase
+        .from("case_items")
+        .select("id, case_id, label, item_name, chance");
+      if (cancelled) return;
+      const byCase = new Map<string, LootBox["pool"]>();
+      (items ?? []).forEach((it) => {
+        const arr = byCase.get(it.case_id) ?? [];
+        arr.push({
+          id: it.id,
+          name: it.label,
+          rarity: rarityFromChance(Number(it.chance)),
+          weight: Number(it.chance),
+          kind: "credits",
+        });
+        byCase.set(it.case_id, arr);
+      });
+      setBoxes(
+        (cases ?? []).map((c) => ({
+          id: c.id,
+          name: c.name,
+          tagline: "",
+          price: c.price,
+          icon: Package,
+          accent: "210 90% 60%",
+          image: c.image_url ?? undefined,
+          pool: byCase.get(c.id) ?? [],
+        }))
+      );
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <>
-      <SectionHeader title="Dėžės" subtitle="Atidaryk dėžes ir laimėk transportą, kreditus arba kosmetiką." />
+      <SectionHeader title="Dėžės" subtitle="Atidaryk dėžes ir laimėk daiktus." />
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-        {lootBoxes.map((box) => (
-          <BoxCard key={box.id} box={box} onOpen={() => setOpeningBox(box)} />
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-center text-muted-foreground py-12">Kraunama…</p>
+      ) : boxes.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Dar nėra dėžių.</p>
+      ) : (
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {boxes.map((box) => (
+            <BoxCard key={box.id} box={box} onOpen={() => {
+              if (box.pool.length === 0) {
+                toast.error("Šioje dėžėje dar nėra daiktų");
+                return;
+              }
+              setOpeningBox(box);
+            }} />
+          ))}
+        </div>
+      )}
 
       {openingBox && (
         <CaseOpeningModal box={openingBox} onClose={() => setOpeningBox(null)} />
