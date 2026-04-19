@@ -847,6 +847,12 @@ const BoxesSection = () => {
                 toast.error("Šioje dėžėje dar nėra daiktų");
                 return;
               }
+              if (credits < box.price) {
+                toast.error("Neturi pakankamai kreditų", {
+                  description: `Reikia ${box.price} €, o turi tik ${credits} €.`,
+                });
+                return;
+              }
               setOpeningBox(box);
             }} />
           ))}
