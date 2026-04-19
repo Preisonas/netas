@@ -1146,4 +1146,165 @@ const FlipCard = ({
   );
 };
 
+interface FoundUser {
+  user_id: string;
+  discord_id: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  credits: number;
+}
+
+const AdminCreditsSection = () => {
+  const [discordId, setDiscordId] = useState("");
+  const [amount, setAmount] = useState<string>("");
+  const [user, setUser] = useState<FoundUser | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [granting, setGranting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const lookup = async () => {
+    const id = discordId.trim();
+    if (!id) {
+      toast.error("Įvesk Discord ID");
+      return;
+    }
+    setLoading(true);
+    setUser(null);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("user_id, discord_id, username, avatar_url, credits")
+      .eq("discord_id", id)
+      .maybeSingle();
+    setLoading(false);
+    if (error) {
+      toast.error("Klaida ieškant vartotojo");
+      return;
+    }
+    if (!data) {
+      toast.error("Vartotojas nerastas");
+      return;
+    }
+    setUser(data as FoundUser);
+  };
+
+  const grant = async () => {
+    if (!user) return;
+    const n = parseInt(amount, 10);
+    if (!Number.isFinite(n) || n === 0) {
+      toast.error("Įvesk teisingą sumą");
+      return;
+    }
+    setGranting(true);
+    const newBalance = (user.credits ?? 0) + n;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ credits: newBalance })
+      .eq("user_id", user.user_id);
+    setGranting(false);
+    setConfirmOpen(false);
+    if (error) {
+      toast.error("Nepavyko atnaujinti kreditų");
+      return;
+    }
+    toast.success(`Pridėta ${n} kreditų ${user.username ?? user.discord_id}`);
+    setUser({ ...user, credits: newBalance });
+    setAmount("");
+  };
+
+  return (
+    <>
+      <SectionHeader title="Duoti kreditų" subtitle="Owner įrankis. Suteik kreditus pagal Discord ID." />
+
+      <div className="space-y-4 max-w-xl">
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">Discord ID</label>
+          <div className="flex gap-2">
+            <input
+              value={discordId}
+              onChange={(e) => setDiscordId(e.target.value)}
+              placeholder="123456789012345678"
+              className="flex-1 rounded-md bg-secondary/60 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary/60"
+            />
+            <Button onClick={lookup} disabled={loading} className="rounded-md">
+              <Search className="h-4 w-4 mr-1.5" />
+              {loading ? "Ieškoma…" : "Ieškoti"}
+            </Button>
+          </div>
+        </div>
+
+        {user && (
+          <div className="rounded-lg border border-border/50 bg-secondary/30 p-4 flex items-center gap-4">
+            {user.avatar_url ? (
+              <img src={user.avatar_url} alt="" className="h-14 w-14 rounded-full object-cover" />
+            ) : (
+              <div className="h-14 w-14 rounded-full bg-secondary grid place-items-center">
+                <User className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold truncate">{user.username ?? "—"}</p>
+              <p className="text-xs text-muted-foreground font-mono truncate">ID: {user.discord_id}</p>
+              <p className="text-xs mt-1 inline-flex items-center gap-1.5">
+                <Coins className="h-3.5 w-3.5 text-primary" />
+                <span className="font-semibold">{user.credits}</span>
+                <span className="text-muted-foreground">kreditai</span>
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">Kiek kreditų</label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="100"
+            className="w-full rounded-md bg-secondary/60 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary/60"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">Naudok neigiamą skaičių, jei nori atimti.</p>
+        </div>
+
+        <Button
+          onClick={() => {
+            if (!user) { toast.error("Pirma surask vartotoją"); return; }
+            const n = parseInt(amount, 10);
+            if (!Number.isFinite(n) || n === 0) { toast.error("Įvesk teisingą sumą"); return; }
+            setConfirmOpen(true);
+          }}
+          className="rounded-md bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90"
+        >
+          <Coins className="h-4 w-4 mr-1.5" />
+          Suteikti kreditus
+        </Button>
+      </div>
+
+      {confirmOpen && user && (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => !granting && setConfirmOpen(false)}>
+          <div className="w-full max-w-md rounded-xl border border-border/60 bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-primary/15 grid place-items-center shrink-0">
+                <AlertTriangle className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Ar tikrai?</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Suteikti <span className="text-foreground font-semibold">{amount}</span> kreditų vartotojui{" "}
+                  <span className="text-foreground font-semibold">{user.username ?? user.discord_id}</span>?
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={granting} className="rounded-md">Atšaukti</Button>
+              <Button onClick={grant} disabled={granting} className="rounded-md">
+                {granting ? "Suteikiama…" : "Patvirtinti"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 export default PlayerDashboard;
