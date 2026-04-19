@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
       let price = 0;
       if (delivery.type === "vehicle") {
         const { data: v } = await supabase
-          .from("vehicles").select("price").eq("model", delivery.item_name).maybeSingle();
+          .from("vehicles").select("price").eq("model_name", delivery.item_name).maybeSingle();
         price = v?.price ?? 0;
       } else if (delivery.type === "case_item") {
         // label format: "<case name> → <reward>"

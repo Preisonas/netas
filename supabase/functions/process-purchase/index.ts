@@ -66,15 +66,19 @@ Deno.serve(async (req) => {
       .from("vehicles").select("price, model, model_name, brand").eq("id", body.vehicle_id).maybeSingle();
     if (error || !v) return json({ error: "Vehicle not found" }, 404);
     price = v.price;
-    itemName = v.model;
-    label = `${v.brand} ${v.model_name || v.model}`;
+    // SPAWN NAME = vehicles.model_name column (e.g. "sultanrs", "t20")
+    // DISPLAY NAME = vehicles.model column (e.g. "Kentas")
+    const spawnName = v.model_name || v.model;
+    const displayName = v.model;
+    itemName = spawnName;
+    label = `${v.brand} ${displayName}`;
     plate = generatePlate();
     deliveryMetadata = buildVehicleDeliveryMetadata({
       characterIdentifier: character.identifier,
       characterName: `${character.first_name ?? ""} ${character.last_name ?? ""}`.trim() || null,
       brand: v.brand,
-      model: v.model,
-      modelName: v.model_name || v.model,
+      model: spawnName,
+      modelName: displayName,
       plate,
     });
   } else if (body.type === "case_item") {
