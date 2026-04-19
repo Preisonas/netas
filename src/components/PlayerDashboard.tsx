@@ -362,9 +362,6 @@ const CharacterCard = ({ character: c }: { character: Character }) => (
   </article>
 );
 
-type Tier = "gold" | "silver" | "bronze";
-type Category = "Visi" | "Transportas" | "Paslaugos" | "Daiktai" | "Ratai" | "Kita";
-
 interface ShopVehicle {
   id: string;
   brand: string;
@@ -375,8 +372,6 @@ interface ShopVehicle {
   image?: string;
   features: string[];
 }
-
-const categories: Category[] = ["Visi", "Transportas", "Paslaugos", "Daiktai", "Ratai", "Kita"];
 
 const ShopSection = () => {
   const [query, setQuery] = useState("");
