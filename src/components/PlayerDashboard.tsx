@@ -1281,7 +1281,7 @@ const AdminCreditsSection = () => {
 
       {confirmOpen && user && (
         <div className="fixed inset-0 z-[100] grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => !granting && setConfirmOpen(false)}>
-          <div className="w-full max-w-md rounded-xl border border-border/60 bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md border border-border/60 bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-4">
               <div className="h-10 w-10 rounded-full bg-secondary/60 grid place-items-center shrink-0">
                 <AlertTriangle className="h-5 w-5 text-muted-foreground" />
