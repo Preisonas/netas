@@ -34,6 +34,7 @@ function normalize(c: AnyObj) {
     black_money: Number(pick(c, ["black_money", "money_black", "moneyBlack", "blackMoney"]) ?? 0),
     position: pick(c, ["position", "coords"]) ?? null,
     inventory: pick(c, ["inventory"]) ?? null,
+    playtime_minutes: Number(pick(c, ["playtime_minutes", "playtimeMinutes", "playtime"]) ?? 0),
     metadata: {
       job_label: pick(c, ["job_label", "jobLabel"]) ?? null,
       dob: pick(c, ["dob"]) ?? null,
