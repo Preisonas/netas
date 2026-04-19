@@ -19,11 +19,26 @@ const PlayerPanel = ({ onClose }: PlayerPanelProps) => {
     });
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
 
-    if (window.location.hash.includes("discord_error=")) {
-      const params = new URLSearchParams(window.location.hash.slice(1));
+    const hash = window.location.hash;
+    if (hash.includes("discord_error=")) {
+      const params = new URLSearchParams(hash.slice(1));
       const err = params.get("discord_error");
       if (err) toast.error("Discord prisijungimas nepavyko", { description: err });
       history.replaceState(null, "", window.location.pathname);
+    } else if (hash.includes("access_token=")) {
+      const params = new URLSearchParams(hash.slice(1));
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+      if (access_token && refresh_token) {
+        supabase.auth.setSession({ access_token, refresh_token }).then(({ error }) => {
+          if (error) {
+            toast.error("Prisijungimas nepavyko", { description: error.message });
+          } else {
+            toast.success("Sėkmingai prisijungta");
+            history.replaceState(null, "", window.location.pathname);
+          }
+        });
+      }
     }
 
     return () => subscription.unsubscribe();
