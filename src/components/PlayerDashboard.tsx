@@ -50,7 +50,9 @@ type SectionKey =
   | "shop"
   | "boxes"
   | "credits"
-  | "admin-credits";
+  | "admin-credits"
+  | "admin-cases"
+  | "admin-vehicles";
 
 type NavGroup = { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] };
 
@@ -69,6 +71,8 @@ const ownerNavGroup: NavGroup = {
   label: "Owner",
   items: [
     { key: "admin-credits", title: "Duoti kreditų", icon: Shield },
+    { key: "admin-cases", title: "Dėžės (valdymas)", icon: Package },
+    { key: "admin-vehicles", title: "Transportas (valdymas)", icon: Car },
   ],
 };
 
