@@ -98,7 +98,10 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
       if (error) throw error;
       return data;
     },
-    staleTime: 15_000,
+    staleTime: 5_000,
+    refetchInterval: 5_000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
   const profile = profileQuery.data;
 
