@@ -291,19 +291,28 @@ const DeliveryPicker = ({
 }) => {
   const { characters, loading } = usePlayerCharacters(discordId);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
   const [useCustomPlate, setUseCustomPlate] = useState(false);
   const [customPlate, setCustomPlate] = useState("");
   const [fullTune, setFullTune] = useState(false);
   const qc = useQueryClient();
 
-  // Reset extras when closing
+  // Reset state when closing
   useEffect(() => {
     if (!open) {
+      setSelectedCharId(null);
       setUseCustomPlate(false);
       setCustomPlate("");
       setFullTune(false);
     }
   }, [open]);
+
+  // Auto-select first character once loaded
+  useEffect(() => {
+    if (open && !selectedCharId && characters.length > 0) {
+      setSelectedCharId(characters[0].id);
+    }
+  }, [open, characters, selectedCharId]);
 
   if (!open) return null;
 
@@ -312,20 +321,22 @@ const DeliveryPicker = ({
   const TUNE_COST = 5;
   const extras = (isVehicle && useCustomPlate ? PLATE_COST : 0) + (isVehicle && fullTune ? TUNE_COST : 0);
   const total = (basePrice ?? 0) + extras;
+  const plateClean = customPlate.trim().toUpperCase();
+  const plateValid = !useCustomPlate || /^[A-Z0-9 ]{2,8}$/.test(plateClean);
+  const selectedChar = characters.find((c) => c.id === selectedCharId) ?? null;
+  const canConfirm = !!selectedChar && plateValid && !submitting;
 
-  const plateValid = !useCustomPlate || /^[A-Z0-9 ]{2,8}$/.test(customPlate.trim().toUpperCase());
-
-  const deliver = async (c: PlayerCharacter) => {
-    if (!discordId) return;
+  const deliver = async () => {
+    if (!discordId || !selectedChar) return;
     if (isVehicle && useCustomPlate && !plateValid) {
       toast.error("Neteisingas numeris", { description: "2-8 simboliai: A-Z, 0-9, tarpai." });
       return;
     }
     setSubmitting(true);
-    const payload: Record<string, unknown> = { type, character_id: c.id };
+    const payload: Record<string, unknown> = { type, character_id: selectedChar.id };
     if (isVehicle) {
       payload.vehicle_id = sourceId;
-      if (useCustomPlate) payload.custom_plate = customPlate.trim().toUpperCase();
+      if (useCustomPlate) payload.custom_plate = plateClean;
       if (fullTune) payload.full_tune = true;
     } else {
       payload.case_id = sourceId;
@@ -349,7 +360,7 @@ const DeliveryPicker = ({
     }
     qc.invalidateQueries({ queryKey: ["profile", userId] });
     toast.success(
-      `${result.label ?? itemLabel} išsiųstas: ${c.firstName} ${c.lastName}`,
+      `${result.label ?? itemLabel} išsiųstas: ${selectedChar.firstName} ${selectedChar.lastName}`,
       result.plate
         ? { description: `Numeris: ${result.plate} • Liko ${result.credits_remaining ?? 0} €` }
         : { description: `Liko ${result.credits_remaining ?? 0} €` }
@@ -358,131 +369,249 @@ const DeliveryPicker = ({
     onClose();
   };
 
+  const initials = (c: PlayerCharacter) =>
+    `${(c.firstName ?? "?")[0] ?? "?"}${(c.lastName ?? "")[0] ?? ""}`.toUpperCase();
+  const platePreview = plateClean || "ABC 123";
+
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl border border-border/60 bg-card/95 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+        className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-lg font-bold">Pasirink veikėją</h3>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+              {isVehicle ? "Transporto pirkimas" : "Dėžės pristatymas"}
+            </p>
+            <h3 className="text-2xl font-bold leading-tight">{itemLabel}</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="shrink-0 h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="text-xs text-muted-foreground mb-4">
-          Į kurio veikėjo paskyrą pristatyti{" "}
-          <span className="text-foreground font-medium">{itemLabel}</span>?
-        </p>
 
-        {isVehicle && (
-          <div className="mb-4 space-y-3 rounded-lg border border-border/50 bg-secondary/30 p-3">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Papildomos paslaugos</p>
-
-            {/* Full tune */}
-            <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={fullTune}
-                  onChange={(e) => setFullTune(e.target.checked)}
-                  className="h-4 w-4 accent-primary"
-                />
-                <span className="text-sm inline-flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  Pilnas tune (engine, brakes, suspension, turbo)
-                </span>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-6">
+          {/* Character selection */}
+          <section>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+              Veikėjas
+            </p>
+            {loading ? (
+              <div className="rounded-lg border border-border/40 bg-secondary/20 p-6 text-center text-sm text-muted-foreground">
+                Kraunama...
               </div>
-              <span className="text-xs font-semibold text-primary">+{TUNE_COST} €</span>
-            </label>
-
-            {/* Custom plate */}
-            <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={useCustomPlate}
-                  onChange={(e) => setUseCustomPlate(e.target.checked)}
-                  className="h-4 w-4 accent-primary"
-                />
-                <span className="text-sm inline-flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5 text-primary" />
-                  Pasirinktinis numeris
-                </span>
+            ) : characters.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border/60 bg-secondary/20 p-6 text-center text-sm text-muted-foreground">
+                Veikėjų nėra. Prisijunk prie serverio.
               </div>
-              <span className="text-xs font-semibold text-primary">+{PLATE_COST} €</span>
-            </label>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {characters.map((c) => {
+                  const active = selectedCharId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setSelectedCharId(c.id)}
+                      className={`group relative text-left rounded-lg p-3 transition-all duration-200 ${
+                        active
+                          ? "bg-secondary/80 ring-2 ring-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
+                          : "bg-secondary/30 hover:bg-secondary/60 ring-1 ring-border/40"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`shrink-0 h-10 w-10 rounded-full grid place-items-center text-sm font-bold ${
+                            active
+                              ? "bg-[image:var(--gradient-brand)] text-primary-foreground"
+                              : "bg-secondary text-muted-foreground"
+                          }`}
+                        >
+                          {initials(c)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold truncate">
+                            {c.firstName || "—"} {c.lastName}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate inline-flex items-center gap-1.5">
+                            <Briefcase className="h-3 w-3" />
+                            {c.job}
+                          </p>
+                        </div>
+                        {active && <Check className="h-4 w-4 text-primary shrink-0" />}
+                      </div>
+                      <div className="mt-2.5 pl-13 flex items-center justify-between text-xs">
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
+                          <Wallet className="h-3 w-3 text-primary" />
+                          {formatMoney(c.bank)}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
 
-            {useCustomPlate && (
-              <div>
-                <input
-                  type="text"
-                  value={customPlate}
-                  onChange={(e) => setCustomPlate(e.target.value.toUpperCase().slice(0, 8))}
-                  placeholder="ABC 123"
-                  maxLength={8}
-                  className={`w-full font-mono uppercase tracking-wider text-sm bg-background/60 border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-primary/50 ${
-                    customPlate && !plateValid ? "border-destructive" : "border-border/60"
+          {/* Vehicle extras */}
+          {isVehicle && (
+            <section>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                Papildomos paslaugos
+              </p>
+              <div className="space-y-2">
+                {/* Full tune */}
+                <button
+                  type="button"
+                  onClick={() => setFullTune((v) => !v)}
+                  className={`w-full flex items-center justify-between gap-3 rounded-lg p-3.5 transition-all ${
+                    fullTune
+                      ? "bg-secondary/80 ring-2 ring-primary"
+                      : "bg-secondary/30 hover:bg-secondary/60 ring-1 ring-border/40"
                   }`}
-                />
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  2-8 simboliai: A-Z, 0-9, tarpai. {!plateValid && customPlate && (
-                    <span className="text-destructive">Neteisingas formatas</span>
+                >
+                  <div className="flex items-center gap-3 text-left">
+                    <div
+                      className={`h-9 w-9 rounded-md grid place-items-center ${
+                        fullTune ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Pilnas tune</p>
+                      <p className="text-xs text-muted-foreground">Engine, brakes, turbo, suspension</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-sm font-semibold text-primary">+{TUNE_COST} €</span>
+                    <SwitchPill on={fullTune} />
+                  </div>
+                </button>
+
+                {/* Custom plate */}
+                <div
+                  className={`rounded-lg transition-all ${
+                    useCustomPlate
+                      ? "bg-secondary/80 ring-2 ring-primary"
+                      : "bg-secondary/30 ring-1 ring-border/40"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setUseCustomPlate((v) => !v)}
+                    className="w-full flex items-center justify-between gap-3 p-3.5"
+                  >
+                    <div className="flex items-center gap-3 text-left">
+                      <div
+                        className={`h-9 w-9 rounded-md grid place-items-center ${
+                          useCustomPlate ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
+                        }`}
+                      >
+                        <Tag className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">Pasirinktinis numeris</p>
+                        <p className="text-xs text-muted-foreground">2-8 simboliai: A-Z, 0-9, tarpai</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-sm font-semibold text-primary">+{PLATE_COST} €</span>
+                      <SwitchPill on={useCustomPlate} />
+                    </div>
+                  </button>
+
+                  {useCustomPlate && (
+                    <div className="px-3.5 pb-3.5 -mt-1 flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={customPlate}
+                        onChange={(e) => setCustomPlate(e.target.value.toUpperCase().slice(0, 8))}
+                        placeholder="ABC 123"
+                        maxLength={8}
+                        className={`flex-1 font-mono uppercase tracking-[0.2em] text-sm bg-background/60 border rounded-md px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/50 transition ${
+                          customPlate && !plateValid ? "border-destructive" : "border-border/60"
+                        }`}
+                      />
+                      <div className="shrink-0 w-32 h-11 rounded-md bg-foreground grid place-items-center font-mono font-bold text-base tracking-[0.15em] text-background shadow-inner">
+                        {platePreview}
+                      </div>
+                    </div>
                   )}
-                </p>
-              </div>
-            )}
-
-            {extras > 0 && basePrice !== undefined && (
-              <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
-                <span className="text-muted-foreground">Iš viso:</span>
-                <span className="font-semibold">
-                  {basePrice} + {extras} = <span className="text-primary">{total} €</span>
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {loading ? (
-          <p className="text-sm text-muted-foreground py-4">Kraunama...</p>
-        ) : characters.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4">
-            Veikėjų nėra. Prisijunk prie serverio, kad jie atsirastų.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {characters.map((c) => (
-              <button
-                key={c.id}
-                disabled={submitting || (isVehicle && useCustomPlate && !plateValid)}
-                onClick={() => deliver(c)}
-                className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left disabled:opacity-50"
-              >
-                <div>
-                  <p className="text-sm font-semibold">
-                    {c.firstName || "—"} {c.lastName}
-                  </p>
-                  <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                    <Briefcase className="h-3 w-3" />
-                    {c.job}
-                  </p>
                 </div>
-                <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                  <Wallet className="h-3 w-3 text-primary" />
-                  {formatMoney(c.bank)}
+              </div>
+
+              {!plateValid && customPlate && (
+                <p className="mt-2 text-xs text-destructive flex items-center gap-1.5">
+                  <AlertTriangle className="h-3 w-3" />
+                  Neteisingas formatas
+                </p>
+              )}
+            </section>
+          )}
+        </div>
+
+        {/* Sticky footer */}
+        <div className="border-t border-border/60 bg-card/80 backdrop-blur-xl px-6 py-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Iš viso</p>
+            {basePrice !== undefined ? (
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold">
+                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
+                    {total} €
+                  </span>
                 </span>
-              </button>
-            ))}
+                {extras > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {basePrice} + {extras}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Pristatymas</p>
+            )}
           </div>
-        )}
+          <button
+            onClick={deliver}
+            disabled={!canConfirm}
+            className="h-11 px-6 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            {submitting ? "Apdorojama..." : (
+              <>
+                <Check className="h-4 w-4" />
+                Patvirtinti
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
 };
+
+const SwitchPill = ({ on }: { on: boolean }) => (
+  <span
+    className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${
+      on ? "bg-primary" : "bg-secondary"
+    }`}
+  >
+    <span
+      className={`absolute top-0.5 h-5 w-5 rounded-full bg-foreground transition-transform ${
+        on ? "translate-x-[22px] bg-primary-foreground" : "translate-x-0.5"
+      }`}
+    />
+  </span>
+);
 
 const ProfileSection = ({
   username,
