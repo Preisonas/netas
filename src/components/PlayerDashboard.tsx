@@ -198,7 +198,8 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
           {active === "shop" && <ShopSection />}
           {active === "credits" && <CreditsSection />}
           {active === "boxes" && <BoxesSection />}
-          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && <Placeholder title={titleFor(active)} />}
+          {active === "admin-credits" && isOwner && <AdminCreditsSection />}
+          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && active !== "admin-credits" && <Placeholder title={titleFor(active)} />}
         </main>
       </div>
     </section>
@@ -206,7 +207,7 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
 };
 
 const titleFor = (k: SectionKey) =>
-  navGroups.flatMap((g) => g.items).find((i) => i.key === k)?.title ?? "";
+  [...baseNavGroups, ownerNavGroup].flatMap((g) => g.items).find((i) => i.key === k)?.title ?? "";
 
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle?: string }) => (
   <div className="mb-6">
