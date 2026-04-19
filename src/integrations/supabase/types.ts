@@ -79,6 +79,63 @@ export type Database = {
         }
         Relationships: []
       }
+      characters: {
+        Row: {
+          bank: number | null
+          black_money: number | null
+          cash: number | null
+          created_at: string
+          discord_id: string
+          first_name: string | null
+          id: string
+          identifier: string
+          inventory: Json | null
+          job: string | null
+          job_grade: number | null
+          last_name: string | null
+          last_synced_at: string
+          metadata: Json | null
+          position: Json | null
+          updated_at: string
+        }
+        Insert: {
+          bank?: number | null
+          black_money?: number | null
+          cash?: number | null
+          created_at?: string
+          discord_id: string
+          first_name?: string | null
+          id?: string
+          identifier: string
+          inventory?: Json | null
+          job?: string | null
+          job_grade?: number | null
+          last_name?: string | null
+          last_synced_at?: string
+          metadata?: Json | null
+          position?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          bank?: number | null
+          black_money?: number | null
+          cash?: number | null
+          created_at?: string
+          discord_id?: string
+          first_name?: string | null
+          id?: string
+          identifier?: string
+          inventory?: Json | null
+          job?: string | null
+          job_grade?: number | null
+          last_name?: string | null
+          last_synced_at?: string
+          metadata?: Json | null
+          position?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
