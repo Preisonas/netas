@@ -785,18 +785,23 @@ const BoxesSection = () => {
   const [openingBox, setOpeningBox] = useState<LootBox | null>(null);
   const [boxes, setBoxes] = useState<LootBox[]>([]);
   const [loading, setLoading] = useState(true);
+  const [credits, setCredits] = useState<number>(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: cases } = await supabase
-        .from("cases")
-        .select("id, name, image_url, price")
-        .order("created_at", { ascending: false });
-      const { data: items } = await supabase
-        .from("case_items")
-        .select("id, case_id, label, item_name, chance");
+      const { data: { session } } = await supabase.auth.getSession();
+      const [casesRes, itemsRes, profileRes] = await Promise.all([
+        supabase.from("cases").select("id, name, image_url, price").order("created_at", { ascending: false }),
+        supabase.from("case_items").select("id, case_id, label, item_name, chance"),
+        session
+          ? supabase.from("profiles").select("credits").eq("user_id", session.user.id).maybeSingle()
+          : Promise.resolve({ data: null as { credits: number } | null }),
+      ]);
       if (cancelled) return;
+      const cases = casesRes.data;
+      const items = itemsRes.data;
+      if (profileRes.data) setCredits(profileRes.data.credits ?? 0);
       const byCase = new Map<string, LootBox["pool"]>();
       (items ?? []).forEach((it) => {
         const arr = byCase.get(it.case_id) ?? [];
@@ -840,6 +845,12 @@ const BoxesSection = () => {
             <BoxCard key={box.id} box={box} onOpen={() => {
               if (box.pool.length === 0) {
                 toast.error("Šioje dėžėje dar nėra daiktų");
+                return;
+              }
+              if (credits < box.price) {
+                toast.error("Neturi pakankamai kreditų", {
+                  description: `Reikia ${box.price} €, o turi tik ${credits} €.`,
+                });
                 return;
               }
               setOpeningBox(box);
