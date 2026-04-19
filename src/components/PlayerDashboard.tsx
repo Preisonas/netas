@@ -643,13 +643,13 @@ const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehic
 
 const BuyWithCharacter = ({
   itemLabel,
-  itemName,
+  vehicleId,
   discordId,
   userId,
   ownedCharacters,
 }: {
   itemLabel: string;
-  itemName: string;
+  vehicleId: string;
   discordId?: string | null;
   userId: string;
   ownedCharacters: PlayerCharacter[];
@@ -677,7 +677,7 @@ const BuyWithCharacter = ({
         open={open}
         onClose={() => setOpen(false)}
         itemLabel={itemLabel}
-        itemName={itemName}
+        sourceId={vehicleId}
         type="vehicle"
         discordId={discordId}
         userId={userId}
