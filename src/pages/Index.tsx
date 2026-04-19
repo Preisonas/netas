@@ -21,8 +21,8 @@ import { FolderOpen, ExternalLink, Users } from "lucide-react";
 
 const DISCORD_URL = "https://discord.com/invite/speedrp";
 const DiscordIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
-    <path d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3a14.62 14.62 0 0 0-.69 1.41 18.27 18.27 0 0 0-5.736 0A14.4 14.4 0 0 0 9.44 3a19.74 19.74 0 0 0-3.76 1.37C2.04 9.79 1.045 15.06 1.543 20.255a19.94 19.94 0 0 0 6.062 3.06 14.6 14.6 0 0 0 1.296-2.105 12.84 12.84 0 0 1-2.04-.978c.171-.124.339-.255.5-.388a14.22 14.22 0 0 0 12.198 0c.163.139.331.27.5.388a12.88 12.88 0 0 1-2.043.978 14.42 14.42 0 0 0 1.296 2.104 19.9 19.9 0 0 0 6.063-3.06c.583-6.013-.964-11.236-4.058-15.885ZM8.78 16.953c-1.21 0-2.21-1.106-2.21-2.464s.98-2.466 2.21-2.466 2.232 1.116 2.21 2.466c0 1.358-.98 2.464-2.21 2.464Zm6.44 0c-1.21 0-2.21-1.106-2.21-2.464s.98-2.466 2.21-2.466 2.232 1.116 2.21 2.466c0 1.358-.97 2.464-2.21 2.464Z"/>
+  <svg viewBox="0 0 127.14 96.36" fill="currentColor" className={className} aria-hidden>
+    <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
   </svg>
 );
 import { useEffect, useState, type ReactNode } from "react";
@@ -213,9 +213,9 @@ const Index = () => {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Discord"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-sm bg-secondary/60 text-foreground hover:bg-secondary transition-colors"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-sm bg-[#5865F2] text-white hover:bg-[#4752C4] transition-colors shadow-sm"
             >
-              <DiscordIcon className="h-4 w-4" />
+              <DiscordIcon className="h-[18px] w-[18px]" />
             </a>
             <Button onClick={() => setPanelOpen(true)} className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
               Žaidėjo panelė
