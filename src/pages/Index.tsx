@@ -18,6 +18,13 @@ import news2 from "@/assets/news-2.png";
 import news3 from "@/assets/news-3.png";
 import pedHero from "@/assets/ped-hero.png";
 import { FolderOpen, ExternalLink, Users } from "lucide-react";
+
+const DISCORD_URL = "https://discord.com/invite/speedrp";
+const DiscordIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <path d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3a14.62 14.62 0 0 0-.69 1.41 18.27 18.27 0 0 0-5.736 0A14.4 14.4 0 0 0 9.44 3a19.74 19.74 0 0 0-3.76 1.37C2.04 9.79 1.045 15.06 1.543 20.255a19.94 19.94 0 0 0 6.062 3.06 14.6 14.6 0 0 0 1.296-2.105 12.84 12.84 0 0 1-2.04-.978c.171-.124.339-.255.5-.388a14.22 14.22 0 0 0 12.198 0c.163.139.331.27.5.388a12.88 12.88 0 0 1-2.043.978 14.42 14.42 0 0 0 1.296 2.104 19.9 19.9 0 0 0 6.063-3.06c.583-6.013-.964-11.236-4.058-15.885ZM8.78 16.953c-1.21 0-2.21-1.106-2.21-2.464s.98-2.466 2.21-2.466 2.232 1.116 2.21 2.466c0 1.358-.98 2.464-2.21 2.464Zm6.44 0c-1.21 0-2.21-1.106-2.21-2.464s.98-2.466 2.21-2.466 2.232 1.116 2.21 2.466c0 1.358-.97 2.464-2.21 2.464Z"/>
+  </svg>
+);
 import { useEffect, useState, type ReactNode } from "react";
 import PlayerPanel from "@/components/PlayerPanel";
 import PlayerDashboard from "@/components/PlayerDashboard";
