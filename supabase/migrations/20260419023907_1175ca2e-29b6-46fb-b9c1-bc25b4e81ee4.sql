@@ -1,0 +1,19 @@
+CREATE OR REPLACE FUNCTION public.is_owner()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE user_id = auth.uid()
+      AND discord_id IN ('1276583745490649214', '528409152024870922')
+  );
+$function$;
+
+DROP POLICY IF EXISTS "Admin can update any profile" ON public.profiles;
+CREATE POLICY "Admin can update any profile"
+ON public.profiles
+FOR UPDATE
+TO authenticated
+USING (public.is_owner());
