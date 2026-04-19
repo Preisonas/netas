@@ -81,38 +81,46 @@ const ownerNavGroup: NavGroup = {
 
 const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const [active, setActive] = useState<SectionKey>("profile");
-  const [profile, setProfile] = useState<{ username: string | null; avatar_url: string | null; discord_id: string | null; email: string | null; credits: number } | null>(null);
+  const qc = useQueryClient();
 
   const meta = session.user.user_metadata as { username?: string; full_name?: string; avatar_url?: string; discord_id?: string } | undefined;
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
+  const profileQuery = useQuery({
+    queryKey: ["profile", session.user.id],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("username, avatar_url, discord_id, email, credits")
         .eq("user_id", session.user.id)
         .maybeSingle();
-      if (!cancelled && !error && data) setProfile(data);
-    };
-    load();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 15_000,
+  });
+  const profile = profileQuery.data;
 
+  useEffect(() => {
     const channel = supabase
-      .channel(`profile-changes-${session.user.id}`)
+      .channel(`profile-changes-${session.user.id}-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles", filter: `user_id=eq.${session.user.id}` },
-        () => {
-          load();
+        (payload) => {
+          const next = (payload.new ?? null) as typeof profile | null;
+          if (next) {
+            qc.setQueryData(["profile", session.user.id], (old: typeof profile) => ({ ...(old ?? {} as never), ...next }));
+          } else {
+            qc.invalidateQueries({ queryKey: ["profile", session.user.id] });
+          }
         }
       )
       .subscribe();
 
     return () => {
-      cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [session.user.id]);
+  }, [session.user.id, qc]);
 
   const username = profile?.username ?? meta?.username ?? meta?.full_name ?? session.user.email ?? "Žaidėjas";
   const avatarUrl = profile?.avatar_url ?? meta?.avatar_url;
