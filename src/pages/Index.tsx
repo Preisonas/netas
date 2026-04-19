@@ -49,6 +49,7 @@ const JoinDialog = ({ children }: { children: ReactNode }) => (
 
 const Index = () => {
   const [players, setPlayers] = useState<{ clients: number; max: number } | null>(null);
+  const [serverStatus, setServerStatus] = useState<"online" | "offline" | "restarting">("restarting");
   const [panelOpen, setPanelOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
 
@@ -63,15 +64,23 @@ const Index = () => {
     const fetchPlayers = async () => {
       try {
         const res = await fetch("https://servers-frontend.fivem.net/api/servers/single/lkzrzv");
+        if (!res.ok) {
+          if (!cancelled) setServerStatus("restarting");
+          return;
+        }
         const json = await res.json();
         if (!cancelled && json?.Data) {
           setPlayers({
             clients: json.Data.clients ?? 0,
             max: json.Data.svMaxclients ?? json.Data.sv_maxclients ?? 0,
           });
+          setServerStatus("online");
+        } else if (!cancelled) {
+          setServerStatus("restarting");
         }
       } catch (e) {
         console.error("Failed to fetch FiveM players", e);
+        if (!cancelled) setServerStatus("offline");
       }
     };
     fetchPlayers();
@@ -121,6 +130,23 @@ const Index = () => {
                 <span className="text-foreground">{players ? players.clients : "—"}</span>
                 <span className="text-muted-foreground"> / {players ? players.max : "—"}</span>
               </span>
+              <span
+                aria-label={`Serveris ${serverStatus}`}
+                title={
+                  serverStatus === "online"
+                    ? "Online"
+                    : serverStatus === "offline"
+                    ? "Offline"
+                    : "Restarting"
+                }
+                className={`ml-1 h-2 w-2 rounded-full ring-2 ring-background/40 ${
+                  serverStatus === "online"
+                    ? "bg-green-500 shadow-[0_0_6px_hsl(142_76%_45%/0.8)] animate-pulse"
+                    : serverStatus === "offline"
+                    ? "bg-red-500 shadow-[0_0_6px_hsl(0_84%_60%/0.8)]"
+                    : "bg-orange-500 shadow-[0_0_6px_hsl(25_95%_55%/0.8)] animate-pulse"
+                }`}
+              />
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-1">
