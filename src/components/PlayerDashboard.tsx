@@ -289,6 +289,7 @@ const DeliveryPicker = ({
 }) => {
   const { characters, loading } = usePlayerCharacters(discordId);
   const [submitting, setSubmitting] = useState(false);
+  const qc = useQueryClient();
 
   if (!open) return null;
 
@@ -310,6 +311,12 @@ const DeliveryPicker = ({
     }
 
     const result = data as { label?: string; plate?: string | null; credits_remaining?: number };
+    if (typeof result.credits_remaining === "number") {
+      qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
+        old ? { ...old, credits: result.credits_remaining } : old
+      );
+    }
+    qc.invalidateQueries({ queryKey: ["profile", userId] });
     toast.success(
       `${result.label ?? itemLabel} išsiųstas: ${c.firstName} ${c.lastName}`,
       result.plate
