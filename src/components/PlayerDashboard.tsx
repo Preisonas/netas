@@ -94,6 +94,8 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const username = profile?.username ?? meta?.username ?? meta?.full_name ?? session.user.email ?? "Žaidėjas";
   const avatarUrl = profile?.avatar_url ?? meta?.avatar_url;
   const discordId = profile?.discord_id ?? meta?.discord_id;
+  const isOwner = discordId === OWNER_DISCORD_ID;
+  const navGroups = isOwner ? [...baseNavGroups, ownerNavGroup] : baseNavGroups;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
