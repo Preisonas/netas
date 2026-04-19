@@ -46,7 +46,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         duration: 3500,
         classNames: {
           toast:
-            "group !w-[340px] !bg-[hsl(240_7%_5%/0.96)] !border-0 !text-foreground !backdrop-blur-xl !shadow-none !rounded-md !p-3 !flex !flex-row !items-center !gap-3",
+            "group !w-[340px] !bg-card !border !border-border/50 !text-foreground !shadow-none !rounded-md !p-3 !flex !flex-row !items-center !gap-3",
           title: "!text-[13px] !font-semibold !leading-tight !text-foreground",
           description: "!text-[12px] !text-muted-foreground !mt-0.5 !leading-snug",
           icon: "!m-0 !p-0 !shrink-0 !self-center !flex !items-center !justify-center [&>svg]:!hidden first:[&>span]:!flex",
