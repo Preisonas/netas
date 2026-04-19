@@ -95,6 +95,7 @@ export type Database = {
           last_name: string | null
           last_synced_at: string
           metadata: Json | null
+          playtime_minutes: number
           position: Json | null
           updated_at: string
         }
@@ -113,6 +114,7 @@ export type Database = {
           last_name?: string | null
           last_synced_at?: string
           metadata?: Json | null
+          playtime_minutes?: number
           position?: Json | null
           updated_at?: string
         }
@@ -131,6 +133,7 @@ export type Database = {
           last_name?: string | null
           last_synced_at?: string
           metadata?: Json | null
+          playtime_minutes?: number
           position?: Json | null
           updated_at?: string
         }

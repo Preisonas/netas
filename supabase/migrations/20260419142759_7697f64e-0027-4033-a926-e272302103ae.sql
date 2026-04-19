@@ -1,0 +1,1 @@
+ALTER TABLE public.characters ADD COLUMN IF NOT EXISTS playtime_minutes integer NOT NULL DEFAULT 0;
