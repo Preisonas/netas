@@ -194,7 +194,7 @@ const Index = () => {
               }`;
               if (isShop) {
                 return (
-                  <button key={item} onClick={() => setPanelOpen(true)} className={className}>
+                  <button key={item} onClick={() => openPanel("shop")} className={className}>
                     {item}
                   </button>
                 );
