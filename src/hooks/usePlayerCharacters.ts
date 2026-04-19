@@ -38,47 +38,6 @@ async function fetchCharacters(discordId: string): Promise<PlayerCharacter[]> {
   });
 }
 
-// Module-level singleton: one realtime channel per discordId, ref-counted across hook instances
-const channelRegistry = new Map<string, { channel: RealtimeChannel; refs: number }>();
-
-function subscribe(discordId: string, onChange: () => void): () => void {
-  const existing = channelRegistry.get(discordId);
-  if (existing) {
-    existing.refs++;
-    // attach extra listener via supabase channel
-    existing.channel.on(
-      "postgres_changes" as never,
-      { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` } as never,
-      onChange as never,
-    );
-    return () => {
-      existing.refs--;
-      if (existing.refs <= 0) {
-        supabase.removeChannel(existing.channel);
-        channelRegistry.delete(discordId);
-      }
-    };
-  }
-  const channel = supabase
-    .channel(`chars-shared-${discordId}`)
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` },
-      onChange,
-    )
-    .subscribe();
-  channelRegistry.set(discordId, { channel, refs: 1 });
-  return () => {
-    const e = channelRegistry.get(discordId);
-    if (!e) return;
-    e.refs--;
-    if (e.refs <= 0) {
-      supabase.removeChannel(e.channel);
-      channelRegistry.delete(discordId);
-    }
-  };
-}
-
 export function usePlayerCharacters(discordId?: string | null) {
   const qc = useQueryClient();
   const query = useQuery({
@@ -91,10 +50,17 @@ export function usePlayerCharacters(discordId?: string | null) {
 
   useEffect(() => {
     if (!discordId) return;
-    const unsub = subscribe(discordId, () => {
-      qc.invalidateQueries({ queryKey: charactersKey(discordId) });
-    });
-    return unsub;
+    const channel = supabase
+      .channel(`chars-${discordId}-${Math.random().toString(36).slice(2, 8)}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` },
+        () => qc.invalidateQueries({ queryKey: charactersKey(discordId) }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [discordId, qc]);
 
   return { characters: query.data ?? [], loading: query.isLoading };
