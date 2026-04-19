@@ -375,11 +375,11 @@ const DeliveryPicker = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-background/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 grid place-items-center bg-background/90 p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-xl bg-card/95 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in zoom-in-95 duration-200"
+        className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-xl bg-card shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -549,7 +549,7 @@ const DeliveryPicker = ({
         </div>
 
         {/* Sticky footer */}
-        <div className="bg-card/80 backdrop-blur-xl px-6 py-4 flex items-center justify-between gap-4 shadow-[0_-1px_0_hsl(var(--border)/0.4)]">
+        <div className="bg-secondary/40 px-6 py-4 flex items-center justify-between gap-4">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Iš viso</p>
             {basePrice !== undefined ? (
