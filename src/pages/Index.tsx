@@ -18,6 +18,13 @@ import news2 from "@/assets/news-2.png";
 import news3 from "@/assets/news-3.png";
 import pedHero from "@/assets/ped-hero.png";
 import { FolderOpen, ExternalLink, Users } from "lucide-react";
+
+const DISCORD_URL = "https://discord.com/invite/speedrp";
+const DiscordIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <path d="M20.317 4.369A19.79 19.79 0 0 0 16.558 3a14.62 14.62 0 0 0-.69 1.41 18.27 18.27 0 0 0-5.736 0A14.4 14.4 0 0 0 9.44 3a19.74 19.74 0 0 0-3.76 1.37C2.04 9.79 1.045 15.06 1.543 20.255a19.94 19.94 0 0 0 6.062 3.06 14.6 14.6 0 0 0 1.296-2.105 12.84 12.84 0 0 1-2.04-.978c.171-.124.339-.255.5-.388a14.22 14.22 0 0 0 12.198 0c.163.139.331.27.5.388a12.88 12.88 0 0 1-2.043.978 14.42 14.42 0 0 0 1.296 2.104 19.9 19.9 0 0 0 6.063-3.06c.583-6.013-.964-11.236-4.058-15.885ZM8.78 16.953c-1.21 0-2.21-1.106-2.21-2.464s.98-2.466 2.21-2.466 2.232 1.116 2.21 2.466c0 1.358-.98 2.464-2.21 2.464Zm6.44 0c-1.21 0-2.21-1.106-2.21-2.464s.98-2.466 2.21-2.466 2.232 1.116 2.21 2.466c0 1.358-.97 2.464-2.21 2.464Z"/>
+  </svg>
+);
 import { useEffect, useState, type ReactNode } from "react";
 import PlayerPanel from "@/components/PlayerPanel";
 import PlayerDashboard from "@/components/PlayerDashboard";
@@ -170,23 +177,50 @@ const Index = () => {
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item, i) => (
-              <a
-                key={item}
-                href="#"
-                className={`px-4 py-1.5 text-sm rounded-sm transition-colors ${
-                  i === 0
-                    ? "bg-secondary text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                }`}
-              >
-                {item}
-              </a>
-            ))}
+            {navItems.map((item, i) => {
+              const isHome = i === 0;
+              const isShop = item === "Parduotuvė";
+              const isDiscordLink = item === "Wiki" || item === "Taisyklės";
+              const className = `px-4 py-1.5 text-sm rounded-sm transition-colors ${
+                isHome
+                  ? "bg-secondary text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+              }`;
+              if (isShop) {
+                return (
+                  <button key={item} onClick={() => setPanelOpen(true)} className={className}>
+                    {item}
+                  </button>
+                );
+              }
+              if (isDiscordLink) {
+                return (
+                  <a key={item} href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className={className}>
+                    {item}
+                  </a>
+                );
+              }
+              return (
+                <a key={item} href="#" className={className}>
+                  {item}
+                </a>
+              );
+            })}
           </nav>
-          <Button onClick={() => setPanelOpen(true)} className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
-            Žaidėjo panelė
-          </Button>
+          <div className="flex items-center gap-2">
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Discord"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-sm bg-secondary/60 text-foreground hover:bg-secondary transition-colors"
+            >
+              <DiscordIcon className="h-4 w-4" />
+            </a>
+            <Button onClick={() => setPanelOpen(true)} className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
+              Žaidėjo panelė
+            </Button>
+          </div>
         </header>
 
         {panelOpen ? (
