@@ -273,19 +273,113 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle?: string }
   </div>
 );
 
-interface Character {
-  id: string;
-  firstName: string;
-  lastName: string;
-  money: number;
-  bank: number;
-  job: string;
-  playtimeMinutes: number;
-}
+// Shared character-picker modal: lists user's real characters and creates a delivery row.
+const DeliveryPicker = ({
+  open,
+  onClose,
+  itemLabel,
+  itemName,
+  type,
+  discordId,
+  userId,
+  onDelivered,
+}: {
+  open: boolean;
+  onClose: () => void;
+  itemLabel: string;
+  itemName: string;
+  type: "vehicle" | "case_item";
+  discordId?: string | null;
+  userId: string;
+  onDelivered?: () => void;
+}) => {
+  const { characters, loading } = usePlayerCharacters(discordId);
+  const [submitting, setSubmitting] = useState(false);
 
-// Placeholder list used by shop/boxes "deliver to character" pickers.
-// TODO: replace with real per-user characters fetched from the `characters` table.
-const mockCharacters: Character[] = [];
+  if (!open) return null;
+
+  const deliver = async (c: PlayerCharacter) => {
+    if (!discordId) return;
+    setSubmitting(true);
+    const plate = type === "vehicle" ? generatePlate() : null;
+    const { error } = await supabase.from("pending_deliveries").insert({
+      user_id: userId,
+      discord_id: discordId,
+      character_id: c.id,
+      character_identifier: c.identifier,
+      type,
+      item_name: itemName,
+      label: itemLabel,
+      plate,
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error("Nepavyko pristatyti", { description: error.message });
+      return;
+    }
+    toast.success(
+      `${itemLabel} išsiųstas: ${c.firstName} ${c.lastName}`,
+      plate ? { description: `Numeris: ${plate}` } : undefined
+    );
+    onDelivered?.();
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-xl border border-border/60 bg-card/95 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-lg font-bold">Pasirink veikėją</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Į kurio veikėjo paskyrą pristatyti{" "}
+          <span className="text-foreground font-medium">{itemLabel}</span>?
+        </p>
+        {loading ? (
+          <p className="text-sm text-muted-foreground py-4">Kraunama...</p>
+        ) : characters.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">
+            Veikėjų nėra. Prisijunk prie serverio, kad jie atsirastų.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {characters.map((c) => (
+              <button
+                key={c.id}
+                disabled={submitting}
+                onClick={() => deliver(c)}
+                className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left disabled:opacity-50"
+              >
+                <div>
+                  <p className="text-sm font-semibold">
+                    {c.firstName || "—"} {c.lastName}
+                  </p>
+                  <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                    <Briefcase className="h-3 w-3" />
+                    {c.job}
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                  <Wallet className="h-3 w-3 text-primary" />
+                  {formatMoney(c.bank)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const ProfileSection = ({
   username,
