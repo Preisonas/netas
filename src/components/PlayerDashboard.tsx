@@ -273,13 +273,14 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle?: string }
   </div>
 );
 
-// Shared character-picker modal: lists user's real characters and creates a delivery row.
+// Shared character-picker modal: server-authoritative purchase via edge function.
+// Server validates price, deducts credits, and creates the delivery row atomically.
 const DeliveryPicker = ({
   open,
   onClose,
   itemLabel,
-  itemName,
   type,
+  sourceId,
   discordId,
   userId,
   onDelivered,
@@ -287,8 +288,8 @@ const DeliveryPicker = ({
   open: boolean;
   onClose: () => void;
   itemLabel: string;
-  itemName: string;
   type: "vehicle" | "case_item";
+  sourceId: string; // vehicle_id or case_id
   discordId?: string | null;
   userId: string;
   onDelivered?: () => void;
@@ -301,25 +302,26 @@ const DeliveryPicker = ({
   const deliver = async (c: PlayerCharacter) => {
     if (!discordId) return;
     setSubmitting(true);
-    const plate = type === "vehicle" ? generatePlate() : null;
-    const { error } = await supabase.from("pending_deliveries").insert({
-      user_id: userId,
-      discord_id: discordId,
-      character_id: c.id,
-      character_identifier: c.identifier,
-      type,
-      item_name: itemName,
-      label: itemLabel,
-      plate,
-    });
+    const payload: Record<string, unknown> = { type, character_id: c.id };
+    if (type === "vehicle") payload.vehicle_id = sourceId;
+    else payload.case_id = sourceId;
+
+    const { data, error } = await supabase.functions.invoke("process-purchase", { body: payload });
     setSubmitting(false);
-    if (error) {
-      toast.error("Nepavyko pristatyti", { description: error.message });
+
+    if (error || (data && (data as { error?: string }).error)) {
+      const msg =
+        (data as { error?: string } | null)?.error ?? error?.message ?? "Nepavyko apdoroti pirkimo";
+      toast.error("Pirkimas nepavyko", { description: msg });
       return;
     }
+
+    const result = data as { label?: string; plate?: string | null; credits_remaining?: number };
     toast.success(
-      `${itemLabel} išsiųstas: ${c.firstName} ${c.lastName}`,
-      plate ? { description: `Numeris: ${plate}` } : undefined
+      `${result.label ?? itemLabel} išsiųstas: ${c.firstName} ${c.lastName}`,
+      result.plate
+        ? { description: `Numeris: ${result.plate} • Liko ${result.credits_remaining ?? 0} €` }
+        : { description: `Liko ${result.credits_remaining ?? 0} €` }
     );
     onDelivered?.();
     onClose();
