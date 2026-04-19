@@ -1,0 +1,1 @@
+ALTER TABLE public.characters REPLICA IDENTITY FULL;
