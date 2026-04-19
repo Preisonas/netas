@@ -406,11 +406,11 @@ const DeliveryPicker = ({
               Veikėjas
             </p>
             {loading ? (
-              <div className="rounded-lg border border-border/40 bg-secondary/20 p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-lg bg-secondary/20 p-6 text-center text-sm text-muted-foreground">
                 Kraunama...
               </div>
             ) : characters.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border/60 bg-secondary/20 p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-lg bg-secondary/20 p-6 text-center text-sm text-muted-foreground">
                 Veikėjų nėra. Prisijunk prie serverio.
               </div>
             ) : (
@@ -424,8 +424,8 @@ const DeliveryPicker = ({
                       onClick={() => setSelectedCharId(c.id)}
                       className={`group relative text-left rounded-lg p-3 transition-all duration-200 ${
                         active
-                          ? "bg-secondary/80 ring-2 ring-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
-                          : "bg-secondary/30 hover:bg-secondary/60 ring-1 ring-border/40"
+                          ? "bg-secondary/80 shadow-[0_0_0_1px_hsl(var(--primary)/0.5)]"
+                          : "bg-secondary/30 hover:bg-secondary/60"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -433,7 +433,7 @@ const DeliveryPicker = ({
                           className={`shrink-0 h-10 w-10 rounded-full grid place-items-center text-sm font-bold ${
                             active
                               ? "bg-[image:var(--gradient-brand)] text-primary-foreground"
-                              : "bg-secondary text-muted-foreground"
+                              : "bg-secondary/60 text-muted-foreground"
                           }`}
                         >
                           {initials(c)}
@@ -449,7 +449,7 @@ const DeliveryPicker = ({
                         </div>
                         {active && <Check className="h-4 w-4 text-primary shrink-0" />}
                       </div>
-                      <div className="mt-2.5 pl-13 flex items-center justify-between text-xs">
+                      <div className="mt-2.5 flex items-center justify-between text-xs">
                         <span className="inline-flex items-center gap-1 text-muted-foreground">
                           <Wallet className="h-3 w-3 text-primary" />
                           {formatMoney(c.bank)}
@@ -475,18 +475,12 @@ const DeliveryPicker = ({
                   onClick={() => setFullTune((v) => !v)}
                   className={`w-full flex items-center justify-between gap-3 rounded-lg p-3.5 transition-all ${
                     fullTune
-                      ? "bg-secondary/80 ring-2 ring-primary"
-                      : "bg-secondary/30 hover:bg-secondary/60 ring-1 ring-border/40"
+                      ? "bg-secondary/80 shadow-[0_0_0_1px_hsl(var(--primary)/0.5)]"
+                      : "bg-secondary/30 hover:bg-secondary/60"
                   }`}
                 >
                   <div className="flex items-center gap-3 text-left">
-                    <div
-                      className={`h-9 w-9 rounded-md grid place-items-center ${
-                        fullTune ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
-                      }`}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                    </div>
+                    <Sparkles className={`h-5 w-5 shrink-0 ${fullTune ? "text-primary" : "text-muted-foreground"}`} />
                     <div>
                       <p className="text-sm font-semibold">Pilnas tune</p>
                       <p className="text-xs text-muted-foreground">Engine, brakes, turbo, suspension</p>
@@ -502,8 +496,8 @@ const DeliveryPicker = ({
                 <div
                   className={`rounded-lg transition-all ${
                     useCustomPlate
-                      ? "bg-secondary/80 ring-2 ring-primary"
-                      : "bg-secondary/30 ring-1 ring-border/40"
+                      ? "bg-secondary/80 shadow-[0_0_0_1px_hsl(var(--primary)/0.5)]"
+                      : "bg-secondary/30"
                   }`}
                 >
                   <button
@@ -512,13 +506,7 @@ const DeliveryPicker = ({
                     className="w-full flex items-center justify-between gap-3 p-3.5"
                   >
                     <div className="flex items-center gap-3 text-left">
-                      <div
-                        className={`h-9 w-9 rounded-md grid place-items-center ${
-                          useCustomPlate ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
-                        }`}
-                      >
-                        <Tag className="h-4 w-4" />
-                      </div>
+                      <Tag className={`h-5 w-5 shrink-0 ${useCustomPlate ? "text-primary" : "text-muted-foreground"}`} />
                       <div>
                         <p className="text-sm font-semibold">Pasirinktinis numeris</p>
                         <p className="text-xs text-muted-foreground">2-8 simboliai: A-Z, 0-9, tarpai</p>
@@ -538,8 +526,8 @@ const DeliveryPicker = ({
                         onChange={(e) => setCustomPlate(e.target.value.toUpperCase().slice(0, 8))}
                         placeholder="ABC 123"
                         maxLength={8}
-                        className={`flex-1 font-mono uppercase tracking-[0.2em] text-sm bg-background/60 border rounded-md px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/50 transition ${
-                          customPlate && !plateValid ? "border-destructive" : "border-border/60"
+                        className={`flex-1 font-mono uppercase tracking-[0.2em] text-sm bg-background/60 rounded-md px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary/50 transition ${
+                          customPlate && !plateValid ? "ring-1 ring-destructive" : ""
                         }`}
                       />
                       <div className="shrink-0 w-32 h-11 rounded-md bg-foreground grid place-items-center font-mono font-bold text-base tracking-[0.15em] text-background shadow-inner">
@@ -561,7 +549,7 @@ const DeliveryPicker = ({
         </div>
 
         {/* Sticky footer */}
-        <div className="border-t border-border/60 bg-card/80 backdrop-blur-xl px-6 py-4 flex items-center justify-between gap-4">
+        <div className="bg-card/80 backdrop-blur-xl px-6 py-4 flex items-center justify-between gap-4 shadow-[0_-1px_0_hsl(var(--border)/0.4)]">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Iš viso</p>
             {basePrice !== undefined ? (
