@@ -736,7 +736,7 @@ const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehic
           </ul>
         </div>
 
-        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} vehicleId={v.id} discordId={discordId} userId={userId} ownedCharacters={ownedCharacters} />
+        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} vehicleId={v.id} price={v.price} discordId={discordId} userId={userId} ownedCharacters={ownedCharacters} />
       </div>
     </article>
   );
@@ -745,12 +745,14 @@ const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehic
 const BuyWithCharacter = ({
   itemLabel,
   vehicleId,
+  price,
   discordId,
   userId,
   ownedCharacters,
 }: {
   itemLabel: string;
   vehicleId: string;
+  price: number;
   discordId?: string | null;
   userId: string;
   ownedCharacters: PlayerCharacter[];
@@ -779,6 +781,7 @@ const BuyWithCharacter = ({
         onClose={() => setOpen(false)}
         itemLabel={itemLabel}
         sourceId={vehicleId}
+        basePrice={price}
         type="vehicle"
         discordId={discordId}
         userId={userId}
@@ -786,6 +789,7 @@ const BuyWithCharacter = ({
     </>
   );
 };
+
 
 const CreditsSection = () => {
   const [amount, setAmount] = useState(10);
