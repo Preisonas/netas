@@ -7,19 +7,45 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface CharacterPayload {
-  discord_id: string;
-  identifier: string;
-  first_name?: string;
-  last_name?: string;
-  job?: string;
-  job_grade?: number;
-  cash?: number;
-  bank?: number;
-  black_money?: number;
-  position?: unknown;
-  inventory?: unknown;
-  metadata?: unknown;
+// deno-lint-ignore no-explicit-any
+type AnyObj = Record<string, any>;
+
+function pick<T = unknown>(obj: AnyObj, keys: string[], fallback?: T): T | undefined {
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null) return obj[k] as T;
+  }
+  return fallback;
+}
+
+function normalize(c: AnyObj) {
+  const discord_id = String(pick<string>(c, ["discord_id", "discord", "discordId"]) ?? "")
+    .replace(/^discord:/, "");
+  const identifier = String(pick<string>(c, ["identifier", "char_identifier", "charIdentifier", "license"]) ?? "");
+
+  return {
+    discord_id,
+    identifier,
+    first_name: pick<string>(c, ["first_name", "firstName", "firstname"]) ?? null,
+    last_name: pick<string>(c, ["last_name", "lastName", "lastname"]) ?? null,
+    job: pick<string>(c, ["job", "jobName", "job_name"]) ?? null,
+    job_grade: Number(pick(c, ["job_grade", "jobGrade", "grade"]) ?? 0),
+    cash: Number(pick(c, ["cash", "money_cash", "moneyCash", "money"]) ?? 0),
+    bank: Number(pick(c, ["bank", "money_bank", "moneyBank"]) ?? 0),
+    black_money: Number(pick(c, ["black_money", "money_black", "moneyBlack", "blackMoney"]) ?? 0),
+    position: pick(c, ["position", "coords"]) ?? null,
+    inventory: pick(c, ["inventory"]) ?? null,
+    metadata: {
+      job_label: pick(c, ["job_label", "jobLabel"]) ?? null,
+      dob: pick(c, ["dob"]) ?? null,
+      sex: pick(c, ["sex", "gender"]) ?? null,
+      phone_number: pick(c, ["phone_number", "phoneNumber"]) ?? null,
+      vehicles: pick(c, ["vehicles"]) ?? null,
+      online: pick(c, ["online"]) ?? null,
+      last_seen: pick(c, ["last_seen", "lastSeen"]) ?? null,
+      ...(c.metadata && typeof c.metadata === "object" ? c.metadata : {}),
+    },
+    last_synced_at: new Date().toISOString(),
+  };
 }
 
 Deno.serve(async (req) => {
@@ -34,7 +60,6 @@ Deno.serve(async (req) => {
 
   const expectedSecret = Deno.env.get("MKK_PANELE_SECRET");
   const providedSecret = req.headers.get("x-mkk-secret");
-
   if (!expectedSecret) {
     return new Response(JSON.stringify({ error: "Server not configured" }), {
       status: 500,
@@ -48,7 +73,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  let body: CharacterPayload | CharacterPayload[];
+  let body: AnyObj | AnyObj[];
   try {
     body = await req.json();
   } catch {
@@ -58,37 +83,24 @@ Deno.serve(async (req) => {
     });
   }
 
-  const characters = Array.isArray(body) ? body : [body];
+  const incoming = Array.isArray(body) ? body : [body];
+  const rows = incoming.map(normalize);
 
-  // Validate required fields
-  for (const c of characters) {
-    if (!c.discord_id || !c.identifier) {
-      return new Response(
-        JSON.stringify({ error: "Each character requires discord_id and identifier" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+  const invalid = rows.find((r) => !r.discord_id || !r.identifier);
+  if (invalid) {
+    return new Response(
+      JSON.stringify({
+        error: "Each character requires discord_id and identifier (or char_identifier)",
+        received_keys: Object.keys(incoming[0] ?? {}),
+        normalized_sample: rows[0],
+      }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-
-  const rows = characters.map((c) => ({
-    discord_id: String(c.discord_id).replace(/^discord:/, ""),
-    identifier: c.identifier,
-    first_name: c.first_name ?? null,
-    last_name: c.last_name ?? null,
-    job: c.job ?? null,
-    job_grade: c.job_grade ?? 0,
-    cash: c.cash ?? 0,
-    bank: c.bank ?? 0,
-    black_money: c.black_money ?? 0,
-    position: c.position ?? null,
-    inventory: c.inventory ?? null,
-    metadata: c.metadata ?? null,
-    last_synced_at: new Date().toISOString(),
-  }));
 
   const { error } = await admin
     .from("characters")
