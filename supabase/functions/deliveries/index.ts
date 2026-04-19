@@ -130,12 +130,25 @@ function enrichDelivery(delivery: DeliveryRow) {
   const model = stringify(metadata.model) ?? delivery.item_name;
   const modelHash = toInt(metadata.model_hash) ?? joaat(model);
 
-  // IMPORTANT: vehicle.model must be the STRING model name (e.g. "m50"),
-  // not the JOAAT hash. ESX/owned_vehicles stores it as a string in the JSON
-  // and hashes it client-side via GetHashKey(model).
+  // Keep the full vehicle props payload so FiveM can insert it directly into owned_vehicles
+  // and/or apply upgrades from the same object. Only normalize model/plate fields.
   const normalizedVehicleProps = {
-    model,                                                  // string name
+    ...vehicleProps,
+    model,
     plate: stringify(vehicleProps.plate) ?? plate,
+  };
+
+  const normalizedOwnedVehicle = {
+    ...ownedVehicle,
+    owner: stringify(ownedVehicle.owner) ?? delivery.character_identifier,
+    plate,
+    vehicle: normalizedVehicleProps,
+    type: stringify(ownedVehicle.type) ?? "car",
+    stored: toInt(ownedVehicle.stored) ?? 1,
+    state: toInt(ownedVehicle.state) ?? 1,
+    garage: stringify(ownedVehicle.garage),
+    job: stringify(ownedVehicle.job),
+    pound: stringify(ownedVehicle.pound),
   };
 
   return {
@@ -143,17 +156,18 @@ function enrichDelivery(delivery: DeliveryRow) {
     metadata,
     garage_payload: {
       schema: "garage_vehicle_v1",
-      owner: stringify(ownedVehicle.owner) ?? delivery.character_identifier,
+      owner: normalizedOwnedVehicle.owner,
       plate,
-      model,                  // string, e.g. "m50"
-      model_hash: modelHash,  // numeric JOAAT, optional helper
-      vehicle: normalizedVehicleProps, // { model: "m50", plate: "ABC 123" }
-      type: stringify(ownedVehicle.type) ?? "car",
-      stored: toInt(ownedVehicle.stored) ?? 1,
-      state: toInt(ownedVehicle.state) ?? 1,
-      garage: stringify(ownedVehicle.garage),
-      job: stringify(ownedVehicle.job),
-      pound: stringify(ownedVehicle.pound),
+      model,
+      model_hash: modelHash,
+      vehicle: normalizedVehicleProps,
+      owned_vehicle: normalizedOwnedVehicle,
+      type: normalizedOwnedVehicle.type,
+      stored: normalizedOwnedVehicle.stored,
+      state: normalizedOwnedVehicle.state,
+      garage: normalizedOwnedVehicle.garage,
+      job: normalizedOwnedVehicle.job,
+      pound: normalizedOwnedVehicle.pound,
     },
   };
 }
