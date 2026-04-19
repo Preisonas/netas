@@ -262,52 +262,108 @@ interface Character {
   playtimeMinutes: number;
 }
 
-const mockCharacters: Character[] = [];
-
 const ProfileSection = ({
   username,
   avatarUrl,
   discordId,
   email,
-}: { username: string; avatarUrl?: string | null; discordId?: string | null; email: string }) => (
-  <>
-    <SectionHeader title="Profilis" subtitle="Tavo paskyra ir veikėjai." />
+}: { username: string; avatarUrl?: string | null; discordId?: string | null; email: string }) => {
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    <div className="flex items-center gap-4 mb-8">
-      {avatarUrl ? (
-        <img src={avatarUrl} alt="" className="h-20 w-20 rounded-full object-cover" />
+  useEffect(() => {
+    if (!discordId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("characters")
+        .select("id, first_name, last_name, job, cash, bank, metadata, last_synced_at")
+        .eq("discord_id", discordId)
+        .order("last_synced_at", { ascending: false });
+      if (cancelled) return;
+      if (!error && data) {
+        setCharacters(
+          data.map((c) => {
+            const md = (c.metadata as { job_label?: string | null } | null) ?? null;
+            return {
+              id: c.id,
+              firstName: c.first_name ?? "",
+              lastName: c.last_name ?? "",
+              money: c.cash ?? 0,
+              bank: c.bank ?? 0,
+              job: md?.job_label || c.job || "—",
+              playtimeMinutes: 0,
+            };
+          })
+        );
+      }
+      setLoading(false);
+    };
+    load();
+
+    const channel = supabase
+      .channel(`characters-${discordId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` },
+        () => load()
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [discordId]);
+
+  return (
+    <>
+      <SectionHeader title="Profilis" subtitle="Tavo paskyra ir veikėjai." />
+
+      <div className="flex items-center gap-4 mb-8">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="h-20 w-20 rounded-full object-cover" />
+        ) : (
+          <div className="h-20 w-20 rounded-full bg-secondary grid place-items-center">
+            <User className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
+        <div>
+          <p className="text-xl font-bold">{username}</p>
+          <p className="text-sm text-muted-foreground">{email}</p>
+          <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">Discord ID: {discordId ?? "—"}</p>
+        </div>
+      </div>
+
+      <div className="mb-3 flex items-baseline justify-between">
+        <h3 className="text-lg font-semibold">Veikėjai</h3>
+        <span className="text-xs text-muted-foreground">{characters.length} / 3</span>
+      </div>
+
+      {loading ? (
+        <div className="rounded-xl bg-secondary/30 p-10 text-center">
+          <p className="text-sm text-muted-foreground">Kraunama...</p>
+        </div>
+      ) : characters.length === 0 ? (
+        <div className="rounded-xl bg-secondary/30 p-10 text-center">
+          <p className="text-sm text-muted-foreground">
+            Veikėjų dar nėra. Kai prisijungsi prie serverio, jie atsiras čia automatiškai.
+          </p>
+        </div>
       ) : (
-        <div className="h-20 w-20 rounded-full bg-secondary grid place-items-center">
-          <User className="h-8 w-8 text-muted-foreground" />
+        <div className="grid sm:grid-cols-2 gap-4">
+          {characters.map((c) => (
+            <CharacterCard key={c.id} character={c} />
+          ))}
         </div>
       )}
-      <div>
-        <p className="text-xl font-bold">{username}</p>
-        <p className="text-sm text-muted-foreground">{email}</p>
-        <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">Discord ID: {discordId ?? "—"}</p>
-      </div>
-    </div>
-
-    <div className="mb-3 flex items-baseline justify-between">
-      <h3 className="text-lg font-semibold">Veikėjai</h3>
-      <span className="text-xs text-muted-foreground">{mockCharacters.length} / 3</span>
-    </div>
-
-    {mockCharacters.length === 0 ? (
-      <div className="rounded-xl bg-secondary/30 p-10 text-center">
-        <p className="text-sm text-muted-foreground">
-          Veikėjų dar nėra. Kai prisijungsi prie serverio, jie atsiras čia automatiškai.
-        </p>
-      </div>
-    ) : (
-      <div className="grid sm:grid-cols-2 gap-4">
-        {mockCharacters.map((c) => (
-          <CharacterCard key={c.id} character={c} />
-        ))}
-      </div>
-    )}
-  </>
-);
+    </>
+  );
+};
 
 const formatMoney = (n: number) =>
   new Intl.NumberFormat("lt-LT").format(n) + " $";
