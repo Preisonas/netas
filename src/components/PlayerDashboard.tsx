@@ -274,6 +274,7 @@ const DeliveryPicker = ({
   itemLabel,
   type,
   sourceId,
+  basePrice,
   discordId,
   userId,
   onDelivered,
@@ -283,22 +284,52 @@ const DeliveryPicker = ({
   itemLabel: string;
   type: "vehicle" | "case_item";
   sourceId: string; // vehicle_id or case_id
+  basePrice?: number;
   discordId?: string | null;
   userId: string;
   onDelivered?: () => void;
 }) => {
   const { characters, loading } = usePlayerCharacters(discordId);
   const [submitting, setSubmitting] = useState(false);
+  const [useCustomPlate, setUseCustomPlate] = useState(false);
+  const [customPlate, setCustomPlate] = useState("");
+  const [fullTune, setFullTune] = useState(false);
   const qc = useQueryClient();
+
+  // Reset extras when closing
+  useEffect(() => {
+    if (!open) {
+      setUseCustomPlate(false);
+      setCustomPlate("");
+      setFullTune(false);
+    }
+  }, [open]);
 
   if (!open) return null;
 
+  const isVehicle = type === "vehicle";
+  const PLATE_COST = 5;
+  const TUNE_COST = 5;
+  const extras = (isVehicle && useCustomPlate ? PLATE_COST : 0) + (isVehicle && fullTune ? TUNE_COST : 0);
+  const total = (basePrice ?? 0) + extras;
+
+  const plateValid = !useCustomPlate || /^[A-Z0-9 ]{2,8}$/.test(customPlate.trim().toUpperCase());
+
   const deliver = async (c: PlayerCharacter) => {
     if (!discordId) return;
+    if (isVehicle && useCustomPlate && !plateValid) {
+      toast.error("Neteisingas numeris", { description: "2-8 simboliai: A-Z, 0-9, tarpai." });
+      return;
+    }
     setSubmitting(true);
     const payload: Record<string, unknown> = { type, character_id: c.id };
-    if (type === "vehicle") payload.vehicle_id = sourceId;
-    else payload.case_id = sourceId;
+    if (isVehicle) {
+      payload.vehicle_id = sourceId;
+      if (useCustomPlate) payload.custom_plate = customPlate.trim().toUpperCase();
+      if (fullTune) payload.full_tune = true;
+    } else {
+      payload.case_id = sourceId;
+    }
 
     const { data, error } = await supabase.functions.invoke("process-purchase", { body: payload });
     setSubmitting(false);
@@ -346,6 +377,76 @@ const DeliveryPicker = ({
           Į kurio veikėjo paskyrą pristatyti{" "}
           <span className="text-foreground font-medium">{itemLabel}</span>?
         </p>
+
+        {isVehicle && (
+          <div className="mb-4 space-y-3 rounded-lg border border-border/50 bg-secondary/30 p-3">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Papildomos paslaugos</p>
+
+            {/* Full tune */}
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={fullTune}
+                  onChange={(e) => setFullTune(e.target.checked)}
+                  className="h-4 w-4 accent-primary"
+                />
+                <span className="text-sm inline-flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  Pilnas tune (engine, brakes, suspension, turbo)
+                </span>
+              </div>
+              <span className="text-xs font-semibold text-primary">+{TUNE_COST} €</span>
+            </label>
+
+            {/* Custom plate */}
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={useCustomPlate}
+                  onChange={(e) => setUseCustomPlate(e.target.checked)}
+                  className="h-4 w-4 accent-primary"
+                />
+                <span className="text-sm inline-flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-primary" />
+                  Pasirinktinis numeris
+                </span>
+              </div>
+              <span className="text-xs font-semibold text-primary">+{PLATE_COST} €</span>
+            </label>
+
+            {useCustomPlate && (
+              <div>
+                <input
+                  type="text"
+                  value={customPlate}
+                  onChange={(e) => setCustomPlate(e.target.value.toUpperCase().slice(0, 8))}
+                  placeholder="ABC 123"
+                  maxLength={8}
+                  className={`w-full font-mono uppercase tracking-wider text-sm bg-background/60 border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-primary/50 ${
+                    customPlate && !plateValid ? "border-destructive" : "border-border/60"
+                  }`}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  2-8 simboliai: A-Z, 0-9, tarpai. {!plateValid && customPlate && (
+                    <span className="text-destructive">Neteisingas formatas</span>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {extras > 0 && basePrice !== undefined && (
+              <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+                <span className="text-muted-foreground">Iš viso:</span>
+                <span className="font-semibold">
+                  {basePrice} + {extras} = <span className="text-primary">{total} €</span>
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <p className="text-sm text-muted-foreground py-4">Kraunama...</p>
         ) : characters.length === 0 ? (
@@ -357,7 +458,7 @@ const DeliveryPicker = ({
             {characters.map((c) => (
               <button
                 key={c.id}
-                disabled={submitting}
+                disabled={submitting || (isVehicle && useCustomPlate && !plateValid)}
                 onClick={() => deliver(c)}
                 className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left disabled:opacity-50"
               >
