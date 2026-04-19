@@ -374,9 +374,9 @@ const DeliveryPicker = ({
     `${(c.firstName ?? "?")[0] ?? "?"}${(c.lastName ?? "")[0] ?? ""}`.toUpperCase();
   const platePreview = plateClean || "ABC 123";
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-background/90 p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] grid place-items-center bg-background/90 p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
