@@ -445,11 +445,6 @@ const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
             <Coins className="h-3.5 w-3.5" />
             {v.price} €
           </span>
-          {v.grid > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/60 text-muted-foreground">
-              Grid: <span className="text-foreground font-medium">{v.grid}€</span>
-            </span>
-          )}
           <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/60 text-muted-foreground">
             <Gauge className="h-3.5 w-3.5" />
             ~ {v.speed} km/h
