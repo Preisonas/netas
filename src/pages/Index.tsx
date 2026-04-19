@@ -177,23 +177,50 @@ const Index = () => {
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item, i) => (
-              <a
-                key={item}
-                href="#"
-                className={`px-4 py-1.5 text-sm rounded-sm transition-colors ${
-                  i === 0
-                    ? "bg-secondary text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                }`}
-              >
-                {item}
-              </a>
-            ))}
+            {navItems.map((item, i) => {
+              const isHome = i === 0;
+              const isShop = item === "Parduotuvė";
+              const isDiscordLink = item === "Wiki" || item === "Taisyklės";
+              const className = `px-4 py-1.5 text-sm rounded-sm transition-colors ${
+                isHome
+                  ? "bg-secondary text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+              }`;
+              if (isShop) {
+                return (
+                  <button key={item} onClick={() => setPanelOpen(true)} className={className}>
+                    {item}
+                  </button>
+                );
+              }
+              if (isDiscordLink) {
+                return (
+                  <a key={item} href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className={className}>
+                    {item}
+                  </a>
+                );
+              }
+              return (
+                <a key={item} href="#" className={className}>
+                  {item}
+                </a>
+              );
+            })}
           </nav>
-          <Button onClick={() => setPanelOpen(true)} className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
-            Žaidėjo panelė
-          </Button>
+          <div className="flex items-center gap-2">
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Discord"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-sm bg-secondary/60 text-foreground hover:bg-secondary transition-colors"
+            >
+              <DiscordIcon className="h-4 w-4" />
+            </a>
+            <Button onClick={() => setPanelOpen(true)} className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
+              Žaidėjo panelė
+            </Button>
+          </div>
         </header>
 
         {panelOpen ? (
