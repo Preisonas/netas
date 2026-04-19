@@ -26,7 +26,11 @@ import {
   Crown,
   Flame,
   Gift,
+  Shield,
+  AlertTriangle,
 } from "lucide-react";
+
+const OWNER_DISCORD_ID = "1276583745490649214";
 import { toast } from "sonner";
 import caseStarterImg from "@/assets/cases/starter.png";
 import caseVehicleImg from "@/assets/cases/vehicle.png";
@@ -45,9 +49,12 @@ type SectionKey =
   | "profile"
   | "shop"
   | "boxes"
-  | "credits";
+  | "credits"
+  | "admin-credits";
 
-const navGroups: { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] }[] = [
+type NavGroup = { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] };
+
+const baseNavGroups: NavGroup[] = [
   {
     label: "Valdymas",
     items: [
@@ -57,6 +64,13 @@ const navGroups: { label: string; items: { key: SectionKey; title: string; icon:
     ],
   },
 ];
+
+const ownerNavGroup: NavGroup = {
+  label: "Owner",
+  items: [
+    { key: "admin-credits", title: "Duoti kreditų", icon: Shield, badge: "OWNER" },
+  ],
+};
 
 const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const [active, setActive] = useState<SectionKey>("profile");
