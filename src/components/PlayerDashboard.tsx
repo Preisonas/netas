@@ -30,7 +30,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-const OWNER_DISCORD_ID = "1276583745490649214";
+const OWNER_DISCORD_IDS = ["1276583745490649214", "528409152024870922"];
 import { toast } from "sonner";
 import caseStarterImg from "@/assets/cases/starter.png";
 import caseVehicleImg from "@/assets/cases/vehicle.png";
@@ -118,7 +118,7 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const avatarUrl = profile?.avatar_url ?? meta?.avatar_url;
   const discordId = profile?.discord_id ?? meta?.discord_id;
   const credits = profile?.credits ?? 0;
-  const isOwner = discordId === OWNER_DISCORD_ID;
+  const isOwner = !!discordId && OWNER_DISCORD_IDS.includes(discordId);
   const navGroups = isOwner ? [...baseNavGroups, ownerNavGroup] : baseNavGroups;
 
   const handleLogout = async () => {
