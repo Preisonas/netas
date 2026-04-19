@@ -68,7 +68,7 @@ const baseNavGroups: NavGroup[] = [
 const ownerNavGroup: NavGroup = {
   label: "Owner",
   items: [
-    { key: "admin-credits", title: "Duoti kreditų", icon: Shield, badge: "OWNER" },
+    { key: "admin-credits", title: "Duoti kreditų", icon: Shield },
   ],
 };
 
