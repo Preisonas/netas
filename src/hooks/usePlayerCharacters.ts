@@ -53,7 +53,7 @@ export function usePlayerCharacters(discordId?: string | null) {
     load();
 
     const channel = supabase
-      .channel(`chars-hook-${discordId}`)
+      .channel(`chars-hook-${discordId}-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` },

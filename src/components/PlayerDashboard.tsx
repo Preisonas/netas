@@ -499,6 +499,7 @@ interface ShopVehicle {
 }
 
 const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId: string }) => {
+  const { characters: ownedCharacters } = usePlayerCharacters(discordId);
   const [query, setQuery] = useState("");
   const [sortByPrice, setSortByPrice] = useState(false);
   const [vehicles, setVehicles] = useState<ShopVehicle[]>([]);
@@ -572,14 +573,14 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
         ) : filtered.length === 0 ? (
           <p className="col-span-full text-center text-muted-foreground py-12">Nėra transporto.</p>
         ) : (
-          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} discordId={discordId} userId={userId} />)
+          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} discordId={discordId} userId={userId} ownedCharacters={ownedCharacters} />)
         )}
       </div>
     </>
   );
 };
 
-const VehicleCard = ({ vehicle: v, discordId, userId }: { vehicle: ShopVehicle; discordId?: string | null; userId: string }) => {
+const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehicle: ShopVehicle; discordId?: string | null; userId: string; ownedCharacters: PlayerCharacter[] }) => {
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
@@ -632,7 +633,7 @@ const VehicleCard = ({ vehicle: v, discordId, userId }: { vehicle: ShopVehicle; 
           </ul>
         </div>
 
-        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} itemName={v.model} discordId={discordId} userId={userId} />
+        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} itemName={v.model} discordId={discordId} userId={userId} ownedCharacters={ownedCharacters} />
       </div>
     </article>
   );
@@ -643,13 +644,14 @@ const BuyWithCharacter = ({
   itemName,
   discordId,
   userId,
+  ownedCharacters,
 }: {
   itemLabel: string;
   itemName: string;
   discordId?: string | null;
   userId: string;
+  ownedCharacters: PlayerCharacter[];
 }) => {
-  const { characters } = usePlayerCharacters(discordId);
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -659,7 +661,7 @@ const BuyWithCharacter = ({
             toast.error("Prisijunk per Discord");
             return;
           }
-          if (characters.length === 0) {
+          if (ownedCharacters.length === 0) {
             toast.error("Neturite veikėjų. Prisijunk prie serverio.");
             return;
           }
