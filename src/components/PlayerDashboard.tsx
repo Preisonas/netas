@@ -305,7 +305,7 @@ const ProfileSection = ({
     const load = async () => {
       const { data, error } = await supabase
         .from("characters")
-        .select("id, first_name, last_name, job, cash, bank, metadata, last_synced_at")
+        .select("id, first_name, last_name, job, cash, bank, metadata, last_synced_at, playtime_minutes")
         .eq("discord_id", discordId)
         .order("last_synced_at", { ascending: false });
       if (cancelled) return;
@@ -320,7 +320,7 @@ const ProfileSection = ({
               money: c.cash ?? 0,
               bank: c.bank ?? 0,
               job: md?.job_label || c.job || "—",
-              playtimeMinutes: 0,
+              playtimeMinutes: c.playtime_minutes ?? 0,
             };
           })
         );
