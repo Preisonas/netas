@@ -41,6 +41,7 @@ import shopMclaren from "@/assets/shop-mclaren.png";
 import cardBackImg from "@/assets/cases/card-back.png";
 import CasesManager from "@/components/admin/CasesManager";
 import VehiclesManager from "@/components/admin/VehiclesManager";
+import { usePlayerCharacters, generatePlate, type PlayerCharacter } from "@/hooks/usePlayerCharacters";
 
 interface PlayerDashboardProps {
   session: Session;
@@ -239,9 +240,9 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
           {active === "profile" && (
             <ProfileSection username={username} avatarUrl={avatarUrl} discordId={discordId} email={session.user.email ?? ""} />
           )}
-          {active === "shop" && <ShopSection />}
+  {active === "shop" && <ShopSection discordId={discordId} userId={session.user.id} />}
           {active === "credits" && <CreditsSection />}
-          {active === "boxes" && <BoxesSection />}
+          {active === "boxes" && <BoxesSection discordId={discordId} userId={session.user.id} />}
           {active === "admin-credits" && isOwner && <AdminCreditsSection />}
           {active === "admin-cases" && isOwner && (
             <>
@@ -272,19 +273,113 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle?: string }
   </div>
 );
 
-interface Character {
-  id: string;
-  firstName: string;
-  lastName: string;
-  money: number;
-  bank: number;
-  job: string;
-  playtimeMinutes: number;
-}
+// Shared character-picker modal: lists user's real characters and creates a delivery row.
+const DeliveryPicker = ({
+  open,
+  onClose,
+  itemLabel,
+  itemName,
+  type,
+  discordId,
+  userId,
+  onDelivered,
+}: {
+  open: boolean;
+  onClose: () => void;
+  itemLabel: string;
+  itemName: string;
+  type: "vehicle" | "case_item";
+  discordId?: string | null;
+  userId: string;
+  onDelivered?: () => void;
+}) => {
+  const { characters, loading } = usePlayerCharacters(discordId);
+  const [submitting, setSubmitting] = useState(false);
 
-// Placeholder list used by shop/boxes "deliver to character" pickers.
-// TODO: replace with real per-user characters fetched from the `characters` table.
-const mockCharacters: Character[] = [];
+  if (!open) return null;
+
+  const deliver = async (c: PlayerCharacter) => {
+    if (!discordId) return;
+    setSubmitting(true);
+    const plate = type === "vehicle" ? generatePlate() : null;
+    const { error } = await supabase.from("pending_deliveries").insert({
+      user_id: userId,
+      discord_id: discordId,
+      character_id: c.id,
+      character_identifier: c.identifier,
+      type,
+      item_name: itemName,
+      label: itemLabel,
+      plate,
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error("Nepavyko pristatyti", { description: error.message });
+      return;
+    }
+    toast.success(
+      `${itemLabel} išsiųstas: ${c.firstName} ${c.lastName}`,
+      plate ? { description: `Numeris: ${plate}` } : undefined
+    );
+    onDelivered?.();
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-xl border border-border/60 bg-card/95 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-lg font-bold">Pasirink veikėją</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Į kurio veikėjo paskyrą pristatyti{" "}
+          <span className="text-foreground font-medium">{itemLabel}</span>?
+        </p>
+        {loading ? (
+          <p className="text-sm text-muted-foreground py-4">Kraunama...</p>
+        ) : characters.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">
+            Veikėjų nėra. Prisijunk prie serverio, kad jie atsirastų.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {characters.map((c) => (
+              <button
+                key={c.id}
+                disabled={submitting}
+                onClick={() => deliver(c)}
+                className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left disabled:opacity-50"
+              >
+                <div>
+                  <p className="text-sm font-semibold">
+                    {c.firstName || "—"} {c.lastName}
+                  </p>
+                  <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                    <Briefcase className="h-3 w-3" />
+                    {c.job}
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                  <Wallet className="h-3 w-3 text-primary" />
+                  {formatMoney(c.bank)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const ProfileSection = ({
   username,
@@ -292,57 +387,7 @@ const ProfileSection = ({
   discordId,
   email,
 }: { username: string; avatarUrl?: string | null; discordId?: string | null; email: string }) => {
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!discordId) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-
-    const load = async () => {
-      const { data, error } = await supabase
-        .from("characters")
-        .select("id, first_name, last_name, job, cash, bank, metadata, last_synced_at, playtime_minutes")
-        .eq("discord_id", discordId)
-        .order("last_synced_at", { ascending: false });
-      if (cancelled) return;
-      if (!error && data) {
-        setCharacters(
-          data.map((c) => {
-            const md = (c.metadata as { job_label?: string | null } | null) ?? null;
-            return {
-              id: c.id,
-              firstName: c.first_name ?? "",
-              lastName: c.last_name ?? "",
-              money: c.cash ?? 0,
-              bank: c.bank ?? 0,
-              job: md?.job_label || c.job || "—",
-              playtimeMinutes: c.playtime_minutes ?? 0,
-            };
-          })
-        );
-      }
-      setLoading(false);
-    };
-    load();
-
-    const channel = supabase
-      .channel(`characters-${discordId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` },
-        () => load()
-      )
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
-    };
-  }, [discordId]);
+  const { characters, loading } = usePlayerCharacters(discordId);
 
   return (
     <>
@@ -398,7 +443,7 @@ const formatPlaytime = (minutes: number) => {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 };
 
-const CharacterCard = ({ character: c }: { character: Character }) => (
+const CharacterCard = ({ character: c }: { character: PlayerCharacter }) => (
   <article className="group relative rounded-xl overflow-hidden bg-secondary/30 hover:bg-secondary/50 transition-colors p-5">
     <div
       aria-hidden
@@ -427,7 +472,7 @@ const CharacterCard = ({ character: c }: { character: Character }) => (
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Grynais</p>
           <p className="mt-1 text-sm font-bold inline-flex items-center gap-1.5">
             <Coins className="h-3.5 w-3.5 text-primary" />
-            {formatMoney(c.money)}
+            {formatMoney(c.cash)}
           </p>
         </div>
         <div className="rounded-lg bg-background/40 p-3">
@@ -453,7 +498,7 @@ interface ShopVehicle {
   features: string[];
 }
 
-const ShopSection = () => {
+const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId: string }) => {
   const [query, setQuery] = useState("");
   const [sortByPrice, setSortByPrice] = useState(false);
   const [vehicles, setVehicles] = useState<ShopVehicle[]>([]);
@@ -527,14 +572,14 @@ const ShopSection = () => {
         ) : filtered.length === 0 ? (
           <p className="col-span-full text-center text-muted-foreground py-12">Nėra transporto.</p>
         ) : (
-          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} />)
+          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} discordId={discordId} userId={userId} />)
         )}
       </div>
     </>
   );
 };
 
-const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
+const VehicleCard = ({ vehicle: v, discordId, userId }: { vehicle: ShopVehicle; discordId?: string | null; userId: string }) => {
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
@@ -587,19 +632,34 @@ const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
           </ul>
         </div>
 
-        <BuyWithCharacter itemName={`${v.brand} ${v.model}`} />
+        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} itemName={v.model} discordId={discordId} userId={userId} />
       </div>
     </article>
   );
 };
 
-const BuyWithCharacter = ({ itemName }: { itemName: string }) => {
+const BuyWithCharacter = ({
+  itemLabel,
+  itemName,
+  discordId,
+  userId,
+}: {
+  itemLabel: string;
+  itemName: string;
+  discordId?: string | null;
+  userId: string;
+}) => {
+  const { characters } = usePlayerCharacters(discordId);
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         onClick={() => {
-          if (mockCharacters.length === 0) {
+          if (!discordId) {
+            toast.error("Prisijunk per Discord");
+            return;
+          }
+          if (characters.length === 0) {
             toast.error("Neturite veikėjų. Prisijunk prie serverio.");
             return;
           }
@@ -609,54 +669,15 @@ const BuyWithCharacter = ({ itemName }: { itemName: string }) => {
       >
         Pirkti
       </button>
-      {open && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="w-full max-w-md rounded-xl border border-border/60 bg-card/90 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-lg font-bold">Pasirink veikėją</h3>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4">
-              Į kurio veikėjo paskyrą pristatyti{" "}
-              <span className="text-foreground font-medium">{itemName}</span>?
-            </p>
-            <div className="space-y-2">
-              {mockCharacters.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    toast.success(`${itemName} priskirtas: ${c.firstName} ${c.lastName}`);
-                    setOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {c.firstName} {c.lastName}
-                    </p>
-                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                      <Briefcase className="h-3 w-3" />
-                      {c.job}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                    <Wallet className="h-3 w-3 text-primary" />
-                    {formatMoney(c.bank)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <DeliveryPicker
+        open={open}
+        onClose={() => setOpen(false)}
+        itemLabel={itemLabel}
+        itemName={itemName}
+        type="vehicle"
+        discordId={discordId}
+        userId={userId}
+      />
     </>
   );
 };
@@ -861,7 +882,7 @@ const rarityIcon = (kind: CaseItem["kind"]) => {
   return Coins;
 };
 
-const BoxesSection = () => {
+const BoxesSection = ({ discordId, userId }: { discordId?: string | null; userId: string }) => {
   const [openingBox, setOpeningBox] = useState<LootBox | null>(null);
   const [boxes, setBoxes] = useState<LootBox[]>([]);
   const [loading, setLoading] = useState(true);
@@ -940,7 +961,7 @@ const BoxesSection = () => {
       )}
 
       {openingBox && (
-        <CaseOpeningModal box={openingBox} onClose={() => setOpeningBox(null)} />
+        <CaseOpeningModal box={openingBox} onClose={() => setOpeningBox(null)} discordId={discordId} userId={userId} />
       )}
     </>
   );
@@ -1005,7 +1026,7 @@ const CARD_COUNT = 5;
 
 type Phase = "idle" | "shuffling" | "picking" | "revealing" | "done";
 
-const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void }) => {
+const CaseOpeningModal = ({ box, onClose, discordId, userId }: { box: LootBox; onClose: () => void; discordId?: string | null; userId: string }) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [cards, setCards] = useState<CaseItem[]>([]);
   const [winnerIdx, setWinnerIdx] = useState<number>(-1);
@@ -1165,59 +1186,20 @@ const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void 
           </p>
         )}
 
-        {selectingChar && winner && (
-          <div
-            className="absolute inset-0 z-30 grid place-items-center bg-background/85 backdrop-blur-md p-6 rounded-2xl"
-            onClick={() => setSelectingChar(false)}
-          >
-            <div
-              className="w-full max-w-md rounded-xl border border-border/60 bg-card p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-lg font-bold">Pasirink veikėją</h3>
-                <button onClick={() => setSelectingChar(false)} className="text-muted-foreground hover:text-foreground">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground mb-4">
-                Į kurio veikėjo paskyrą pristatyti{" "}
-                <span className="text-foreground font-medium">{winner.name}</span>?
-              </p>
-              {mockCharacters.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4">Veikėjų nėra.</p>
-              ) : (
-                <div className="space-y-2">
-                  {mockCharacters.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        toast.success(`${winner.name} priskirtas: ${c.firstName} ${c.lastName}`);
-                        setSelectingChar(false);
-                        reset();
-                        onClose();
-                      }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold">
-                          {c.firstName} {c.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                          <Briefcase className="h-3 w-3" />
-                          {c.job}
-                        </p>
-                      </div>
-                      <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                        <Wallet className="h-3 w-3 text-primary" />
-                        {formatMoney(c.bank)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+        {winner && (
+          <DeliveryPicker
+            open={selectingChar}
+            onClose={() => setSelectingChar(false)}
+            itemLabel={winner.name}
+            itemName={winner.name}
+            type="case_item"
+            discordId={discordId}
+            userId={userId}
+            onDelivered={() => {
+              reset();
+              onClose();
+            }}
+          />
         )}
       </div>
     </div>
