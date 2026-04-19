@@ -58,7 +58,13 @@ const Index = () => {
   const [players, setPlayers] = useState<{ clients: number; max: number } | null>(null);
   const [serverStatus, setServerStatus] = useState<"online" | "offline" | "restarting">("restarting");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [panelInitialSection, setPanelInitialSection] = useState<"profile" | "shop">("profile");
   const [session, setSession] = useState<Session | null>(null);
+
+  const openPanel = (section: "profile" | "shop" = "profile") => {
+    setPanelInitialSection(section);
+    setPanelOpen(true);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => setSession(sess));
