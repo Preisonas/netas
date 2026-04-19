@@ -766,31 +766,14 @@ const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; 
   mythic:    { text: "text-primary",            ring: "ring-primary/50",            label: "MITINIS",    bar: "bg-primary",                   badge: "bg-primary/15 text-primary border border-primary/30" },
 };
 
-const lootBoxes: LootBox[] = [
-  {
-    id: "starter", name: "Pinigų dėžė", tagline: "Atsitiktinė pinigų suma", price: 5, icon: Gift, accent: "210 90% 60%", image: caseStarterImg,
-    pool: [
-      { id: "m5",    name: "5 €",     rarity: "common",    weight: 35, kind: "credits", value: 5 },
-      { id: "m10",   name: "10 €",    rarity: "common",    weight: 25, kind: "credits", value: 10 },
-      { id: "m25",   name: "25 €",    rarity: "rare",      weight: 18, kind: "credits", value: 25 },
-      { id: "m50",   name: "50 €",    rarity: "rare",      weight: 12, kind: "credits", value: 50 },
-      { id: "m100",  name: "100 €",   rarity: "epic",      weight: 6,  kind: "credits", value: 100 },
-      { id: "m250",  name: "250 €",   rarity: "epic",      weight: 3,  kind: "credits", value: 250 },
-      { id: "m500",  name: "500 €",   rarity: "legendary", weight: 0.8, kind: "credits", value: 500 },
-      { id: "m1000", name: "1000 €",  rarity: "mythic",    weight: 0.2, kind: "credits", value: 1000 },
-    ],
-  },
-  {
-    id: "vehicle", name: "Transporto dėžė", tagline: "Šansas laimėti automobilį", price: 25, icon: Car, accent: "160 75% 55%", image: caseVehicleImg,
-    pool: [
-      { id: "c10",   name: "10 kreditų",   rarity: "common",    weight: 50, kind: "credits", value: 10 },
-      { id: "c25",   name: "25 kreditai",  rarity: "rare",      weight: 25, kind: "credits", value: 25 },
-      { id: "audi",  name: "Audi RS6",     rarity: "epic",      weight: 15, kind: "vehicle" },
-      { id: "bmwm3", name: "BMW M3 G81",   rarity: "legendary", weight: 8,  kind: "vehicle" },
-      { id: "senna", name: "McLaren Senna",rarity: "mythic",    weight: 2,  kind: "vehicle" },
-    ],
-  },
-];
+// Auto-derive rarity from chance % for visual styling only
+const rarityFromChance = (chance: number): Rarity => {
+  if (chance >= 30) return "common";
+  if (chance >= 15) return "rare";
+  if (chance >= 5) return "epic";
+  if (chance >= 1) return "legendary";
+  return "mythic";
+};
 
 const rarityIcon = (kind: CaseItem["kind"]) => {
   if (kind === "vehicle") return Car;
@@ -800,15 +783,70 @@ const rarityIcon = (kind: CaseItem["kind"]) => {
 
 const BoxesSection = () => {
   const [openingBox, setOpeningBox] = useState<LootBox | null>(null);
+  const [boxes, setBoxes] = useState<LootBox[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: cases } = await supabase
+        .from("cases")
+        .select("id, name, image_url, price")
+        .order("created_at", { ascending: false });
+      const { data: items } = await supabase
+        .from("case_items")
+        .select("id, case_id, label, item_name, chance");
+      if (cancelled) return;
+      const byCase = new Map<string, LootBox["pool"]>();
+      (items ?? []).forEach((it) => {
+        const arr = byCase.get(it.case_id) ?? [];
+        arr.push({
+          id: it.id,
+          name: it.label,
+          rarity: rarityFromChance(Number(it.chance)),
+          weight: Number(it.chance),
+          kind: "credits",
+        });
+        byCase.set(it.case_id, arr);
+      });
+      setBoxes(
+        (cases ?? []).map((c) => ({
+          id: c.id,
+          name: c.name,
+          tagline: "",
+          price: c.price,
+          icon: Package,
+          accent: "210 90% 60%",
+          image: c.image_url ?? undefined,
+          pool: byCase.get(c.id) ?? [],
+        }))
+      );
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <>
-      <SectionHeader title="Dėžės" subtitle="Atidaryk dėžes ir laimėk transportą, kreditus arba kosmetiką." />
+      <SectionHeader title="Dėžės" subtitle="Atidaryk dėžes ir laimėk daiktus." />
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-        {lootBoxes.map((box) => (
-          <BoxCard key={box.id} box={box} onOpen={() => setOpeningBox(box)} />
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-center text-muted-foreground py-12">Kraunama…</p>
+      ) : boxes.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Dar nėra dėžių.</p>
+      ) : (
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {boxes.map((box) => (
+            <BoxCard key={box.id} box={box} onOpen={() => {
+              if (box.pool.length === 0) {
+                toast.error("Šioje dėžėje dar nėra daiktų");
+                return;
+              }
+              setOpeningBox(box);
+            }} />
+          ))}
+        </div>
+      )}
 
       {openingBox && (
         <CaseOpeningModal box={openingBox} onClose={() => setOpeningBox(null)} />
