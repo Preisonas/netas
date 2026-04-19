@@ -1,0 +1,1 @@
+ALTER TABLE public.vehicles ADD COLUMN model_name text NOT NULL DEFAULT '';

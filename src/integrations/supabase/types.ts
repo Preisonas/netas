@@ -123,6 +123,7 @@ export type Database = {
           id: string
           image_url: string | null
           model: string
+          model_name: string
           price: number
           sort_order: number
           top_speed: number
@@ -136,6 +137,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           model: string
+          model_name?: string
           price?: number
           sort_order?: number
           top_speed?: number
@@ -149,6 +151,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           model?: string
+          model_name?: string
           price?: number
           sort_order?: number
           top_speed?: number
