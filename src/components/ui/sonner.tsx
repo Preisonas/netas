@@ -21,12 +21,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       toastOptions={{
         duration: 3500,
+        unstyled: false,
         classNames: {
           toast:
-            "group !w-[340px] !bg-card/95 !border !border-border/60 !text-foreground !backdrop-blur-xl !shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)] !rounded-lg !p-3 !pl-3.5 !pr-3 !gap-2.5 !items-center",
+            "group !w-[340px] !bg-[hsl(240_7%_5%/0.95)] !border-0 !text-foreground !backdrop-blur-xl !shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] !rounded-lg !p-3 !pl-3.5 !pr-3 !gap-2.5 !items-center",
           title: "!text-[13px] !font-semibold !leading-tight !text-foreground",
           description: "!text-[12px] !text-muted-foreground !mt-0.5 !leading-snug",
-          icon: "!shrink-0 !m-0 !self-center",
+          icon: "!shrink-0 !m-0 !self-center !grid !place-items-center !h-7 !w-7 !rounded-md !bg-secondary/60",
           closeButton:
             "!opacity-0 group-hover:!opacity-100 !transition-opacity !left-auto !right-2 !top-1/2 !-translate-y-1/2 !translate-x-0 !h-6 !w-6 !rounded-md !bg-secondary/80 hover:!bg-secondary !border-0 !text-muted-foreground hover:!text-foreground !grid !place-items-center [&>svg]:!h-3.5 [&>svg]:!w-3.5",
           actionButton:
@@ -40,37 +41,32 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-// Wrap toast with dedup: same message within 1.5s reuses the same toast id
+// Dedup wrapper: identical messages within 1.5s reuse the same toast id
 const recent = new Map<string, number>();
 const DEDUP_MS = 1500;
+const keyOf = (msg: unknown, type: string) =>
+  `${type}:${typeof msg === "string" ? msg : JSON.stringify(msg)}`;
 
-const keyOf = (msg: unknown, type: string) => `${type}:${typeof msg === "string" ? msg : JSON.stringify(msg)}`;
-
-const dedup = (type: "default" | "success" | "error" | "warning" | "info" | "loading") =>
-  (message: Parameters<typeof sonnerToast>[0], data?: Parameters<typeof sonnerToast>[1]) => {
+const wrap = (type: "default" | "success" | "error" | "warning" | "info" | "loading") =>
+  (message: any, data?: any) => {
     const k = keyOf(message, type);
     const now = Date.now();
-    const last = recent.get(k);
-    if (last && now - last < DEDUP_MS) {
-      return sonnerToast[type === "default" ? "message" : type](message as any, { ...data, id: k });
-    }
     recent.set(k, now);
-    // cleanup old
     if (recent.size > 50) {
       for (const [key, ts] of recent) if (now - ts > DEDUP_MS * 4) recent.delete(key);
     }
-    return type === "default"
-      ? sonnerToast(message as any, { ...data, id: k })
-      : sonnerToast[type](message as any, { ...data, id: k });
+    const opts = { ...data, id: k };
+    if (type === "default") return sonnerToast(message, opts);
+    return (sonnerToast as any)[type](message, opts);
   };
 
-const baseToast = dedup("default") as unknown as typeof sonnerToast;
+const baseToast = wrap("default") as unknown as typeof sonnerToast;
 const toast = Object.assign(baseToast, sonnerToast, {
-  success: dedup("success"),
-  error: dedup("error"),
-  warning: dedup("warning"),
-  info: dedup("info"),
-  loading: dedup("loading"),
+  success: wrap("success"),
+  error: wrap("error"),
+  warning: wrap("warning"),
+  info: wrap("info"),
+  loading: wrap("loading"),
 });
 
 export { Toaster, toast };
