@@ -139,6 +139,65 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_deliveries: {
+        Row: {
+          character_id: string
+          character_identifier: string
+          created_at: string
+          delivered_at: string | null
+          discord_id: string
+          error: string | null
+          id: string
+          item_name: string
+          label: string
+          metadata: Json | null
+          plate: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          character_identifier: string
+          created_at?: string
+          delivered_at?: string | null
+          discord_id: string
+          error?: string | null
+          id?: string
+          item_name: string
+          label: string
+          metadata?: Json | null
+          plate?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          character_identifier?: string
+          created_at?: string
+          delivered_at?: string | null
+          discord_id?: string
+          error?: string | null
+          id?: string
+          item_name?: string
+          label?: string
+          metadata?: Json | null
+          plate?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_deliveries_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
