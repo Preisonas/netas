@@ -380,19 +380,46 @@ const categories: Category[] = ["Visi", "Transportas", "Paslaugos", "Daiktai", "
 
 const ShopSection = () => {
   const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<Category>("Visi");
   const [sortByPrice, setSortByPrice] = useState(false);
+  const [vehicles, setVehicles] = useState<ShopVehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("id, brand, model, price, top_speed, trunk, image_url, features")
+        .order("created_at", { ascending: false });
+      if (!cancelled) {
+        if (!error && data) {
+          setVehicles(
+            data.map((v) => ({
+              id: v.id,
+              brand: v.brand,
+              model: v.model,
+              price: v.price,
+              speed: v.top_speed,
+              trunk: v.trunk ?? undefined,
+              image: v.image_url ?? undefined,
+              features: v.features ?? [],
+            }))
+          );
+        }
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = useMemo(() => {
-    let list = shopVehicles.filter((v) => {
-      const matchesCat = cat === "Visi" || v.category === cat;
+    let list = vehicles.filter((v) => {
       const q = query.trim().toLowerCase();
-      const matchesQuery = !q || `${v.brand} ${v.model}`.toLowerCase().includes(q);
-      return matchesCat && matchesQuery;
+      return !q || `${v.brand} ${v.model}`.toLowerCase().includes(q);
     });
     if (sortByPrice) list = [...list].sort((a, b) => a.price - b.price);
     return list;
-  }, [query, cat, sortByPrice]);
+  }, [query, sortByPrice, vehicles]);
 
   return (
     <>
