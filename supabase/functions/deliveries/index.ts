@@ -46,6 +46,17 @@ Deno.serve(async (req) => {
     if (!body.id || !body.status) return json({ error: "id and status required" }, 400);
     if (!["delivered", "failed"].includes(body.status)) return json({ error: "Invalid status" }, 400);
 
+    // Fetch delivery first so we can refund on failure
+    const { data: delivery, error: fetchErr } = await supabase
+      .from("pending_deliveries")
+      .select("id, user_id, status, type, item_name, label")
+      .eq("id", body.id)
+      .maybeSingle();
+    if (fetchErr || !delivery) return json({ error: "Delivery not found" }, 404);
+    if (delivery.status !== "pending") {
+      return json({ success: true, note: "Already processed" });
+    }
+
     const { error } = await supabase
       .from("pending_deliveries")
       .update({
@@ -53,8 +64,39 @@ Deno.serve(async (req) => {
         delivered_at: new Date().toISOString(),
         error: body.error ?? null,
       })
-      .eq("id", body.id);
+      .eq("id", body.id)
+      .eq("status", "pending");
     if (error) return json({ error: error.message }, 500);
+
+    // Refund credits if delivery failed
+    if (body.status === "failed") {
+      // Find original price by type+item
+      let price = 0;
+      if (delivery.type === "vehicle") {
+        const { data: v } = await supabase
+          .from("vehicles").select("price").eq("model", delivery.item_name).maybeSingle();
+        price = v?.price ?? 0;
+      } else if (delivery.type === "case_item") {
+        // label format: "<case name> → <reward>"
+        const caseName = (delivery.label || "").split("→")[0]?.trim();
+        if (caseName) {
+          const { data: c } = await supabase
+            .from("cases").select("price").eq("name", caseName).maybeSingle();
+          price = c?.price ?? 0;
+        }
+      }
+      if (price > 0) {
+        const { data: prof } = await supabase
+          .from("profiles").select("credits").eq("user_id", delivery.user_id).maybeSingle();
+        if (prof) {
+          await supabase
+            .from("profiles")
+            .update({ credits: (prof.credits ?? 0) + price })
+            .eq("user_id", delivery.user_id);
+        }
+      }
+    }
+
     return json({ success: true });
   }
 
