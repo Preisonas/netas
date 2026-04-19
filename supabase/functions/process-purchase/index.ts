@@ -182,6 +182,8 @@ function buildVehicleDeliveryMetadata({
   model,
   modelName,
   plate,
+  customPlate,
+  fullTune,
 }: {
   characterIdentifier: string;
   characterName: string | null;
@@ -189,13 +191,17 @@ function buildVehicleDeliveryMetadata({
   model: string;
   modelName: string;
   plate: string;
+  customPlate: boolean;
+  fullTune: boolean;
 }) {
   const modelHash = joaat(model);
-  // ESX owned_vehicles stores `vehicle` as JSON with the STRING model name,
-  // not the numeric hash. The game hashes it via GetHashKey(model) on spawn.
+  // ESX owned_vehicles stores `vehicle` as JSON with the STRING model name.
+  // When fullTune is true, include max upgrade props so FiveM can apply them on spawn.
+  const tuneProps = fullTune ? buildFullTuneProps() : {};
   const vehicleProps = {
-    model,   // string, e.g. "m50"
+    model,
     plate,
+    ...tuneProps,
   };
 
   return {
@@ -207,6 +213,8 @@ function buildVehicleDeliveryMetadata({
     model,
     model_name: modelName,
     model_hash: modelHash,
+    custom_plate: customPlate,
+    full_tune: fullTune,
     vehicle_props: vehicleProps,
     owned_vehicle: {
       owner: characterIdentifier,
