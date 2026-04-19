@@ -213,9 +213,9 @@ const Index = () => {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Discord"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-sm bg-secondary/60 text-foreground hover:bg-secondary transition-colors"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-sm bg-[#5865F2] text-white hover:bg-[#4752C4] transition-colors shadow-sm"
             >
-              <DiscordIcon className="h-4 w-4" />
+              <DiscordIcon className="h-[18px] w-[18px]" />
             </a>
             <Button onClick={() => setPanelOpen(true)} className="rounded-sm bg-white text-black hover:bg-white/90 h-8 px-8">
               Žaidėjo panelė
