@@ -890,23 +890,20 @@ const BoxesSection = ({ discordId, userId }: { discordId?: string | null; userId
   const [openingBox, setOpeningBox] = useState<LootBox | null>(null);
   const [boxes, setBoxes] = useState<LootBox[]>([]);
   const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState<number>(0);
+  const qc = useQueryClient();
+  const profile = qc.getQueryData<{ credits?: number } | null>(["profile", userId]);
+  const credits = profile?.credits ?? 0;
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const [casesRes, itemsRes, profileRes] = await Promise.all([
+      const [casesRes, itemsRes] = await Promise.all([
         supabase.from("cases").select("id, name, image_url, price").order("created_at", { ascending: false }),
         supabase.from("case_items").select("id, case_id, label, item_name, chance"),
-        session
-          ? supabase.from("profiles").select("credits").eq("user_id", session.user.id).maybeSingle()
-          : Promise.resolve({ data: null as { credits: number } | null }),
       ]);
       if (cancelled) return;
       const cases = casesRes.data;
       const items = itemsRes.data;
-      if (profileRes.data) setCredits(profileRes.data.credits ?? 0);
       const byCase = new Map<string, LootBox["pool"]>();
       (items ?? []).forEach((it) => {
         const arr = byCase.get(it.case_id) ?? [];
