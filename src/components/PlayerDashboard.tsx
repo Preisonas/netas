@@ -239,9 +239,9 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
           {active === "profile" && (
             <ProfileSection username={username} avatarUrl={avatarUrl} discordId={discordId} email={session.user.email ?? ""} />
           )}
-          {active === "shop" && <ShopSection />}
+  {active === "shop" && <ShopSection discordId={discordId} userId={session.user.id} />}
           {active === "credits" && <CreditsSection />}
-          {active === "boxes" && <BoxesSection />}
+          {active === "boxes" && <BoxesSection discordId={discordId} userId={session.user.id} />}
           {active === "admin-credits" && isOwner && <AdminCreditsSection />}
           {active === "admin-cases" && isOwner && (
             <>
