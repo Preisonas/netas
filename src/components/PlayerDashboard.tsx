@@ -121,23 +121,8 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const isOwner = !!discordId && OWNER_DISCORD_IDS.includes(discordId);
   const navGroups = isOwner ? [...baseNavGroups, ownerNavGroup] : baseNavGroups;
 
-  useEffect(() => {
-    if (!discordId) { setCharacterCount(0); return; }
-    let cancelled = false;
-    const loadCount = async () => {
-      const { count } = await supabase
-        .from("characters")
-        .select("id", { count: "exact", head: true })
-        .eq("discord_id", discordId);
-      if (!cancelled) setCharacterCount(count ?? 0);
-    };
-    loadCount();
-    const channel = supabase
-      .channel(`characters-count-${discordId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` }, () => loadCount())
-      .subscribe();
-    return () => { cancelled = true; supabase.removeChannel(channel); };
-  }, [discordId]);
+  const { characters: sidebarCharacters } = usePlayerCharacters(discordId);
+  const characterCount = sidebarCharacters.length;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
