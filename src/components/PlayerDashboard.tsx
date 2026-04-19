@@ -572,7 +572,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
         ) : filtered.length === 0 ? (
           <p className="col-span-full text-center text-muted-foreground py-12">Nėra transporto.</p>
         ) : (
-          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} />)
+          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} discordId={discordId} userId={userId} />)
         )}
       </div>
     </>
@@ -961,7 +961,7 @@ const BoxesSection = ({ discordId, userId }: { discordId?: string | null; userId
       )}
 
       {openingBox && (
-        <CaseOpeningModal box={openingBox} onClose={() => setOpeningBox(null)} />
+        <CaseOpeningModal box={openingBox} onClose={() => setOpeningBox(null)} discordId={discordId} userId={userId} />
       )}
     </>
   );
@@ -1186,59 +1186,20 @@ const CaseOpeningModal = ({ box, onClose, discordId, userId }: { box: LootBox; o
           </p>
         )}
 
-        {selectingChar && winner && (
-          <div
-            className="absolute inset-0 z-30 grid place-items-center bg-background/85 backdrop-blur-md p-6 rounded-2xl"
-            onClick={() => setSelectingChar(false)}
-          >
-            <div
-              className="w-full max-w-md rounded-xl border border-border/60 bg-card p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-lg font-bold">Pasirink veikėją</h3>
-                <button onClick={() => setSelectingChar(false)} className="text-muted-foreground hover:text-foreground">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground mb-4">
-                Į kurio veikėjo paskyrą pristatyti{" "}
-                <span className="text-foreground font-medium">{winner.name}</span>?
-              </p>
-              {mockCharacters.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4">Veikėjų nėra.</p>
-              ) : (
-                <div className="space-y-2">
-                  {mockCharacters.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        toast.success(`${winner.name} priskirtas: ${c.firstName} ${c.lastName}`);
-                        setSelectingChar(false);
-                        reset();
-                        onClose();
-                      }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold">
-                          {c.firstName} {c.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                          <Briefcase className="h-3 w-3" />
-                          {c.job}
-                        </p>
-                      </div>
-                      <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                        <Wallet className="h-3 w-3 text-primary" />
-                        {formatMoney(c.bank)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+        {winner && (
+          <DeliveryPicker
+            open={selectingChar}
+            onClose={() => setSelectingChar(false)}
+            itemLabel={winner.name}
+            itemName={winner.name}
+            type="case_item"
+            discordId={discordId}
+            userId={userId}
+            onDelivered={() => {
+              reset();
+              onClose();
+            }}
+          />
         )}
       </div>
     </div>
