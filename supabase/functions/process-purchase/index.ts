@@ -239,6 +239,27 @@ function generatePlate(): string {
   return `${a}${b}${c} ${n}`;
 }
 
+// Full-tune ESX vehicle props: max performance + visual upgrades.
+// FiveM should merge these into vehicle_props before ESX.Game.SetVehicleProperties.
+function buildFullTuneProps() {
+  return {
+    modEngine: 3,
+    modBrakes: 2,
+    modTransmission: 2,
+    modSuspension: 3,
+    modTurbo: true,
+    modArmor: 4,
+    windowTint: 1,
+    wheels: 7,
+    modSmokeEnabled: true,
+    tyreSmokeColor: [255, 255, 255],
+    color1: 0,
+    color2: 0,
+    pearlescentColor: 0,
+    wheelColor: 0,
+  };
+}
+
 function joaat(value: string): number {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) {
