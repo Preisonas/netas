@@ -82,8 +82,8 @@ const ownerNavGroup: NavGroup = {
   ],
 };
 
-const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
-  const [active, setActive] = useState<SectionKey>("profile");
+const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: PlayerDashboardProps) => {
+  const [active, setActive] = useState<SectionKey>(initialSection);
   const qc = useQueryClient();
 
   const meta = session.user.user_metadata as { username?: string; full_name?: string; avatar_url?: string; discord_id?: string } | undefined;
