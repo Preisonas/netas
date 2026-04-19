@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -424,7 +425,7 @@ const DeliveryPicker = ({
                       onClick={() => setSelectedCharId(c.id)}
                       className={`group relative text-left rounded-lg p-3 transition-all duration-200 ${
                         active
-                          ? "bg-secondary/80 shadow-[0_0_0_1px_hsl(var(--primary)/0.5)]"
+                          ? "bg-secondary/80"
                           : "bg-secondary/30 hover:bg-secondary/60"
                       }`}
                     >
@@ -475,7 +476,7 @@ const DeliveryPicker = ({
                   onClick={() => setFullTune((v) => !v)}
                   className={`w-full flex items-center justify-between gap-3 rounded-lg p-3.5 transition-all ${
                     fullTune
-                      ? "bg-secondary/80 shadow-[0_0_0_1px_hsl(var(--primary)/0.5)]"
+                      ? "bg-secondary/80"
                       : "bg-secondary/30 hover:bg-secondary/60"
                   }`}
                 >
@@ -496,7 +497,7 @@ const DeliveryPicker = ({
                 <div
                   className={`rounded-lg transition-all ${
                     useCustomPlate
-                      ? "bg-secondary/80 shadow-[0_0_0_1px_hsl(var(--primary)/0.5)]"
+                      ? "bg-secondary/80"
                       : "bg-secondary/30"
                   }`}
                 >
