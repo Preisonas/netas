@@ -9,11 +9,17 @@ const corsHeaders = {
 
 type Body = {
   type: "vehicle" | "case_item";
-  // For vehicle: vehicle_id (uuid). For case_item: case_id (uuid) — server picks reward.
   vehicle_id?: string;
   case_id?: string;
-  character_id: string; // uuid of selected character
+  character_id: string;
+  // Vehicle-only extras (each +5 credits, server-validated)
+  custom_plate?: string | null;
+  full_tune?: boolean;
 };
+
+const PLATE_EXTRA_COST = 5;
+const TUNE_EXTRA_COST = 5;
+const PLATE_REGEX = /^[A-Z0-9 ]{2,8}$/;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
