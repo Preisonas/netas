@@ -549,7 +549,7 @@ const DeliveryPicker = ({
         </div>
 
         {/* Sticky footer */}
-        <div className="bg-card/80 backdrop-blur-xl px-6 py-4 flex items-center justify-between gap-4 shadow-[0_-1px_0_hsl(var(--border)/0.4)]">
+        <div className="bg-secondary/40 px-6 py-4 flex items-center justify-between gap-4">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Iš viso</p>
             {basePrice !== undefined ? (
