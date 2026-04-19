@@ -223,7 +223,19 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
           {active === "credits" && <CreditsSection />}
           {active === "boxes" && <BoxesSection />}
           {active === "admin-credits" && isOwner && <AdminCreditsSection />}
-          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && active !== "admin-credits" && <Placeholder title={titleFor(active)} />}
+          {active === "admin-cases" && isOwner && (
+            <>
+              <SectionHeader title="Dėžės (valdymas)" subtitle="Kurk, redaguok ir trink dėžes." />
+              <CasesManager />
+            </>
+          )}
+          {active === "admin-vehicles" && isOwner && (
+            <>
+              <SectionHeader title="Transportas (valdymas)" subtitle="Kurk, redaguok ir trink transporto priemones." />
+              <VehiclesManager />
+            </>
+          )}
+          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && active !== "admin-credits" && active !== "admin-cases" && active !== "admin-vehicles" && <Placeholder title={titleFor(active)} />}
         </main>
       </div>
     </section>
