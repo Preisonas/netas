@@ -48,6 +48,7 @@ import { usePlayerCharacters, generatePlate, type PlayerCharacter } from "@/hook
 interface PlayerDashboardProps {
   session: Session;
   onClose: () => void;
+  initialSection?: SectionKey;
 }
 
 type SectionKey =
