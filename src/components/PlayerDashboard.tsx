@@ -81,6 +81,7 @@ const ownerNavGroup: NavGroup = {
 const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const [active, setActive] = useState<SectionKey>("profile");
   const [profile, setProfile] = useState<{ username: string | null; avatar_url: string | null; discord_id: string | null; email: string | null; credits: number } | null>(null);
+  const [characterCount, setCharacterCount] = useState<number>(0);
 
   const meta = session.user.user_metadata as { username?: string; full_name?: string; avatar_url?: string; discord_id?: string } | undefined;
 
@@ -102,7 +103,6 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles", filter: `user_id=eq.${session.user.id}` },
         () => {
-          // Refetch to be safe (works even if payload doesn't include all columns)
           load();
         }
       )
@@ -120,6 +120,24 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const credits = profile?.credits ?? 0;
   const isOwner = !!discordId && OWNER_DISCORD_IDS.includes(discordId);
   const navGroups = isOwner ? [...baseNavGroups, ownerNavGroup] : baseNavGroups;
+
+  useEffect(() => {
+    if (!discordId) { setCharacterCount(0); return; }
+    let cancelled = false;
+    const loadCount = async () => {
+      const { count } = await supabase
+        .from("characters")
+        .select("id", { count: "exact", head: true })
+        .eq("discord_id", discordId);
+      if (!cancelled) setCharacterCount(count ?? 0);
+    };
+    loadCount();
+    const channel = supabase
+      .channel(`characters-count-${discordId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` }, () => loadCount())
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, [discordId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
