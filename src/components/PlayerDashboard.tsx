@@ -170,7 +170,9 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
               )}
               <div className="min-w-0">
                 <p className="text-sm font-semibold truncate">{username}</p>
-                <p className="text-xs text-muted-foreground truncate">Neturite sukurtų veikėjų</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {characterCount > 0 ? `${characterCount} veikėj${characterCount === 1 ? "as" : "ai"}` : "Neturite sukurtų veikėjų"}
+                </p>
               </div>
             </div>
 
