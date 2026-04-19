@@ -683,27 +683,6 @@ const CharacterCard = ({ character: c }: { character: PlayerCharacter }) => (
             {c.job}
           </p>
         </div>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {formatPlaytime(c.playtimeMinutes)}
-        </span>
-      </div>
-
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <div className="rounded-lg bg-background/40 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Grynais</p>
-          <p className="mt-1 text-sm font-bold inline-flex items-center gap-1.5">
-            <Coins className="h-3.5 w-3.5 text-primary" />
-            {formatMoney(c.cash)}
-          </p>
-        </div>
-        <div className="rounded-lg bg-background/40 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Banke</p>
-          <p className="mt-1 text-sm font-bold inline-flex items-center gap-1.5">
-            <Wallet className="h-3.5 w-3.5 text-primary" />
-            {formatMoney(c.bank)}
-          </p>
-        </div>
       </div>
     </div>
   </article>
