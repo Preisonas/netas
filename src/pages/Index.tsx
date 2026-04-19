@@ -231,7 +231,7 @@ const Index = () => {
 
         {panelOpen ? (
           session ? (
-            <PlayerDashboard session={session} onClose={() => setPanelOpen(false)} />
+            <PlayerDashboard session={session} onClose={() => setPanelOpen(false)} initialSection={panelInitialSection} />
           ) : (
             <PlayerPanel onClose={() => setPanelOpen(false)} />
           )
