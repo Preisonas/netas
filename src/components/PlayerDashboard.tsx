@@ -153,7 +153,7 @@ const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
             <div className="mt-4 flex items-center justify-between rounded-md bg-secondary/60 px-3 py-2">
               <span className="inline-flex items-center gap-2 text-sm">
                 <Coins className="h-4 w-4 text-primary" />
-                <span className="font-semibold">0 €</span>
+                <span className="font-semibold">{credits} €</span>
               </span>
               <button
                 onClick={() => setActive("credits")}
