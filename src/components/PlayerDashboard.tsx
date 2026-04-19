@@ -498,7 +498,7 @@ interface ShopVehicle {
   features: string[];
 }
 
-const ShopSection = () => {
+const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId: string }) => {
   const [query, setQuery] = useState("");
   const [sortByPrice, setSortByPrice] = useState(false);
   const [vehicles, setVehicles] = useState<ShopVehicle[]>([]);
@@ -579,7 +579,7 @@ const ShopSection = () => {
   );
 };
 
-const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
+const VehicleCard = ({ vehicle: v, discordId, userId }: { vehicle: ShopVehicle; discordId?: string | null; userId: string }) => {
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
@@ -632,19 +632,34 @@ const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
           </ul>
         </div>
 
-        <BuyWithCharacter itemName={`${v.brand} ${v.model}`} />
+        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} itemName={v.model} discordId={discordId} userId={userId} />
       </div>
     </article>
   );
 };
 
-const BuyWithCharacter = ({ itemName }: { itemName: string }) => {
+const BuyWithCharacter = ({
+  itemLabel,
+  itemName,
+  discordId,
+  userId,
+}: {
+  itemLabel: string;
+  itemName: string;
+  discordId?: string | null;
+  userId: string;
+}) => {
+  const { characters } = usePlayerCharacters(discordId);
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         onClick={() => {
-          if (mockCharacters.length === 0) {
+          if (!discordId) {
+            toast.error("Prisijunk per Discord");
+            return;
+          }
+          if (characters.length === 0) {
             toast.error("Neturite veikėjų. Prisijunk prie serverio.");
             return;
           }
@@ -654,54 +669,15 @@ const BuyWithCharacter = ({ itemName }: { itemName: string }) => {
       >
         Pirkti
       </button>
-      {open && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="w-full max-w-md rounded-xl border border-border/60 bg-card/90 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-lg font-bold">Pasirink veikėją</h3>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4">
-              Į kurio veikėjo paskyrą pristatyti{" "}
-              <span className="text-foreground font-medium">{itemName}</span>?
-            </p>
-            <div className="space-y-2">
-              {mockCharacters.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    toast.success(`${itemName} priskirtas: ${c.firstName} ${c.lastName}`);
-                    setOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md bg-secondary/50 hover:bg-secondary transition text-left"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {c.firstName} {c.lastName}
-                    </p>
-                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                      <Briefcase className="h-3 w-3" />
-                      {c.job}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                    <Wallet className="h-3 w-3 text-primary" />
-                    {formatMoney(c.bank)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <DeliveryPicker
+        open={open}
+        onClose={() => setOpen(false)}
+        itemLabel={itemLabel}
+        itemName={itemName}
+        type="vehicle"
+        discordId={discordId}
+        userId={userId}
+      />
     </>
   );
 };
@@ -906,7 +882,7 @@ const rarityIcon = (kind: CaseItem["kind"]) => {
   return Coins;
 };
 
-const BoxesSection = () => {
+const BoxesSection = ({ discordId, userId }: { discordId?: string | null; userId: string }) => {
   const [openingBox, setOpeningBox] = useState<LootBox | null>(null);
   const [boxes, setBoxes] = useState<LootBox[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1050,7 +1026,7 @@ const CARD_COUNT = 5;
 
 type Phase = "idle" | "shuffling" | "picking" | "revealing" | "done";
 
-const CaseOpeningModal = ({ box, onClose }: { box: LootBox; onClose: () => void }) => {
+const CaseOpeningModal = ({ box, onClose, discordId, userId }: { box: LootBox; onClose: () => void; discordId?: string | null; userId: string }) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [cards, setCards] = useState<CaseItem[]>([]);
   const [winnerIdx, setWinnerIdx] = useState<number>(-1);
