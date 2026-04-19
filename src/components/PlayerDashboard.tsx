@@ -1194,8 +1194,8 @@ const CaseOpeningModal = ({ box, onClose, discordId, userId }: { box: LootBox; o
           <DeliveryPicker
             open={selectingChar}
             onClose={() => setSelectingChar(false)}
-            itemLabel={winner.name}
-            itemName={winner.name}
+            itemLabel={box.name}
+            sourceId={box.id}
             type="case_item"
             discordId={discordId}
             userId={userId}
