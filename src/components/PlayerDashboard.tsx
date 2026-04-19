@@ -1553,18 +1553,23 @@ const AdminCreditsSection = () => {
     }
     setGranting(true);
     const newBalance = (user.credits ?? 0) + n;
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("profiles")
       .update({ credits: newBalance })
-      .eq("user_id", user.user_id);
+      .eq("user_id", user.user_id)
+      .select("user_id, credits");
     setGranting(false);
     setConfirmOpen(false);
     if (error) {
-      toast.error("Nepavyko atnaujinti kreditų");
+      toast.error("Nepavyko atnaujinti kreditų", { description: error.message });
+      return;
+    }
+    if (!updated || updated.length === 0) {
+      toast.error("Atnaujinimas užblokuotas (RLS) — nė viena eilutė nepakeista");
       return;
     }
     toast.success(`Pridėta ${n} kreditų ${user.username ?? user.discord_id}`);
-    setUser({ ...user, credits: newBalance });
+    setUser({ ...user, credits: updated[0].credits });
     setAmount("");
   };
 
