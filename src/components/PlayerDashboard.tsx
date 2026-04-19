@@ -366,39 +366,15 @@ type Tier = "gold" | "silver" | "bronze";
 type Category = "Visi" | "Transportas" | "Paslaugos" | "Daiktai" | "Ratai" | "Kita";
 
 interface ShopVehicle {
-  id: number;
+  id: string;
   brand: string;
   model: string;
   price: number;
-  grid: number;
   speed: number;
   trunk?: number;
-  tier: Tier;
-  category: Exclude<Category, "Visi">;
   image?: string;
   features: string[];
 }
-
-const shopVehicles: ShopVehicle[] = [
-  { id: 1, brand: "McLaren", model: "Senna", price: 220, grid: 30, speed: 340, trunk: 145, tier: "gold", category: "Transportas", image: shopMclaren,
-    features: ["Dirt map", "Ray Tracing Ready", "Custom airbrush", "4 sėdimos vietos"] },
-  { id: 2, brand: "BMW", model: "M5 F10", price: 140, grid: 20, speed: 310, tier: "gold", category: "Transportas",
-    features: ["Dirt map", "Ray Tracing Ready", "Vossen HF 5 Ratai", "Veikiantis spidometras", "4 sėdimos vietos"] },
-  { id: 3, brand: "BMW", model: "M4 CSL", price: 180, grid: 25, speed: 320, tier: "gold", category: "Transportas",
-    features: ["Dirt map", "Ray Tracing Ready", "Vossen HF 5 Ratai", "Veikiantis custom spidometras", "4 sėdimos vietos"] },
-  { id: 4, brand: "BMW", model: "M3 G81", price: 160, grid: 20, speed: 320, tier: "silver", category: "Transportas",
-    features: ["Dirt map", "Ray Tracing Ready", "Forgiato Flow 002 Ratai", "Veikiantis custom spidometras", "4 sėdimos vietos"] },
-  { id: 5, brand: "Pagani", model: "Huayra", price: 140, grid: 0, speed: 310, trunk: 248, tier: "silver", category: "Transportas",
-    features: ["Greitas pagreitėjimas", "Lengva valdyti"] },
-  { id: 6, brand: "Audi", model: "RS6 Avant", price: 170, grid: 22, speed: 305, tier: "bronze", category: "Transportas",
-    features: ["Dirt map", "Ray Tracing Ready", "Universalas", "5 sėdimos vietos"] },
-];
-
-const tierStyles: Record<Tier, { text: string; label: string }> = {
-  gold:   { text: "text-[hsl(330_90%_65%)]", label: "gold" },
-  silver: { text: "text-[hsl(160_75%_55%)]", label: "silver" },
-  bronze: { text: "text-[hsl(30_90%_60%)]",  label: "bronze" },
-};
 
 const categories: Category[] = ["Visi", "Transportas", "Paslaugos", "Daiktai", "Ratai", "Kita"];
 
