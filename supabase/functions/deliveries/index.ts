@@ -130,8 +130,11 @@ function enrichDelivery(delivery: DeliveryRow) {
   const model = stringify(metadata.model) ?? delivery.item_name;
   const modelHash = toInt(metadata.model_hash) ?? joaat(model);
 
+  // IMPORTANT: vehicle.model must be the STRING model name (e.g. "m50"),
+  // not the JOAAT hash. ESX/owned_vehicles stores it as a string in the JSON
+  // and hashes it client-side via GetHashKey(model).
   const normalizedVehicleProps = {
-    model: toInt(vehicleProps.model) ?? modelHash,
+    model,                                                  // string name
     plate: stringify(vehicleProps.plate) ?? plate,
   };
 
@@ -142,9 +145,9 @@ function enrichDelivery(delivery: DeliveryRow) {
       schema: "garage_vehicle_v1",
       owner: stringify(ownedVehicle.owner) ?? delivery.character_identifier,
       plate,
-      model,
-      model_hash: modelHash,
-      vehicle: normalizedVehicleProps,
+      model,                  // string, e.g. "m50"
+      model_hash: modelHash,  // numeric JOAAT, optional helper
+      vehicle: normalizedVehicleProps, // { model: "m50", plate: "ABC 123" }
       type: stringify(ownedVehicle.type) ?? "car",
       stored: toInt(ownedVehicle.stored) ?? 1,
       state: toInt(ownedVehicle.state) ?? 1,
