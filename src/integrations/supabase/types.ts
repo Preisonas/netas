@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      case_items: {
+        Row: {
+          case_id: string
+          chance: number
+          created_at: string
+          id: string
+          item_name: string
+          label: string
+        }
+        Insert: {
+          case_id: string
+          chance?: number
+          created_at?: string
+          id?: string
+          item_name: string
+          label: string
+        }
+        Update: {
+          case_id?: string
+          chance?: number
+          created_at?: string
+          id?: string
+          item_name?: string
+          label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_items_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cases: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -50,12 +115,54 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicles: {
+        Row: {
+          brand: string
+          created_at: string
+          features: string[]
+          id: string
+          image_url: string | null
+          model: string
+          price: number
+          sort_order: number
+          top_speed: number
+          trunk: number | null
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          features?: string[]
+          id?: string
+          image_url?: string | null
+          model: string
+          price?: number
+          sort_order?: number
+          top_speed?: number
+          trunk?: number | null
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          features?: string[]
+          id?: string
+          image_url?: string | null
+          model?: string
+          price?: number
+          sort_order?: number
+          top_speed?: number
+          trunk?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_owner: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
