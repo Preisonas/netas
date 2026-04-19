@@ -379,20 +379,20 @@ const DeliveryPicker = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in zoom-in-95 duration-200"
+        className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-xl bg-card/95 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.6)] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
-          <div>
+          <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
               {isVehicle ? "Transporto pirkimas" : "Dėžės pristatymas"}
             </p>
-            <h3 className="text-2xl font-bold leading-tight">{itemLabel}</h3>
+            <h3 className="text-2xl font-bold leading-tight truncate">{itemLabel}</h3>
           </div>
           <button
             onClick={onClose}
-            className="shrink-0 h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+            className="shrink-0 h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
