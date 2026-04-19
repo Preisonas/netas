@@ -584,7 +584,8 @@ const DeliveryPicker = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
