@@ -8,6 +8,23 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
+type DeliveryRow = {
+  id: string;
+  user_id: string;
+  discord_id: string;
+  character_id: string;
+  character_identifier: string;
+  type: string;
+  item_name: string;
+  label: string;
+  plate: string | null;
+  metadata: Record<string, unknown> | null;
+  status: string;
+  created_at: string;
+  delivered_at: string | null;
+  error: string | null;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -36,7 +53,7 @@ Deno.serve(async (req) => {
     if (identifier) q = q.eq("character_identifier", identifier);
     const { data, error } = await q;
     if (error) return json({ error: error.message }, 500);
-    return json({ deliveries: data ?? [] });
+    return json({ deliveries: (data ?? []).map((delivery) => enrichDelivery(delivery as DeliveryRow)) });
   }
 
   // POST { id, status: "delivered" | "failed", error? }  -> mark delivery as processed
@@ -102,6 +119,71 @@ Deno.serve(async (req) => {
 
   return json({ error: "Method not allowed" }, 405);
 });
+
+function enrichDelivery(delivery: DeliveryRow) {
+  if (delivery.type !== "vehicle") return delivery;
+
+  const metadata = isRecord(delivery.metadata) ? delivery.metadata : {};
+  const ownedVehicle = isRecord(metadata.owned_vehicle) ? metadata.owned_vehicle : {};
+  const vehicleProps = isRecord(metadata.vehicle_props) ? metadata.vehicle_props : {};
+  const plate = delivery.plate ?? stringify(metadata.plate) ?? stringify(ownedVehicle.plate) ?? null;
+  const model = stringify(metadata.model) ?? delivery.item_name;
+  const modelHash = toInt(metadata.model_hash) ?? joaat(model);
+
+  const normalizedVehicleProps = {
+    model: toInt(vehicleProps.model) ?? modelHash,
+    plate: stringify(vehicleProps.plate) ?? plate,
+  };
+
+  return {
+    ...delivery,
+    metadata,
+    garage_payload: {
+      schema: "garage_vehicle_v1",
+      owner: stringify(ownedVehicle.owner) ?? delivery.character_identifier,
+      plate,
+      model,
+      model_hash: modelHash,
+      vehicle: normalizedVehicleProps,
+      type: stringify(ownedVehicle.type) ?? "car",
+      stored: toInt(ownedVehicle.stored) ?? 1,
+      state: toInt(ownedVehicle.state) ?? 1,
+      garage: stringify(ownedVehicle.garage),
+      job: stringify(ownedVehicle.job),
+      pound: stringify(ownedVehicle.pound),
+    },
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function stringify(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function toInt(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return Math.trunc(value);
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return Math.trunc(parsed);
+  }
+  return null;
+}
+
+function joaat(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash += value.charCodeAt(i);
+    hash += hash << 10;
+    hash ^= hash >>> 6;
+  }
+  hash += hash << 3;
+  hash ^= hash >>> 11;
+  hash += hash << 15;
+  return hash | 0;
+}
 
 function json(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
