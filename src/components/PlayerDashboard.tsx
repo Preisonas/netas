@@ -209,17 +209,7 @@ interface Character {
   playtimeMinutes: number;
 }
 
-const mockCharacters: Character[] = [
-  {
-    id: "1",
-    firstName: "Jonas",
-    lastName: "Jonaitis",
-    money: 12500,
-    bank: 87400,
-    job: "Policininkas",
-    playtimeMinutes: 742,
-  },
-];
+const mockCharacters: Character[] = [];
 
 const ProfileSection = ({
   username,
