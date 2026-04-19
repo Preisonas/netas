@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface PlayerCharacter {
   id: string;
@@ -12,62 +14,90 @@ export interface PlayerCharacter {
   playtimeMinutes: number;
 }
 
+const charactersKey = (discordId?: string | null) => ["characters", discordId ?? "none"] as const;
+
+async function fetchCharacters(discordId: string): Promise<PlayerCharacter[]> {
+  const { data, error } = await supabase
+    .from("characters")
+    .select("id, identifier, first_name, last_name, job, cash, bank, metadata, playtime_minutes, last_synced_at")
+    .eq("discord_id", discordId)
+    .order("last_synced_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map((c) => {
+    const md = (c.metadata as { job_label?: string | null } | null) ?? null;
+    return {
+      id: c.id,
+      identifier: c.identifier,
+      firstName: c.first_name ?? "",
+      lastName: c.last_name ?? "",
+      job: md?.job_label || c.job || "—",
+      cash: c.cash ?? 0,
+      bank: c.bank ?? 0,
+      playtimeMinutes: c.playtime_minutes ?? 0,
+    };
+  });
+}
+
+// Module-level singleton: one realtime channel per discordId, ref-counted across hook instances
+const channelRegistry = new Map<string, { channel: RealtimeChannel; refs: number }>();
+
+function subscribe(discordId: string, onChange: () => void): () => void {
+  const existing = channelRegistry.get(discordId);
+  if (existing) {
+    existing.refs++;
+    // attach extra listener via supabase channel
+    existing.channel.on(
+      "postgres_changes" as never,
+      { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` } as never,
+      onChange as never,
+    );
+    return () => {
+      existing.refs--;
+      if (existing.refs <= 0) {
+        supabase.removeChannel(existing.channel);
+        channelRegistry.delete(discordId);
+      }
+    };
+  }
+  const channel = supabase
+    .channel(`chars-shared-${discordId}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` },
+      onChange,
+    )
+    .subscribe();
+  channelRegistry.set(discordId, { channel, refs: 1 });
+  return () => {
+    const e = channelRegistry.get(discordId);
+    if (!e) return;
+    e.refs--;
+    if (e.refs <= 0) {
+      supabase.removeChannel(e.channel);
+      channelRegistry.delete(discordId);
+    }
+  };
+}
+
 export function usePlayerCharacters(discordId?: string | null) {
-  const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: charactersKey(discordId),
+    queryFn: () => fetchCharacters(discordId as string),
+    enabled: !!discordId,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+  });
 
   useEffect(() => {
-    if (!discordId) {
-      setCharacters([]);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
+    if (!discordId) return;
+    const unsub = subscribe(discordId, () => {
+      qc.invalidateQueries({ queryKey: charactersKey(discordId) });
+    });
+    return unsub;
+  }, [discordId, qc]);
 
-    const load = async () => {
-      const { data, error } = await supabase
-        .from("characters")
-        .select("id, identifier, first_name, last_name, job, cash, bank, metadata, playtime_minutes, last_synced_at")
-        .eq("discord_id", discordId)
-        .order("last_synced_at", { ascending: false });
-      if (cancelled) return;
-      if (!error && data) {
-        setCharacters(
-          data.map((c) => {
-            const md = (c.metadata as { job_label?: string | null } | null) ?? null;
-            return {
-              id: c.id,
-              identifier: c.identifier,
-              firstName: c.first_name ?? "",
-              lastName: c.last_name ?? "",
-              job: md?.job_label || c.job || "—",
-              cash: c.cash ?? 0,
-              bank: c.bank ?? 0,
-              playtimeMinutes: c.playtime_minutes ?? 0,
-            };
-          })
-        );
-      }
-      setLoading(false);
-    };
-    load();
-
-    const channel = supabase
-      .channel(`chars-hook-${discordId}-${Math.random().toString(36).slice(2, 8)}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` },
-        () => load()
-      )
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
-    };
-  }, [discordId]);
-
-  return { characters, loading };
+  return { characters: query.data ?? [], loading: query.isLoading };
 }
 
 // Random LT-style plate: 3 letters + 3 digits, e.g. "MKK 123"
