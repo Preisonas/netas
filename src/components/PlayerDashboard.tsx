@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -81,38 +82,46 @@ const ownerNavGroup: NavGroup = {
 
 const PlayerDashboard = ({ session, onClose }: PlayerDashboardProps) => {
   const [active, setActive] = useState<SectionKey>("profile");
-  const [profile, setProfile] = useState<{ username: string | null; avatar_url: string | null; discord_id: string | null; email: string | null; credits: number } | null>(null);
+  const qc = useQueryClient();
 
   const meta = session.user.user_metadata as { username?: string; full_name?: string; avatar_url?: string; discord_id?: string } | undefined;
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
+  const profileQuery = useQuery({
+    queryKey: ["profile", session.user.id],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("username, avatar_url, discord_id, email, credits")
         .eq("user_id", session.user.id)
         .maybeSingle();
-      if (!cancelled && !error && data) setProfile(data);
-    };
-    load();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 15_000,
+  });
+  const profile = profileQuery.data;
 
+  useEffect(() => {
     const channel = supabase
-      .channel(`profile-changes-${session.user.id}`)
+      .channel(`profile-changes-${session.user.id}-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles", filter: `user_id=eq.${session.user.id}` },
-        () => {
-          load();
+        (payload) => {
+          const next = (payload.new ?? null) as typeof profile | null;
+          if (next) {
+            qc.setQueryData(["profile", session.user.id], (old: typeof profile) => ({ ...(old ?? {} as never), ...next }));
+          } else {
+            qc.invalidateQueries({ queryKey: ["profile", session.user.id] });
+          }
         }
       )
       .subscribe();
 
     return () => {
-      cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [session.user.id]);
+  }, [session.user.id, qc]);
 
   const username = profile?.username ?? meta?.username ?? meta?.full_name ?? session.user.email ?? "Žaidėjas";
   const avatarUrl = profile?.avatar_url ?? meta?.avatar_url;
@@ -280,6 +289,7 @@ const DeliveryPicker = ({
 }) => {
   const { characters, loading } = usePlayerCharacters(discordId);
   const [submitting, setSubmitting] = useState(false);
+  const qc = useQueryClient();
 
   if (!open) return null;
 
@@ -301,6 +311,12 @@ const DeliveryPicker = ({
     }
 
     const result = data as { label?: string; plate?: string | null; credits_remaining?: number };
+    if (typeof result.credits_remaining === "number") {
+      qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
+        old ? { ...old, credits: result.credits_remaining } : old
+      );
+    }
+    qc.invalidateQueries({ queryKey: ["profile", userId] });
     toast.success(
       `${result.label ?? itemLabel} išsiųstas: ${c.firstName} ${c.lastName}`,
       result.plate
@@ -874,23 +890,20 @@ const BoxesSection = ({ discordId, userId }: { discordId?: string | null; userId
   const [openingBox, setOpeningBox] = useState<LootBox | null>(null);
   const [boxes, setBoxes] = useState<LootBox[]>([]);
   const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState<number>(0);
+  const qc = useQueryClient();
+  const profile = qc.getQueryData<{ credits?: number } | null>(["profile", userId]);
+  const credits = profile?.credits ?? 0;
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const [casesRes, itemsRes, profileRes] = await Promise.all([
+      const [casesRes, itemsRes] = await Promise.all([
         supabase.from("cases").select("id, name, image_url, price").order("created_at", { ascending: false }),
         supabase.from("case_items").select("id, case_id, label, item_name, chance"),
-        session
-          ? supabase.from("profiles").select("credits").eq("user_id", session.user.id).maybeSingle()
-          : Promise.resolve({ data: null as { credits: number } | null }),
       ]);
       if (cancelled) return;
       const cases = casesRes.data;
       const items = itemsRes.data;
-      if (profileRes.data) setCredits(profileRes.data.credits ?? 0);
       const byCase = new Map<string, LootBox["pool"]>();
       (items ?? []).forEach((it) => {
         const arr = byCase.get(it.case_id) ?? [];
