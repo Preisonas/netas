@@ -44,18 +44,23 @@ export function usePlayerCharacters(discordId?: string | null) {
     queryKey: charactersKey(discordId),
     queryFn: () => fetchCharacters(discordId as string),
     enabled: !!discordId,
-    staleTime: 30_000,
+    staleTime: 5_000,
     gcTime: 5 * 60_000,
+    refetchInterval: 15_000, // polling fallback in case realtime drops
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
     if (!discordId) return;
-    const channel = supabase
+    const channel: RealtimeChannel = supabase
       .channel(`chars-${discordId}-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "characters", filter: `discord_id=eq.${discordId}` },
-        () => qc.invalidateQueries({ queryKey: charactersKey(discordId) }),
+        () => {
+          qc.invalidateQueries({ queryKey: charactersKey(discordId) });
+          qc.refetchQueries({ queryKey: charactersKey(discordId) });
+        },
       )
       .subscribe();
     return () => {
