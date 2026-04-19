@@ -436,35 +436,23 @@ const ShopSection = () => {
           />
         </div>
 
-        <div className="flex items-center gap-1 rounded-md bg-secondary/40 border border-border/60 p-1 overflow-x-auto">
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCat(c)}
-              className={`shrink-0 px-3 h-7 rounded text-xs font-medium transition-colors ${
-                cat === c ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-          <button
-            onClick={() => setSortByPrice((s) => !s)}
-            className={`shrink-0 ml-1 px-3 h-7 rounded text-xs font-medium transition-colors border-l border-border/60 ${
-              sortByPrice ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Kaina
-          </button>
-        </div>
+        <button
+          onClick={() => setSortByPrice((s) => !s)}
+          className={`shrink-0 px-3 h-9 rounded-md text-xs font-medium transition-colors border border-border/60 ${
+            sortByPrice ? "bg-background text-foreground" : "bg-secondary/40 text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Rūšiuoti pagal kainą
+        </button>
       </div>
 
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-        {filtered.map((v) => (
-          <VehicleCard key={v.id} vehicle={v} />
-        ))}
-        {filtered.length === 0 && (
-          <p className="col-span-full text-center text-muted-foreground py-12">Nieko nerasta.</p>
+        {loading ? (
+          <p className="col-span-full text-center text-muted-foreground py-12">Kraunama…</p>
+        ) : filtered.length === 0 ? (
+          <p className="col-span-full text-center text-muted-foreground py-12">Nėra transporto.</p>
+        ) : (
+          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} />)
         )}
       </div>
     </>
@@ -472,7 +460,6 @@ const ShopSection = () => {
 };
 
 const VehicleCard = ({ vehicle: v }: { vehicle: ShopVehicle }) => {
-  const tier = tierStyles[v.tier];
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
