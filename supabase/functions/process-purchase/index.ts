@@ -9,11 +9,17 @@ const corsHeaders = {
 
 type Body = {
   type: "vehicle" | "case_item";
-  // For vehicle: vehicle_id (uuid). For case_item: case_id (uuid) — server picks reward.
   vehicle_id?: string;
   case_id?: string;
-  character_id: string; // uuid of selected character
+  character_id: string;
+  // Vehicle-only extras (each +5 credits, server-validated)
+  custom_plate?: string | null;
+  full_tune?: boolean;
 };
+
+const PLATE_EXTRA_COST = 5;
+const TUNE_EXTRA_COST = 5;
+const PLATE_REGEX = /^[A-Z0-9 ]{2,8}$/;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -72,7 +78,25 @@ Deno.serve(async (req) => {
     const displayName = v.model;
     itemName = spawnName;
     label = `${v.brand} ${displayName}`;
-    plate = generatePlate();
+
+    // ----- Extras: custom plate (+5) and full tune (+5) -----
+    let customPlate: string | null = null;
+    if (typeof body.custom_plate === "string" && body.custom_plate.trim()) {
+      const cp = body.custom_plate.trim().toUpperCase();
+      if (!PLATE_REGEX.test(cp)) {
+        return json({ error: "Invalid plate. Use 2-8 chars: A-Z, 0-9, spaces." }, 400);
+      }
+      // Uniqueness check against pending + delivered plates we issued
+      const { data: existing } = await admin
+        .from("pending_deliveries").select("id").eq("plate", cp).maybeSingle();
+      if (existing) return json({ error: "Plate already taken" }, 409);
+      customPlate = cp;
+      price += PLATE_EXTRA_COST;
+    }
+    const fullTune = body.full_tune === true;
+    if (fullTune) price += TUNE_EXTRA_COST;
+
+    plate = customPlate ?? generatePlate();
     deliveryMetadata = buildVehicleDeliveryMetadata({
       characterIdentifier: character.identifier,
       characterName: `${character.first_name ?? ""} ${character.last_name ?? ""}`.trim() || null,
@@ -80,6 +104,8 @@ Deno.serve(async (req) => {
       model: spawnName,
       modelName: displayName,
       plate,
+      customPlate: customPlate !== null,
+      fullTune,
     });
   } else if (body.type === "case_item") {
     if (!body.case_id) return json({ error: "case_id required" }, 400);
@@ -156,6 +182,8 @@ function buildVehicleDeliveryMetadata({
   model,
   modelName,
   plate,
+  customPlate,
+  fullTune,
 }: {
   characterIdentifier: string;
   characterName: string | null;
@@ -163,13 +191,17 @@ function buildVehicleDeliveryMetadata({
   model: string;
   modelName: string;
   plate: string;
+  customPlate: boolean;
+  fullTune: boolean;
 }) {
   const modelHash = joaat(model);
-  // ESX owned_vehicles stores `vehicle` as JSON with the STRING model name,
-  // not the numeric hash. The game hashes it via GetHashKey(model) on spawn.
+  // ESX owned_vehicles stores `vehicle` as JSON with the STRING model name.
+  // When fullTune is true, include max upgrade props so FiveM can apply them on spawn.
+  const tuneProps = fullTune ? buildFullTuneProps() : {};
   const vehicleProps = {
-    model,   // string, e.g. "m50"
+    model,
     plate,
+    ...tuneProps,
   };
 
   return {
@@ -181,6 +213,8 @@ function buildVehicleDeliveryMetadata({
     model,
     model_name: modelName,
     model_hash: modelHash,
+    custom_plate: customPlate,
+    full_tune: fullTune,
     vehicle_props: vehicleProps,
     owned_vehicle: {
       owner: characterIdentifier,
@@ -203,6 +237,27 @@ function generatePlate(): string {
   const c = letters[Math.floor(Math.random() * letters.length)];
   const n = String(Math.floor(100 + Math.random() * 900));
   return `${a}${b}${c} ${n}`;
+}
+
+// Full-tune ESX vehicle props: max performance + visual upgrades.
+// FiveM should merge these into vehicle_props before ESX.Game.SetVehicleProperties.
+function buildFullTuneProps() {
+  return {
+    modEngine: 3,
+    modBrakes: 2,
+    modTransmission: 2,
+    modSuspension: 3,
+    modTurbo: true,
+    modArmor: 4,
+    windowTint: 1,
+    wheels: 7,
+    modSmokeEnabled: true,
+    tyreSmokeColor: [255, 255, 255],
+    color1: 0,
+    color2: 0,
+    pearlescentColor: 0,
+    wheelColor: 0,
+  };
 }
 
 function joaat(value: string): number {
