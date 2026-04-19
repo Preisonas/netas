@@ -262,6 +262,10 @@ interface Character {
   playtimeMinutes: number;
 }
 
+// Placeholder list used by shop/boxes "deliver to character" pickers.
+// TODO: replace with real per-user characters fetched from the `characters` table.
+const mockCharacters: Character[] = [];
+
 const ProfileSection = ({
   username,
   avatarUrl,
