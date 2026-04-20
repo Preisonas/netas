@@ -62,6 +62,7 @@ const Index = () => {
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelInitialSection, setPanelInitialSection] = useState<"profile" | "shop">("profile");
   const [session, setSession] = useState<Session | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const openPanel = (section: "profile" | "shop" = "profile") => {
     setPanelInitialSection(section);
@@ -69,29 +70,52 @@ const Index = () => {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => setSession(sess));
+    let mounted = true;
 
-    // Handle tokens returned in URL hash (Discord login via magic link)
+    // 1. Subscribe FIRST so we don't miss any auth events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (!mounted) return;
+      setSession(sess);
+      setAuthReady(true);
+    });
+
+    // 2. Handle Discord OAuth redirect tokens in URL hash, if present
     const hash = window.location.hash;
-    if (hash && hash.includes("access_token=")) {
+    const hashHasTokens = hash && hash.includes("access_token=");
+
+    if (hashHasTokens) {
       const params = new URLSearchParams(hash.replace(/^#/, ""));
       const access_token = params.get("access_token");
       const refresh_token = params.get("refresh_token");
       if (access_token && refresh_token) {
         supabase.auth.setSession({ access_token, refresh_token })
           .then(({ data }) => {
+            if (!mounted) return;
             setSession(data.session);
-            // Clean URL
+            setAuthReady(true);
             window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
             setPanelOpen(true);
           })
-          .catch((e) => console.error("setSession failed", e));
+          .catch((e) => {
+            console.error("setSession failed", e);
+            if (mounted) setAuthReady(true);
+          });
+      } else if (mounted) {
+        setAuthReady(true);
       }
-    } else {
-      supabase.auth.getSession().then(({ data }) => setSession(data.session));
     }
 
-    return () => subscription.unsubscribe();
+    // 3. Always restore persisted session from storage — critical after remix
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setSession((prev) => prev ?? data.session);
+      setAuthReady(true);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Verify Stripe checkout on return
@@ -257,7 +281,9 @@ const Index = () => {
         </header>
 
         {panelOpen ? (
-          session ? (
+          !authReady ? (
+            <div className="container py-24 text-center text-muted-foreground">Kraunama…</div>
+          ) : session ? (
             <PlayerDashboard session={session} onClose={() => setPanelOpen(false)} initialSection={panelInitialSection} />
           ) : (
             <PlayerPanel onClose={() => setPanelOpen(false)} />
