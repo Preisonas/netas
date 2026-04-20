@@ -912,9 +912,11 @@ const CreditsSection = () => {
     const codes: Record<string, number> = { MKKAHUJIENAS30: 0.3 };
     if (codes[c] !== undefined) {
       setDiscount(codes[c]);
+      setAppliedCode(c);
       toast.success(`Pritaikyta nuolaida -${codes[c] * 100}%`);
     } else {
       setDiscount(0);
+      setAppliedCode(null);
       toast.error("Nuolaidos kodas neegzistuoja");
     }
   };
