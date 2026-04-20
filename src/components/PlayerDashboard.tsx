@@ -44,6 +44,7 @@ import cardBackImg from "@/assets/cases/card-back.png";
 import CasesManager from "@/components/admin/CasesManager";
 import VehiclesManager from "@/components/admin/VehiclesManager";
 import { usePlayerCharacters, generatePlate, type PlayerCharacter } from "@/hooks/usePlayerCharacters";
+import { CreditCheckoutDialog } from "@/components/CreditCheckoutDialog";
 
 interface PlayerDashboardProps {
   session: Session;
