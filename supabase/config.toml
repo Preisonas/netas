@@ -1,10 +1,1 @@
-project_id = "ftonkizgmtpulmlqtppv"
-
-[functions.create-credit-checkout]
-verify_jwt = false
-
-[functions.verify-credit-checkout]
-verify_jwt = false
-
-[functions.stripe-public-config]
-verify_jwt = false
+project_id = "ciaffurdravcdevadtam"
