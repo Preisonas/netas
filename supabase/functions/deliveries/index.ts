@@ -34,11 +34,9 @@ Deno.serve(async (req) => {
   if (provided !== expected) return json({ error: "Unauthorized" }, 401);
 
   const url = new URL(req.url);
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    { auth: { persistSession: false } },
-  );
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+    auth: { persistSession: false },
+  });
 
   // GET /deliveries?identifier=char1:xxx  -> list pending deliveries for that character
   // GET /deliveries                       -> list ALL pending deliveries
@@ -59,7 +57,11 @@ Deno.serve(async (req) => {
   // POST { id, status: "delivered" | "failed", error? }  -> mark delivery as processed
   if (req.method === "POST") {
     let body: { id?: string; status?: string; error?: string };
-    try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+    try {
+      body = await req.json();
+    } catch {
+      return json({ error: "Invalid JSON" }, 400);
+    }
     if (!body.id || !body.status) return json({ error: "id and status required" }, 400);
     if (!["delivered", "failed"].includes(body.status)) return json({ error: "Invalid status" }, 400);
 
@@ -85,26 +87,26 @@ Deno.serve(async (req) => {
       .eq("status", "pending");
     if (error) return json({ error: error.message }, 500);
 
-    // Refund credits if delivery failed
+    // Refund credits ONLY for case_item failures (random reward lost).
+    // Vehicle failures are kept as 'failed' for manual review — they were
+    // likely caused by the player being offline or a transient FiveM issue,
+    // and the vehicle can be re-delivered without double-charging.
     if (body.status === "failed") {
-      // Find original price by type+item
       let price = 0;
-      if (delivery.type === "vehicle") {
-        const { data: v } = await supabase
-          .from("vehicles").select("price").eq("model_name", delivery.item_name).maybeSingle();
-        price = v?.price ?? 0;
-      } else if (delivery.type === "case_item") {
+      if (delivery.type === "case_item") {
         // label format: "<case name> → <reward>"
         const caseName = (delivery.label || "").split("→")[0]?.trim();
         if (caseName) {
-          const { data: c } = await supabase
-            .from("cases").select("price").eq("name", caseName).maybeSingle();
+          const { data: c } = await supabase.from("cases").select("price").eq("name", caseName).maybeSingle();
           price = c?.price ?? 0;
         }
       }
       if (price > 0) {
         const { data: prof } = await supabase
-          .from("profiles").select("credits").eq("user_id", delivery.user_id).maybeSingle();
+          .from("profiles")
+          .select("credits")
+          .eq("user_id", delivery.user_id)
+          .maybeSingle();
         if (prof) {
           await supabase
             .from("profiles")
