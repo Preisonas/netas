@@ -701,7 +701,22 @@ interface ShopVehicle {
   speed: number;
   trunk?: number;
   image?: string;
+  videoUrl?: string;
   features: string[];
+}
+
+function getYoutubeId(url?: string): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtu.be")) return u.pathname.slice(1) || null;
+    if (u.hostname.includes("youtube.com")) {
+      if (u.pathname === "/watch") return u.searchParams.get("v");
+      if (u.pathname.startsWith("/embed/")) return u.pathname.split("/")[2] || null;
+      if (u.pathname.startsWith("/shorts/")) return u.pathname.split("/")[2] || null;
+    }
+  } catch { /* ignore */ }
+  return null;
 }
 
 const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId: string }) => {
@@ -716,7 +731,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
     (async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, brand, model, price, top_speed, trunk, image_url, features")
+        .select("id, brand, model, price, top_speed, trunk, image_url, features, video_url")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         if (!error && data) {
@@ -729,6 +744,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
               speed: v.top_speed,
               trunk: v.trunk ?? undefined,
               image: v.image_url ?? undefined,
+              videoUrl: v.video_url ?? undefined,
               features: v.features ?? [],
             }))
           );
@@ -787,23 +803,49 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
 };
 
 const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehicle: ShopVehicle; discordId?: string | null; userId: string; ownedCharacters: PlayerCharacter[] }) => {
+  const [playing, setPlaying] = useState(false);
+  const ytId = getYoutubeId(v.videoUrl);
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
-        {v.image ? (
-          <img
-            src={v.image}
-            alt={`${v.brand} ${v.model}`}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        {playing && ytId ? (
+          <iframe
+            src={`https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
+            title={`${v.brand} ${v.model}`}
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            className="absolute inset-0 h-full w-full"
           />
         ) : (
-          <div className="absolute inset-0 grid place-items-center">
-            <span className="text-[80px] font-black text-foreground/5 tracking-tighter select-none">
-              {v.brand.slice(0, 3).toUpperCase()}
-            </span>
-          </div>
+          <>
+            {v.image ? (
+              <img
+                src={v.image}
+                alt={`${v.brand} ${v.model}`}
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <div className="absolute inset-0 grid place-items-center">
+                <span className="text-[80px] font-black text-foreground/5 tracking-tighter select-none">
+                  {v.brand.slice(0, 3).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+            {ytId && (
+              <button
+                type="button"
+                onClick={() => setPlaying(true)}
+                aria-label="Paleisti video"
+                className="absolute inset-0 grid place-items-center bg-background/20 hover:bg-background/10 transition-colors"
+              >
+                <span className="grid place-items-center h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg group-hover:scale-110 transition-transform">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 ml-0.5"><path d="M8 5v14l11-7z" /></svg>
+                </span>
+              </button>
+            )}
+          </>
         )}
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
       </div>
 
       <div className="p-4">

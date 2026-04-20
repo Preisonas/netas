@@ -15,10 +15,11 @@ interface Vehicle {
   top_speed: number;
   trunk: number | null;
   features: string[];
+  video_url: string | null;
 }
 
 const empty: Vehicle = {
-  id: "", brand: "", model: "", model_name: "", image_url: null, price: 0, top_speed: 0, trunk: null, features: [],
+  id: "", brand: "", model: "", model_name: "", image_url: null, price: 0, top_speed: 0, trunk: null, features: [], video_url: null,
 };
 
 const VehiclesManager = () => {
@@ -59,6 +60,7 @@ const VehiclesManager = () => {
       top_speed: editing.top_speed,
       trunk: editing.trunk,
       features: editing.features,
+      video_url: editing.video_url,
     };
     const { error } = editing.id
       ? await supabase.from("vehicles").update(payload).eq("id", editing.id)
@@ -140,6 +142,17 @@ const VehiclesManager = () => {
         <div>
           <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">Paveikslėlis</label>
           <ImageUploader value={editing.image_url} onChange={(u) => setEditing({ ...editing, image_url: u })} folder="vehicles" />
+        </div>
+
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">YouTube video nuoroda (neprivaloma)</label>
+          <input
+            value={editing.video_url ?? ""}
+            onChange={(e) => setEditing({ ...editing, video_url: e.target.value || null })}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="w-full rounded-md bg-secondary/60 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary/60"
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">Kortelėje bus rodomas video vietoj paveikslėlio (kai užvedi pelę / paspaudi).</p>
         </div>
 
         <div>
