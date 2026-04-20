@@ -20,17 +20,17 @@ export function CreditCheckoutDialog({
   discountCode,
   onSuccess,
 }: CreditCheckoutDialogProps) {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
 
-  // Bump key when reopened so a fresh session is fetched
   useEffect(() => {
-    if (open) setSessionKey((k) => k + 1);
+    if (open) {
+      setError(null);
+      setSessionKey((k) => k + 1);
+    }
   }, [open]);
 
   const fetchClientSecret = useCallback(async (): Promise<string> => {
-    setLoading(true);
     setError(null);
     try {
       const { data, error } = await supabase.functions.invoke("create-credit-checkout", {
@@ -42,13 +42,16 @@ export function CreditCheckoutDialog({
       });
       if (error || !data?.clientSecret) {
         const msg = (error as any)?.message || data?.error || "Nepavyko pradėti mokėjimo";
+        console.error("create-credit-checkout failed:", error, data);
         setError(msg);
         toast.error(msg);
         throw new Error(msg);
       }
       return data.clientSecret as string;
-    } finally {
-      setLoading(false);
+    } catch (e: any) {
+      const msg = e?.message || "Nepavyko pradėti mokėjimo";
+      setError(msg);
+      throw e;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [credits, discountCode, sessionKey]);
@@ -59,10 +62,10 @@ export function CreditCheckoutDialog({
         <DialogHeader className="px-6 pt-5 pb-2">
           <DialogTitle>Apmokėjimas — {credits} kreditų</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[80vh] overflow-y-auto bg-white">
+        <div className="max-h-[80vh] overflow-y-auto bg-white min-h-[500px]">
           {error ? (
             <div className="p-6 text-sm text-destructive">{error}</div>
-          ) : (
+          ) : open ? (
             <EmbeddedCheckoutProvider
               key={sessionKey}
               stripe={getStripe()}
@@ -70,8 +73,7 @@ export function CreditCheckoutDialog({
             >
               <EmbeddedCheckout />
             </EmbeddedCheckoutProvider>
-          )}
-          {loading && <div className="p-6 text-sm text-muted-foreground">Kraunama...</div>}
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>
