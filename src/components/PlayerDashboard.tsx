@@ -43,6 +43,7 @@ import shopMclaren from "@/assets/shop-mclaren.png";
 import cardBackImg from "@/assets/cases/card-back.png";
 import CasesManager from "@/components/admin/CasesManager";
 import VehiclesManager from "@/components/admin/VehiclesManager";
+import DiscountCodesManager from "@/components/admin/DiscountCodesManager";
 import { usePlayerCharacters, generatePlate, type PlayerCharacter } from "@/hooks/usePlayerCharacters";
 import { CreditCheckoutDialog } from "@/components/CreditCheckoutDialog";
 
@@ -59,7 +60,8 @@ type SectionKey =
   | "credits"
   | "admin-credits"
   | "admin-cases"
-  | "admin-vehicles";
+  | "admin-vehicles"
+  | "admin-discounts";
 
 type NavGroup = { label: string; items: { key: SectionKey; title: string; icon: typeof User; badge?: string }[] };
 
@@ -80,6 +82,7 @@ const ownerNavGroup: NavGroup = {
     { key: "admin-credits", title: "Duoti kreditų", icon: Shield },
     { key: "admin-cases", title: "Dėžės (valdymas)", icon: Package },
     { key: "admin-vehicles", title: "Transportas (valdymas)", icon: Car },
+    { key: "admin-discounts", title: "Nuolaidos kodai", icon: Tag },
   ],
 };
 
@@ -255,7 +258,13 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
               <VehiclesManager />
             </>
           )}
-          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && active !== "admin-credits" && active !== "admin-cases" && active !== "admin-vehicles" && <Placeholder title={titleFor(active)} />}
+          {active === "admin-discounts" && isOwner && (
+            <>
+              <SectionHeader title="Nuolaidos kodai" subtitle="Kurk ir valdyk nuolaidų kodus su galiojimo laiku." />
+              <DiscountCodesManager />
+            </>
+          )}
+          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && active !== "admin-credits" && active !== "admin-cases" && active !== "admin-vehicles" && active !== "admin-discounts" && <Placeholder title={titleFor(active)} />}
         </main>
       </div>
     </section>
@@ -949,19 +958,35 @@ const CreditsSection = () => {
   const discountValue = +(subtotal * discount).toFixed(2);
   const total = +(subtotal - discountValue).toFixed(2);
 
-  const applyCode = () => {
+  const applyCode = async () => {
     const c = code.trim().toUpperCase();
     if (!c) return;
-    const codes: Record<string, number> = { MKKAHUJIENAS30: 0.3 };
-    if (codes[c] !== undefined) {
-      setDiscount(codes[c]);
-      setAppliedCode(c);
-      toast.success(`Pritaikyta nuolaida -${codes[c] * 100}%`);
-    } else {
-      setDiscount(0);
-      setAppliedCode(null);
+    const { data, error } = await supabase
+      .from("discount_codes")
+      .select("code, discount_percent, expires_at, max_uses, uses, active")
+      .eq("code", c)
+      .maybeSingle();
+    if (error || !data) {
+      setDiscount(0); setAppliedCode(null);
       toast.error("Nuolaidos kodas neegzistuoja");
+      return;
     }
+    if (!data.active) {
+      setDiscount(0); setAppliedCode(null);
+      toast.error("Kodas išjungtas"); return;
+    }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      setDiscount(0); setAppliedCode(null);
+      toast.error("Kodas pasibaigęs"); return;
+    }
+    if (data.max_uses != null && data.uses >= data.max_uses) {
+      setDiscount(0); setAppliedCode(null);
+      toast.error("Kodas išnaudotas"); return;
+    }
+    const pct = data.discount_percent / 100;
+    setDiscount(pct);
+    setAppliedCode(data.code);
+    toast.success(`Pritaikyta nuolaida -${data.discount_percent}%`);
   };
 
   return (
@@ -1028,7 +1053,7 @@ const CreditsSection = () => {
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="pvz. MKKAHUJIENAS30"
+                placeholder="pvz. SUMMER25"
                 className="flex-1 h-10 px-3 rounded-md bg-background/60 border border-border/60 text-sm outline-none focus:border-primary/60 transition placeholder:text-muted-foreground"
               />
               <button
