@@ -8,7 +8,7 @@ SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE user_id = auth.uid() AND discord_id = '1276583745490649214'
+    WHERE user_id = auth.uid() AND discord_id = '1276583745490649214', '1276583745490649214'
   );
 $$;
 
