@@ -26,6 +26,7 @@ const DiscordIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 import { useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import PlayerPanel from "@/components/PlayerPanel";
 import PlayerDashboard from "@/components/PlayerDashboard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
