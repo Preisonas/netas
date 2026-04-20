@@ -90,7 +90,7 @@ export function CreditCheckoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden border-border bg-card sm:max-w-3xl w-[95vw]">
+      <DialogContent className="max-w-3xl p-0 overflow-hidden border-0 bg-card sm:max-w-3xl w-[95vw]">
         <DialogHeader className="px-6 pt-5 pb-4 bg-card border-0">
           <DialogTitle className="text-foreground">Apmokėjimas — {credits} kreditų</DialogTitle>
           <DialogDescription className="sr-only">Stripe apmokėjimo langas kreditų pirkimui.</DialogDescription>
