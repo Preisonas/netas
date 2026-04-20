@@ -18,7 +18,7 @@ type Body = {
 };
 
 const PLATE_EXTRA_COST = 5;
-const TUNE_EXTRA_COST = 5;
+const TUNE_EXTRA_COST = 10;
 const PLATE_REGEX = /^[A-Z0-9 ]{2,8}$/;
 
 Deno.serve(async (req) => {

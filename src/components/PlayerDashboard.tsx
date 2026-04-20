@@ -324,7 +324,7 @@ const DeliveryPicker = ({
 
   const isVehicle = type === "vehicle";
   const PLATE_COST = 5;
-  const TUNE_COST = 5;
+  const TUNE_COST = 10;
   const extras = (isVehicle && useCustomPlate ? PLATE_COST : 0) + (isVehicle && fullTune ? TUNE_COST : 0);
   const total = (basePrice ?? 0) + extras;
   const plateClean = customPlate.trim().toUpperCase();
