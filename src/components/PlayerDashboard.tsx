@@ -44,6 +44,7 @@ import cardBackImg from "@/assets/cases/card-back.png";
 import CasesManager from "@/components/admin/CasesManager";
 import VehiclesManager from "@/components/admin/VehiclesManager";
 import { usePlayerCharacters, generatePlate, type PlayerCharacter } from "@/hooks/usePlayerCharacters";
+import { CreditCheckoutDialog } from "@/components/CreditCheckoutDialog";
 
 interface PlayerDashboardProps {
   session: Session;
@@ -897,6 +898,9 @@ const CreditsSection = () => {
   const [amount, setAmount] = useState(10);
   const [code, setCode] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const qc = useQueryClient();
   const presets = [5, 10, 25, 50, 100, 250];
 
   const subtotal = amount;
@@ -909,9 +913,11 @@ const CreditsSection = () => {
     const codes: Record<string, number> = { MKKAHUJIENAS30: 0.3 };
     if (codes[c] !== undefined) {
       setDiscount(codes[c]);
+      setAppliedCode(c);
       toast.success(`Pritaikyta nuolaida -${codes[c] * 100}%`);
     } else {
       setDiscount(0);
+      setAppliedCode(null);
       toast.error("Nuolaidos kodas neegzistuoja");
     }
   };
@@ -1018,7 +1024,13 @@ const CreditsSection = () => {
           </div>
 
           <button
-            onClick={() => toast.info("Mokėjimo integracija greitai")}
+            onClick={() => {
+              if (amount < 1) {
+                toast.error("Mažiausia suma — 1 €");
+                return;
+              }
+              setCheckoutOpen(true);
+            }}
             className="mt-5 w-full h-11 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
           >
             <CreditCard className="h-4 w-4" />
@@ -1030,6 +1042,17 @@ const CreditsSection = () => {
           </p>
         </aside>
       </div>
+
+      <CreditCheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        credits={amount}
+        discountCode={appliedCode ?? undefined}
+        onSuccess={() => {
+          toast.success("Apmokėta! Kreditai bus pridėti per kelias sekundes.");
+          setTimeout(() => qc.invalidateQueries({ queryKey: ["profile"] }), 1500);
+        }}
+      />
     </>
   );
 };

@@ -139,6 +139,45 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_purchases: {
+        Row: {
+          amount_eur: number
+          created_at: string
+          credits: number
+          discount_code: string | null
+          environment: string
+          fulfilled_at: string | null
+          id: string
+          status: string
+          stripe_session_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_eur: number
+          created_at?: string
+          credits: number
+          discount_code?: string | null
+          environment?: string
+          fulfilled_at?: string | null
+          id?: string
+          status?: string
+          stripe_session_id: string
+          user_id: string
+        }
+        Update: {
+          amount_eur?: number
+          created_at?: string
+          credits?: number
+          discount_code?: string | null
+          environment?: string
+          fulfilled_at?: string | null
+          id?: string
+          status?: string
+          stripe_session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pending_deliveries: {
         Row: {
           character_id: string
