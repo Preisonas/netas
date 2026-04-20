@@ -503,6 +503,25 @@ const DeliveryPicker = ({
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">Papildomos paslaugos</p>
               <div className="space-y-2">
                 {/* Full tune */}
+                <button
+                  type="button"
+                  onClick={() => setFullTune((v) => !v)}
+                  className={`w-full flex items-center justify-between gap-3 rounded-lg p-3.5 transition-all ${
+                    fullTune ? "bg-secondary/80" : "bg-secondary/30 hover:bg-secondary/60"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 text-left">
+                    <Sparkles className={`h-5 w-5 shrink-0 ${fullTune ? "text-primary" : "text-muted-foreground"}`} />
+                    <div>
+                      <p className="text-sm font-semibold">Pilnas tune</p>
+                      <p className="text-xs text-muted-foreground">Engine, brakes, turbo, suspension</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-sm font-semibold text-primary">+{TUNE_COST} €</span>
+                    <SwitchPill on={fullTune} />
+                  </div>
+                </button>
 
                 {/* Custom plate */}
                 <div className={`rounded-lg transition-all ${useCustomPlate ? "bg-secondary/80" : "bg-secondary/30"}`}>
