@@ -108,21 +108,33 @@ All colors MUST be HSL.
   100% { transform: translateX(0) translateY(0) rotate(0deg); opacity: 1; }
 }
 
-/* Custom scrollbar for embedded checkout */
-.checkout-scroll::-webkit-scrollbar {
+/* Global themed scrollbar */
+*::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
-.checkout-scroll::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: transparent;
 }
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* Light scrollbar for embedded checkout (white bg) */
 .checkout-scroll::-webkit-scrollbar-thumb {
   background: hsl(0 0% 80%);
-  border-radius: 9999px;
 }
 .checkout-scroll::-webkit-scrollbar-thumb:hover {
   background: hsl(0 0% 65%);
 }
 .checkout-scroll {
-  scrollbar-width: thin;
   scrollbar-color: hsl(0 0% 80%) transparent;
 }
