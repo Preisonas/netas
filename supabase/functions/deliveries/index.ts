@@ -87,34 +87,9 @@ Deno.serve(async (req) => {
       .eq("status", "pending");
     if (error) return json({ error: error.message }, 500);
 
-    // Refund credits ONLY for case_item failures (random reward lost).
-    // Vehicle failures are kept as 'failed' for manual review — they were
-    // likely caused by the player being offline or a transient FiveM issue,
-    // and the vehicle can be re-delivered without double-charging.
-    if (body.status === "failed") {
-      let price = 0;
-      if (delivery.type === "case_item") {
-        // label format: "<case name> → <reward>"
-        const caseName = (delivery.label || "").split("→")[0]?.trim();
-        if (caseName) {
-          const { data: c } = await supabase.from("cases").select("price").eq("name", caseName).maybeSingle();
-          price = c?.price ?? 0;
-        }
-      }
-      if (price > 0) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("credits")
-          .eq("user_id", delivery.user_id)
-          .maybeSingle();
-        if (prof) {
-          await supabase
-            .from("profiles")
-            .update({ credits: (prof.credits ?? 0) + price })
-            .eq("user_id", delivery.user_id);
-        }
-      }
-    }
+    // Never auto-refund here.
+    // If FiveM reports a failure after spawning or during a transient issue,
+    // refunding here creates duplicate value for the player.
 
     return json({ success: true });
   }
