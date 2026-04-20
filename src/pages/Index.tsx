@@ -28,6 +28,7 @@ const DiscordIcon = ({ className }: { className?: string }) => (
 import { useEffect, useState, type ReactNode } from "react";
 import PlayerPanel from "@/components/PlayerPanel";
 import PlayerDashboard from "@/components/PlayerDashboard";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
@@ -126,6 +127,7 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <PaymentTestModeBanner />
       {/* Background image — hero only */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-screen" aria-hidden>
         <div
