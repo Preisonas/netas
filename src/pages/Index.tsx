@@ -26,6 +26,7 @@ const DiscordIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 import { useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import PlayerPanel from "@/components/PlayerPanel";
 import PlayerDashboard from "@/components/PlayerDashboard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -91,6 +92,30 @@ const Index = () => {
     }
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Verify Stripe checkout on return
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") !== "success") return;
+    const sessionId = params.get("session_id");
+    if (!sessionId) return;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("verify-credit-checkout", {
+        body: { sessionId },
+      });
+      if (error) {
+        toast.error("Nepavyko patvirtinti mokėjimo");
+      } else if (data?.status === "fulfilled") {
+        toast.success(`Pridėta ${data.added} kreditų. Likutis: ${data.credits}`);
+      } else if (data?.status === "already") {
+        toast.info("Mokėjimas jau apdorotas");
+      } else {
+        toast.warning("Mokėjimas dar neapmokėtas");
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setPanelOpen(true);
+    })();
   }, []);
 
   useEffect(() => {

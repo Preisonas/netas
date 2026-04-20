@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getStripe, stripeEnvironment } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -37,7 +37,6 @@ export function CreditCheckoutDialog({
         body: {
           credits,
           discountCode,
-          environment: stripeEnvironment,
           returnUrl: `${window.location.origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
         },
       });
