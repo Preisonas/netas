@@ -1023,7 +1023,13 @@ const CreditsSection = () => {
           </div>
 
           <button
-            onClick={() => toast.info("Mokėjimo integracija greitai")}
+            onClick={() => {
+              if (amount < 1) {
+                toast.error("Mažiausia suma — 1 €");
+                return;
+              }
+              setCheckoutOpen(true);
+            }}
             className="mt-5 w-full h-11 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-2"
           >
             <CreditCard className="h-4 w-4" />
@@ -1035,6 +1041,17 @@ const CreditsSection = () => {
           </p>
         </aside>
       </div>
+
+      <CreditCheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        credits={amount}
+        discountCode={appliedCode ?? undefined}
+        onSuccess={() => {
+          toast.success("Apmokėta! Kreditai bus pridėti per kelias sekundes.");
+          setTimeout(() => qc.invalidateQueries({ queryKey: ["profile"] }), 1500);
+        }}
+      />
     </>
   );
 };
