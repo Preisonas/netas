@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getStripe } from "@/lib/stripe";
@@ -22,6 +22,7 @@ export function CreditCheckoutDialog({
 }: CreditCheckoutDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
+  const stripePromise = useMemo(() => getStripe(), []);
 
   useEffect(() => {
     if (open) {
@@ -32,6 +33,7 @@ export function CreditCheckoutDialog({
 
   const fetchClientSecret = useCallback(async (): Promise<string> => {
     setError(null);
+    console.log("[checkout] fetchClientSecret called", { credits, discountCode });
     try {
       const { data, error } = await supabase.functions.invoke("create-credit-checkout", {
         body: {
@@ -40,6 +42,7 @@ export function CreditCheckoutDialog({
           returnUrl: `${window.location.origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
         },
       });
+      console.log("[checkout] invoke result", { data, error });
       if (error || !data?.clientSecret) {
         const msg = (error as any)?.message || data?.error || "Nepavyko pradėti mokėjimo";
         console.error("create-credit-checkout failed:", error, data);
@@ -50,6 +53,7 @@ export function CreditCheckoutDialog({
       return data.clientSecret as string;
     } catch (e: any) {
       const msg = e?.message || "Nepavyko pradėti mokėjimo";
+      console.error("[checkout] fetchClientSecret threw", e);
       setError(msg);
       throw e;
     }
@@ -62,13 +66,13 @@ export function CreditCheckoutDialog({
         <DialogHeader className="px-6 pt-5 pb-2">
           <DialogTitle>Apmokėjimas — {credits} kreditų</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[80vh] overflow-y-auto bg-white min-h-[500px]">
+        <div className="max-h-[80vh] overflow-y-auto bg-white" style={{ minHeight: 600 }}>
           {error ? (
             <div className="p-6 text-sm text-destructive">{error}</div>
           ) : open ? (
             <EmbeddedCheckoutProvider
               key={sessionKey}
-              stripe={getStripe()}
+              stripe={stripePromise}
               options={{ fetchClientSecret, onComplete: () => onSuccess?.() }}
             >
               <EmbeddedCheckout />
