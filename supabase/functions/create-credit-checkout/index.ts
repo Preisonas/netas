@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,7 +37,7 @@ serve(async (req) => {
     }
     const user = userData.user;
 
-    const { credits, discountCode, returnUrl, environment } = await req.json();
+    const { credits, discountCode, returnUrl } = await req.json();
 
     const baseCredits = Number(credits);
     if (!Number.isFinite(baseCredits) || baseCredits < 1 || baseCredits > 10000) {
@@ -60,8 +60,10 @@ serve(async (req) => {
 
     const cents = Math.max(50, Math.round(credInt * 100 * (1 - discount)));
 
-    const env = (environment || "sandbox") as StripeEnv;
-    const stripe = createStripeClient(env);
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
+    const stripe = new Stripe(stripeKey, { apiVersion: "2024-11-20.acacia" as any });
+    const env: "sandbox" | "live" = stripeKey.startsWith("sk_test_") ? "sandbox" : "live";
 
     const session = await stripe.checkout.sessions.create({
       line_items: [{
@@ -86,7 +88,6 @@ serve(async (req) => {
       },
     });
 
-    // Track the order
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,

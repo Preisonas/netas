@@ -3,5 +3,5 @@ project_id = "ftonkizgmtpulmlqtppv"
 [functions.create-credit-checkout]
 verify_jwt = false
 
-[functions.payments-webhook]
+[functions.verify-credit-checkout]
 verify_jwt = false
