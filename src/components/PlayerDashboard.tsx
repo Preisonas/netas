@@ -897,6 +897,9 @@ const CreditsSection = () => {
   const [amount, setAmount] = useState(10);
   const [code, setCode] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const qc = useQueryClient();
   const presets = [5, 10, 25, 50, 100, 250];
 
   const subtotal = amount;
