@@ -361,9 +361,16 @@ const DeliveryPicker = ({
     setSubmitting(false);
 
     if (error || (data && (data as { error?: string }).error)) {
-      const msg =
+      const rawMsg =
         (data as { error?: string } | null)?.error ?? error?.message ?? "Nepavyko apdoroti pirkimo";
-      toast.error("Pirkimas nepavyko", { description: msg });
+      const isPlateTaken = /plate\s+already\s+taken/i.test(rawMsg);
+      if (isPlateTaken) {
+        toast.error("Numeris jau užimtas", {
+          description: `Numeris „${plateClean}" jau priklauso kitam transportui. Pasirink kitą.`,
+        });
+      } else {
+        toast.error("Pirkimas nepavyko", { description: rawMsg });
+      }
       return;
     }
 
