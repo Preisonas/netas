@@ -32,7 +32,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-const OWNER_DISCORD_IDS = ["1276583745490649214", "528409152024870922"];
+const OWNER_DISCORD_IDS = ["1276583745490649214", "528409152024870922", "811365896824029184"];
 import { toast } from "sonner";
 import caseStarterImg from "@/assets/cases/starter.png";
 import caseVehicleImg from "@/assets/cases/vehicle.png";
@@ -90,7 +90,9 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
   const [active, setActive] = useState<SectionKey>(initialSection);
   const qc = useQueryClient();
 
-  const meta = session.user.user_metadata as { username?: string; full_name?: string; avatar_url?: string; discord_id?: string } | undefined;
+  const meta = session.user.user_metadata as
+    | { username?: string; full_name?: string; avatar_url?: string; discord_id?: string }
+    | undefined;
 
   const profileQuery = useQuery({
     queryKey: ["profile", session.user.id],
@@ -119,11 +121,14 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
         (payload) => {
           const next = (payload.new ?? null) as typeof profile | null;
           if (next) {
-            qc.setQueryData(["profile", session.user.id], (old: typeof profile) => ({ ...(old ?? {} as never), ...next }));
+            qc.setQueryData(["profile", session.user.id], (old: typeof profile) => ({
+              ...(old ?? ({} as never)),
+              ...next,
+            }));
           } else {
             qc.invalidateQueries({ queryKey: ["profile", session.user.id] });
           }
-        }
+        },
       )
       .subscribe();
 
@@ -174,7 +179,9 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
               <div className="min-w-0">
                 <p className="text-sm font-semibold truncate">{username}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {characterCount > 0 ? `${characterCount} veikėj${characterCount === 1 ? "as" : "ai"}` : "Neturite sukurtų veikėjų"}
+                  {characterCount > 0
+                    ? `${characterCount} veikėj${characterCount === 1 ? "as" : "ai"}`
+                    : "Neturite sukurtų veikėjų"}
                 </p>
               </div>
             </div>
@@ -191,7 +198,6 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
                 Gauti kreditų
               </button>
             </div>
-
           </div>
 
           {/* Nav groups */}
@@ -240,9 +246,14 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
         {/* Content */}
         <main className="rounded-lg border border-border/50 bg-card/30 backdrop-blur-xl p-6 md:p-8 min-h-[600px] shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
           {active === "profile" && (
-            <ProfileSection username={username} avatarUrl={avatarUrl} discordId={discordId} email={session.user.email ?? ""} />
+            <ProfileSection
+              username={username}
+              avatarUrl={avatarUrl}
+              discordId={discordId}
+              email={session.user.email ?? ""}
+            />
           )}
-  {active === "shop" && <ShopSection discordId={discordId} userId={session.user.id} />}
+          {active === "shop" && <ShopSection discordId={discordId} userId={session.user.id} />}
           {active === "credits" && <CreditsSection />}
           {active === "boxes" && <BoxesSection discordId={discordId} userId={session.user.id} />}
           {active === "admin-credits" && isOwner && <AdminCreditsSection />}
@@ -264,7 +275,14 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
               <DiscountCodesManager />
             </>
           )}
-          {active !== "profile" && active !== "shop" && active !== "credits" && active !== "boxes" && active !== "admin-credits" && active !== "admin-cases" && active !== "admin-vehicles" && active !== "admin-discounts" && <Placeholder title={titleFor(active)} />}
+          {active !== "profile" &&
+            active !== "shop" &&
+            active !== "credits" &&
+            active !== "boxes" &&
+            active !== "admin-credits" &&
+            active !== "admin-cases" &&
+            active !== "admin-vehicles" &&
+            active !== "admin-discounts" && <Placeholder title={titleFor(active)} />}
         </main>
       </div>
     </section>
@@ -361,8 +379,7 @@ const DeliveryPicker = ({
     setSubmitting(false);
 
     if (error || (data && (data as { error?: string }).error)) {
-      const rawMsg =
-        (data as { error?: string } | null)?.error ?? error?.message ?? "Nepavyko apdoroti pirkimo";
+      const rawMsg = (data as { error?: string } | null)?.error ?? error?.message ?? "Nepavyko apdoroti pirkimo";
       const isPlateTaken = /plate\s+already\s+taken/i.test(rawMsg);
       if (isPlateTaken) {
         toast.error("Numeris jau užimtas", {
@@ -377,7 +394,7 @@ const DeliveryPicker = ({
     const result = data as { label?: string; plate?: string | null; credits_remaining?: number };
     if (typeof result.credits_remaining === "number") {
       qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
-        old ? { ...old, credits: result.credits_remaining } : old
+        old ? { ...old, credits: result.credits_remaining } : old,
       );
     }
     qc.invalidateQueries({ queryKey: ["profile", userId] });
@@ -385,7 +402,7 @@ const DeliveryPicker = ({
       `${result.label ?? itemLabel} išsiųstas: ${selectedChar.firstName} ${selectedChar.lastName}`,
       result.plate
         ? { description: `Numeris: ${result.plate} • Liko ${result.credits_remaining ?? 0} €` }
-        : { description: `Liko ${result.credits_remaining ?? 0} €` }
+        : { description: `Liko ${result.credits_remaining ?? 0} €` },
     );
     onDelivered?.();
     onClose();
@@ -424,9 +441,7 @@ const DeliveryPicker = ({
         <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-6">
           {/* Character selection */}
           <section>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-              Veikėjas
-            </p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">Veikėjas</p>
             {loading ? (
               <div className="rounded-lg bg-secondary/20 p-6 text-center text-sm text-muted-foreground">
                 Kraunama...
@@ -445,9 +460,7 @@ const DeliveryPicker = ({
                       type="button"
                       onClick={() => setSelectedCharId(c.id)}
                       className={`group relative text-left rounded-lg p-3 transition-all duration-200 ${
-                        active
-                          ? "bg-secondary/80"
-                          : "bg-secondary/30 hover:bg-secondary/60"
+                        active ? "bg-secondary/80" : "bg-secondary/30 hover:bg-secondary/60"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -487,18 +500,14 @@ const DeliveryPicker = ({
           {/* Vehicle extras */}
           {isVehicle && (
             <section>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                Papildomos paslaugos
-              </p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">Papildomos paslaugos</p>
               <div className="space-y-2">
                 {/* Full tune */}
                 <button
                   type="button"
                   onClick={() => setFullTune((v) => !v)}
                   className={`w-full flex items-center justify-between gap-3 rounded-lg p-3.5 transition-all ${
-                    fullTune
-                      ? "bg-secondary/80"
-                      : "bg-secondary/30 hover:bg-secondary/60"
+                    fullTune ? "bg-secondary/80" : "bg-secondary/30 hover:bg-secondary/60"
                   }`}
                 >
                   <div className="flex items-center gap-3 text-left">
@@ -515,20 +524,16 @@ const DeliveryPicker = ({
                 </button>
 
                 {/* Custom plate */}
-                <div
-                  className={`rounded-lg transition-all ${
-                    useCustomPlate
-                      ? "bg-secondary/80"
-                      : "bg-secondary/30"
-                  }`}
-                >
+                <div className={`rounded-lg transition-all ${useCustomPlate ? "bg-secondary/80" : "bg-secondary/30"}`}>
                   <button
                     type="button"
                     onClick={() => setUseCustomPlate((v) => !v)}
                     className="w-full flex items-center justify-between gap-3 p-3.5"
                   >
                     <div className="flex items-center gap-3 text-left">
-                      <Tag className={`h-5 w-5 shrink-0 ${useCustomPlate ? "text-primary" : "text-muted-foreground"}`} />
+                      <Tag
+                        className={`h-5 w-5 shrink-0 ${useCustomPlate ? "text-primary" : "text-muted-foreground"}`}
+                      />
                       <div>
                         <p className="text-sm font-semibold">Pasirinktinis numeris</p>
                         <p className="text-xs text-muted-foreground">2-8 simboliai: A-Z, 0-9, tarpai</p>
@@ -577,9 +582,7 @@ const DeliveryPicker = ({
             {basePrice !== undefined ? (
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold">
-                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
-                    {total} €
-                  </span>
+                  <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">{total} €</span>
                 </span>
                 {extras > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -596,7 +599,9 @@ const DeliveryPicker = ({
             disabled={!canConfirm}
             className="h-11 px-6 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
-            {submitting ? "Apdorojama..." : (
+            {submitting ? (
+              "Apdorojama..."
+            ) : (
               <>
                 <Check className="h-4 w-4" />
                 Patvirtinti
@@ -606,15 +611,13 @@ const DeliveryPicker = ({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 
 const SwitchPill = ({ on }: { on: boolean }) => (
   <span
-    className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${
-      on ? "bg-primary" : "bg-secondary"
-    }`}
+    className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${on ? "bg-primary" : "bg-secondary"}`}
   >
     <span
       className={`absolute top-0.5 h-5 w-5 rounded-full bg-foreground transition-transform ${
@@ -629,7 +632,12 @@ const ProfileSection = ({
   avatarUrl,
   discordId,
   email,
-}: { username: string; avatarUrl?: string | null; discordId?: string | null; email: string }) => {
+}: {
+  username: string;
+  avatarUrl?: string | null;
+  discordId?: string | null;
+  email: string;
+}) => {
   const { characters, loading } = usePlayerCharacters(discordId);
 
   return (
@@ -677,8 +685,7 @@ const ProfileSection = ({
   );
 };
 
-const formatMoney = (n: number) =>
-  new Intl.NumberFormat("lt-LT").format(n) + " $";
+const formatMoney = (n: number) => new Intl.NumberFormat("lt-LT").format(n) + " $";
 
 const formatPlaytime = (minutes: number) => {
   const h = Math.floor(minutes / 60);
@@ -731,7 +738,9 @@ function getYoutubeId(url?: string): string | null {
       if (u.pathname.startsWith("/embed/")) return u.pathname.split("/")[2] || null;
       if (u.pathname.startsWith("/shorts/")) return u.pathname.split("/")[2] || null;
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
@@ -762,13 +771,15 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
               image: v.image_url ?? undefined,
               videoUrl: v.video_url ?? undefined,
               features: v.features ?? [],
-            }))
+            })),
           );
         }
         setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -798,7 +809,9 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
         <button
           onClick={() => setSortByPrice((s) => !s)}
           className={`shrink-0 px-3 h-9 rounded-md text-xs font-medium transition-colors border border-border/60 ${
-            sortByPrice ? "bg-background text-foreground" : "bg-secondary/40 text-muted-foreground hover:text-foreground"
+            sortByPrice
+              ? "bg-background text-foreground"
+              : "bg-secondary/40 text-muted-foreground hover:text-foreground"
           }`}
         >
           Rūšiuoti pagal kainą
@@ -811,14 +824,32 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
         ) : filtered.length === 0 ? (
           <p className="col-span-full text-center text-muted-foreground py-12">Nėra transporto.</p>
         ) : (
-          filtered.map((v) => <VehicleCard key={v.id} vehicle={v} discordId={discordId} userId={userId} ownedCharacters={ownedCharacters} />)
+          filtered.map((v) => (
+            <VehicleCard
+              key={v.id}
+              vehicle={v}
+              discordId={discordId}
+              userId={userId}
+              ownedCharacters={ownedCharacters}
+            />
+          ))
         )}
       </div>
     </>
   );
 };
 
-const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehicle: ShopVehicle; discordId?: string | null; userId: string; ownedCharacters: PlayerCharacter[] }) => {
+const VehicleCard = ({
+  vehicle: v,
+  discordId,
+  userId,
+  ownedCharacters,
+}: {
+  vehicle: ShopVehicle;
+  discordId?: string | null;
+  userId: string;
+  ownedCharacters: PlayerCharacter[];
+}) => {
   const [playing, setPlaying] = useState(false);
   const ytId = getYoutubeId(v.videoUrl);
   return (
@@ -847,7 +878,10 @@ const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehic
                 </span>
               </div>
             )}
-            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"
+            />
             {ytId && (
               <button
                 type="button"
@@ -856,7 +890,9 @@ const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehic
                 className="absolute inset-0 grid place-items-center bg-background/20 hover:bg-background/10 transition-colors"
               >
                 <span className="grid place-items-center h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg group-hover:scale-110 transition-transform">
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 ml-0.5"><path d="M8 5v14l11-7z" /></svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 ml-0.5">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
                 </span>
               </button>
             )}
@@ -874,8 +910,7 @@ const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehic
             {v.price} €
           </span>
           <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/60 text-muted-foreground">
-            <Gauge className="h-3.5 w-3.5" />
-            ~ {v.speed} km/h
+            <Gauge className="h-3.5 w-3.5" />~ {v.speed} km/h
           </span>
           {v.trunk && (
             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary/60 text-muted-foreground">
@@ -897,7 +932,14 @@ const VehicleCard = ({ vehicle: v, discordId, userId, ownedCharacters }: { vehic
           </ul>
         </div>
 
-        <BuyWithCharacter itemLabel={`${v.brand} ${v.model}`} vehicleId={v.id} price={v.price} discordId={discordId} userId={userId} ownedCharacters={ownedCharacters} />
+        <BuyWithCharacter
+          itemLabel={`${v.brand} ${v.model}`}
+          vehicleId={v.id}
+          price={v.price}
+          discordId={discordId}
+          userId={userId}
+          ownedCharacters={ownedCharacters}
+        />
       </div>
     </article>
   );
@@ -951,7 +993,6 @@ const BuyWithCharacter = ({
   );
 };
 
-
 const CreditsSection = () => {
   const [amount, setAmount] = useState(10);
   const [code, setCode] = useState("");
@@ -974,21 +1015,28 @@ const CreditsSection = () => {
       .eq("code", c)
       .maybeSingle();
     if (error || !data) {
-      setDiscount(0); setAppliedCode(null);
+      setDiscount(0);
+      setAppliedCode(null);
       toast.error("Nuolaidos kodas neegzistuoja");
       return;
     }
     if (!data.active) {
-      setDiscount(0); setAppliedCode(null);
-      toast.error("Kodas išjungtas"); return;
+      setDiscount(0);
+      setAppliedCode(null);
+      toast.error("Kodas išjungtas");
+      return;
     }
     if (data.expires_at && new Date(data.expires_at) < new Date()) {
-      setDiscount(0); setAppliedCode(null);
-      toast.error("Kodas pasibaigęs"); return;
+      setDiscount(0);
+      setAppliedCode(null);
+      toast.error("Kodas pasibaigęs");
+      return;
     }
     if (data.max_uses != null && data.uses >= data.max_uses) {
-      setDiscount(0); setAppliedCode(null);
-      toast.error("Kodas išnaudotas"); return;
+      setDiscount(0);
+      setAppliedCode(null);
+      toast.error("Kodas išnaudotas");
+      return;
     }
     const pct = data.discount_percent / 100;
     setDiscount(pct);
@@ -1070,9 +1118,7 @@ const CreditsSection = () => {
                 Pritaikyti
               </button>
             </div>
-            {discount > 0 && (
-              <p className="text-xs text-primary mt-2">Nuolaida -{discount * 100}% pritaikyta.</p>
-            )}
+            {discount > 0 && <p className="text-xs text-primary mt-2">Nuolaida -{discount * 100}% pritaikyta.</p>}
           </div>
         </div>
 
@@ -1168,11 +1214,41 @@ interface LootBox {
 
 // English rarity labels with subtle badge colors. One hue family per tier, no glows.
 const rarityStyles: Record<Rarity, { text: string; ring: string; label: string; bar: string; badge: string }> = {
-  common:    { text: "text-muted-foreground",   ring: "ring-border/60",             label: "DAŽNAS",     bar: "bg-muted-foreground/50",       badge: "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/20" },
-  rare:      { text: "text-[hsl(210_80%_70%)]", ring: "ring-[hsl(210_80%_55%)]/40", label: "RETAS",      bar: "bg-[hsl(210_80%_55%)]",        badge: "bg-[hsl(210_80%_55%)]/15 text-[hsl(210_80%_75%)] border border-[hsl(210_80%_55%)]/30" },
-  epic:      { text: "text-[hsl(265_75%_72%)]", ring: "ring-[hsl(265_75%_60%)]/45", label: "EPINIS",     bar: "bg-[hsl(265_75%_60%)]",        badge: "bg-[hsl(265_75%_60%)]/15 text-[hsl(265_75%_75%)] border border-[hsl(265_75%_60%)]/30" },
-  legendary: { text: "text-[hsl(38_95%_65%)]",  ring: "ring-[hsl(38_95%_55%)]/45",  label: "LEGENDINIS", bar: "bg-[hsl(38_95%_55%)]",         badge: "bg-[hsl(38_95%_55%)]/15 text-[hsl(38_95%_70%)] border border-[hsl(38_95%_55%)]/30" },
-  mythic:    { text: "text-primary",            ring: "ring-primary/50",            label: "MITINIS",    bar: "bg-primary",                   badge: "bg-primary/15 text-primary border border-primary/30" },
+  common: {
+    text: "text-muted-foreground",
+    ring: "ring-border/60",
+    label: "DAŽNAS",
+    bar: "bg-muted-foreground/50",
+    badge: "bg-muted-foreground/15 text-muted-foreground border border-muted-foreground/20",
+  },
+  rare: {
+    text: "text-[hsl(210_80%_70%)]",
+    ring: "ring-[hsl(210_80%_55%)]/40",
+    label: "RETAS",
+    bar: "bg-[hsl(210_80%_55%)]",
+    badge: "bg-[hsl(210_80%_55%)]/15 text-[hsl(210_80%_75%)] border border-[hsl(210_80%_55%)]/30",
+  },
+  epic: {
+    text: "text-[hsl(265_75%_72%)]",
+    ring: "ring-[hsl(265_75%_60%)]/45",
+    label: "EPINIS",
+    bar: "bg-[hsl(265_75%_60%)]",
+    badge: "bg-[hsl(265_75%_60%)]/15 text-[hsl(265_75%_75%)] border border-[hsl(265_75%_60%)]/30",
+  },
+  legendary: {
+    text: "text-[hsl(38_95%_65%)]",
+    ring: "ring-[hsl(38_95%_55%)]/45",
+    label: "LEGENDINIS",
+    bar: "bg-[hsl(38_95%_55%)]",
+    badge: "bg-[hsl(38_95%_55%)]/15 text-[hsl(38_95%_70%)] border border-[hsl(38_95%_55%)]/30",
+  },
+  mythic: {
+    text: "text-primary",
+    ring: "ring-primary/50",
+    label: "MITINIS",
+    bar: "bg-primary",
+    badge: "bg-primary/15 text-primary border border-primary/30",
+  },
 };
 
 // Auto-derive rarity from chance % for visual styling only
@@ -1230,11 +1306,13 @@ const BoxesSection = ({ discordId, userId }: { discordId?: string | null; userId
           accent: "210 90% 60%",
           image: c.image_url ?? undefined,
           pool: byCase.get(c.id) ?? [],
-        }))
+        })),
       );
       setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -1248,19 +1326,23 @@ const BoxesSection = ({ discordId, userId }: { discordId?: string | null; userId
       ) : (
         <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {boxes.map((box) => (
-            <BoxCard key={box.id} box={box} onOpen={() => {
-              if (box.pool.length === 0) {
-                toast.error("Šioje dėžėje dar nėra daiktų");
-                return;
-              }
-              if (credits < box.price) {
-                toast.error("Neturi pakankamai kreditų", {
-                  description: `Reikia ${box.price} €, o turi tik ${credits} €.`,
-                });
-                return;
-              }
-              setOpeningBox(box);
-            }} />
+            <BoxCard
+              key={box.id}
+              box={box}
+              onOpen={() => {
+                if (box.pool.length === 0) {
+                  toast.error("Šioje dėžėje dar nėra daiktų");
+                  return;
+                }
+                if (credits < box.price) {
+                  toast.error("Neturi pakankamai kreditų", {
+                    description: `Reikia ${box.price} €, o turi tik ${credits} €.`,
+                  });
+                  return;
+                }
+                setOpeningBox(box);
+              }}
+            />
           ))}
         </div>
       )}
@@ -1301,11 +1383,7 @@ const BoxCard = ({ box, onOpen }: { box: LootBox; onOpen: () => void }) => {
         <h3 className="text-lg font-bold leading-tight">{box.name}</h3>
         <p className="text-xs text-muted-foreground mt-0.5">{box.tagline}</p>
 
-
-        <button
-          onClick={onOpen}
-          className="mt-auto pt-5 w-full"
-        >
+        <button onClick={onOpen} className="mt-auto pt-5 w-full">
           <span className="flex items-center justify-center gap-2 h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition">
             <Package className="h-4 w-4" />
             Atidaryti už {box.price} €
@@ -1326,12 +1404,21 @@ const pickWeighted = (pool: CaseItem[]): CaseItem => {
   return pool[pool.length - 1];
 };
 
-
 const CARD_COUNT = 5;
 
 type Phase = "idle" | "shuffling" | "picking" | "revealing" | "done";
 
-const CaseOpeningModal = ({ box, onClose, discordId, userId }: { box: LootBox; onClose: () => void; discordId?: string | null; userId: string }) => {
+const CaseOpeningModal = ({
+  box,
+  onClose,
+  discordId,
+  userId,
+}: {
+  box: LootBox;
+  onClose: () => void;
+  discordId?: string | null;
+  userId: string;
+}) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [cards, setCards] = useState<CaseItem[]>([]);
   const [winnerIdx, setWinnerIdx] = useState<number>(-1);
@@ -1421,7 +1508,9 @@ const CaseOpeningModal = ({ box, onClose, discordId, userId }: { box: LootBox; o
           {phase === "idle" ? (
             <div className="text-center space-y-1">
               <Package className="h-10 w-10 mx-auto text-muted-foreground" strokeWidth={1.25} />
-              <p className="text-sm text-muted-foreground">Paspausk „Atidaryti", kad atskleistum {CARD_COUNT} korteles.</p>
+              <p className="text-sm text-muted-foreground">
+                Paspausk „Atidaryti", kad atskleistum {CARD_COUNT} korteles.
+              </p>
             </div>
           ) : (
             <div className="flex items-center justify-center gap-3 md:gap-4 flex-wrap">
@@ -1446,7 +1535,9 @@ const CaseOpeningModal = ({ box, onClose, discordId, userId }: { box: LootBox; o
             <div className="mt-1 flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <h4 className="text-2xl font-black text-foreground">{winner.name}</h4>
-                <span className={`inline-flex items-center mt-2 px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[winner.rarity].badge}`}>
+                <span
+                  className={`inline-flex items-center mt-2 px-2 py-0.5 rounded text-[10px] tracking-wider font-bold ${rarityStyles[winner.rarity].badge}`}
+                >
                   {rarityStyles[winner.rarity].label}
                 </span>
               </div>
@@ -1559,7 +1650,10 @@ const FlipCard = ({
             className={`h-full w-full object-cover transition-transform duration-500 ${interactive ? "group-hover:scale-105" : ""}`}
           />
           {interactive && (
-            <span aria-hidden className="absolute inset-0 rounded-xl ring-2 ring-primary/0 group-hover:ring-primary/60 transition-all duration-300" />
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-xl ring-2 ring-primary/0 group-hover:ring-primary/60 transition-all duration-300"
+            />
           )}
         </div>
 
@@ -1569,11 +1663,12 @@ const FlipCard = ({
             picked ? "border-primary" : "border-border/60"
           }`}
         >
-          
           <div className="text-center">
             <Icon className="h-9 w-9 mx-auto text-foreground/90" strokeWidth={1.5} />
             <p className="mt-2 text-xs font-semibold leading-tight text-foreground line-clamp-2">{item.name}</p>
-            <span className={`mt-2 inline-flex items-center px-1.5 py-0.5 rounded text-[8px] tracking-wider font-bold ${r.badge}`}>
+            <span
+              className={`mt-2 inline-flex items-center px-1.5 py-0.5 rounded text-[8px] tracking-wider font-bold ${r.badge}`}
+            >
               {r.label}
             </span>
           </div>
@@ -1709,9 +1804,15 @@ const AdminCreditsSection = () => {
 
         <Button
           onClick={() => {
-            if (!user) { toast.error("Pirma surask vartotoją"); return; }
+            if (!user) {
+              toast.error("Pirma surask vartotoją");
+              return;
+            }
             const n = parseInt(amount, 10);
-            if (!Number.isFinite(n) || n === 0) { toast.error("Įvesk teisingą sumą"); return; }
+            if (!Number.isFinite(n) || n === 0) {
+              toast.error("Įvesk teisingą sumą");
+              return;
+            }
             setConfirmOpen(true);
           }}
           className="rounded-md bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90"
@@ -1722,7 +1823,10 @@ const AdminCreditsSection = () => {
       </div>
 
       {confirmOpen && user && (
-        <div className="fixed inset-0 z-[100] grid place-items-center bg-background/80 backdrop-blur-sm p-4" onClick={() => !granting && setConfirmOpen(false)}>
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-background/80 backdrop-blur-sm p-4"
+          onClick={() => !granting && setConfirmOpen(false)}
+        >
           <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-4">
               <div className="h-10 w-10 rounded-full bg-secondary/60 grid place-items-center shrink-0">
@@ -1737,7 +1841,14 @@ const AdminCreditsSection = () => {
               </div>
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={granting} className="rounded-md">Atšaukti</Button>
+              <Button
+                variant="outline"
+                onClick={() => setConfirmOpen(false)}
+                disabled={granting}
+                className="rounded-md"
+              >
+                Atšaukti
+              </Button>
               <Button onClick={grant} disabled={granting} className="rounded-md">
                 {granting ? "Suteikiama…" : "Patvirtinti"}
               </Button>
