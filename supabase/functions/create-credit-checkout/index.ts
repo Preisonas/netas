@@ -7,10 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const DISCOUNT_CODES: Record<string, number> = {
-  MKKAHUJIENAS30: 0.3,
-};
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -48,13 +44,27 @@ serve(async (req) => {
     }
     const credInt = Math.floor(baseCredits);
 
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
     let discount = 0;
     let codeApplied: string | null = null;
     if (discountCode && typeof discountCode === "string") {
       const normalized = discountCode.trim().toUpperCase();
-      if (DISCOUNT_CODES[normalized] !== undefined) {
-        discount = DISCOUNT_CODES[normalized];
-        codeApplied = normalized;
+      const { data: dc } = await admin
+        .from("discount_codes")
+        .select("code, discount_percent, expires_at, max_uses, uses, active")
+        .eq("code", normalized)
+        .maybeSingle();
+      if (
+        dc && dc.active &&
+        (!dc.expires_at || new Date(dc.expires_at) > new Date()) &&
+        (dc.max_uses == null || dc.uses < dc.max_uses)
+      ) {
+        discount = dc.discount_percent / 100;
+        codeApplied = dc.code;
       }
     }
 
@@ -88,10 +98,6 @@ serve(async (req) => {
       },
     });
 
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
     await admin.from("credit_purchases").insert({
       user_id: user.id,
       stripe_session_id: session.id,

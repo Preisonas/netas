@@ -90,6 +90,16 @@ serve(async (req) => {
       .update({ status: "fulfilled", fulfilled_at: new Date().toISOString() })
       .eq("id", purchase.id);
 
+    const codeUsed = session.metadata?.discountCode;
+    if (codeUsed) {
+      const { data: dc } = await admin
+        .from("discount_codes").select("id, uses").eq("code", codeUsed).maybeSingle();
+      if (dc) {
+        await admin.from("discount_codes")
+          .update({ uses: (dc.uses ?? 0) + 1 }).eq("id", dc.id);
+      }
+    }
+
     return new Response(JSON.stringify({ status: "fulfilled", credits: newBalance, added: credits }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
