@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getStripe } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,59 +21,89 @@ export function CreditCheckoutDialog({
   onSuccess,
 }: CreditCheckoutDialogProps) {
   const [error, setError] = useState<string | null>(null);
-  const [sessionKey, setSessionKey] = useState(0);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const stripePromise = useMemo(() => getStripe(), []);
+  const onSuccessRef = useRef(onSuccess);
 
   useEffect(() => {
-    if (open) {
-      setError(null);
-      setSessionKey((k) => k + 1);
-    }
-  }, [open]);
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
 
-  const fetchClientSecret = useCallback(async (): Promise<string> => {
-    setError(null);
-    console.log("[checkout] fetchClientSecret called", { credits, discountCode });
-    try {
-      const { data, error } = await supabase.functions.invoke("create-credit-checkout", {
-        body: {
-          credits,
-          discountCode,
-          returnUrl: `${window.location.origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-        },
-      });
-      console.log("[checkout] invoke result", { data, error });
-      if (error || !data?.clientSecret) {
-        const msg = (error as any)?.message || data?.error || "Nepavyko pradėti mokėjimo";
-        console.error("create-credit-checkout failed:", error, data);
-        setError(msg);
-        toast.error(msg);
-        throw new Error(msg);
-      }
-      return data.clientSecret as string;
-    } catch (e: any) {
-      const msg = e?.message || "Nepavyko pradėti mokėjimo";
-      console.error("[checkout] fetchClientSecret threw", e);
-      setError(msg);
-      throw e;
+  useEffect(() => {
+    if (!open) {
+      setError(null);
+      setClientSecret(null);
+      setLoading(false);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [credits, discountCode, sessionKey]);
+
+    let active = true;
+    setError(null);
+    setLoading(true);
+    setClientSecret(null);
+
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("create-credit-checkout", {
+          body: {
+            credits,
+            discountCode,
+            returnUrl: `${window.location.origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+          },
+        });
+
+        if (!active) return;
+
+        if (error || !data?.clientSecret) {
+          const msg = (error as any)?.message || data?.error || "Nepavyko pradėti mokėjimo";
+          console.error("create-credit-checkout failed:", error, data);
+          setError(msg);
+          toast.error(msg);
+          return;
+        }
+
+        setClientSecret(data.clientSecret as string);
+      } catch (e: any) {
+        if (!active) return;
+        const msg = e?.message || "Nepavyko pradėti mokėjimo";
+        console.error("create-credit-checkout threw:", e);
+        setError(msg);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [open, credits, discountCode]);
+
+  const handleComplete = useCallback(() => {
+    onSuccessRef.current?.();
+  }, []);
+
+  const checkoutOptions = useMemo(
+    () => (clientSecret ? { clientSecret, onComplete: handleComplete } : null),
+    [clientSecret, handleComplete],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-5 pb-2">
           <DialogTitle>Apmokėjimas — {credits} kreditų</DialogTitle>
+          <DialogDescription className="sr-only">Stripe apmokėjimo langas kreditų pirkimui.</DialogDescription>
         </DialogHeader>
         <div className="max-h-[80vh] overflow-y-auto bg-white" style={{ minHeight: 600 }}>
           {error ? (
             <div className="p-6 text-sm text-destructive">{error}</div>
-          ) : open ? (
+          ) : loading ? (
+            <div className="p-6 text-sm text-muted-foreground">Kraunamas apmokėjimas...</div>
+          ) : open && checkoutOptions ? (
             <EmbeddedCheckoutProvider
-              key={sessionKey}
               stripe={stripePromise}
-              options={{ fetchClientSecret, onComplete: () => onSuccess?.() }}
+              options={checkoutOptions}
             >
               <EmbeddedCheckout />
             </EmbeddedCheckoutProvider>
