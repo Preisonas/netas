@@ -1,8 +1,6 @@
-import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { supabase } from "@/integrations/supabase/client";
 
 let cachedKey: string | null = null;
-let stripePromise: Promise<Stripe | null> | null = null;
 let envCache: "sandbox" | "live" = "sandbox";
 
 async function fetchPublishableKey(): Promise<string> {
@@ -24,17 +22,9 @@ async function fetchPublishableKey(): Promise<string> {
   return cachedKey;
 }
 
-export function getStripe(): Promise<Stripe | null> {
-  if (!stripePromise) {
-    stripePromise = fetchPublishableKey()
-      .then((key) => loadStripe(key))
-      .catch((err) => {
-        stripePromise = null;
-        throw err;
-      });
-  }
-
-  return stripePromise;
+export async function getStripe(): Promise<null> {
+  await fetchPublishableKey();
+  return null;
 }
 
 export async function getStripeEnvironment(): Promise<"sandbox" | "live"> {
@@ -46,5 +36,5 @@ export function getCachedStripeEnvironment(): "sandbox" | "live" {
   return envCache;
 }
 
-// Backwards-compat export — value resolves after first getStripe() call
+// Backwards-compat export
 export const stripeEnvironment: "sandbox" | "live" = envCache;
