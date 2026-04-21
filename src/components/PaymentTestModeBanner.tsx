@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { getCachedStripeEnvironment, getStripe } from "@/lib/stripe";
+import { getCachedStripeEnvironment, getStripeEnvironment } from "@/lib/stripe";
 
 export function PaymentTestModeBanner() {
   const [env, setEnv] = useState(getCachedStripeEnvironment());
 
   useEffect(() => {
-    getStripe().then(() => setEnv(getCachedStripeEnvironment())).catch(() => {});
+    getStripeEnvironment().then((nextEnv) => setEnv(nextEnv)).catch(() => {});
   }, []);
 
   if (env !== "sandbox") return null;

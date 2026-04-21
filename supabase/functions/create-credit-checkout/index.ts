@@ -75,6 +75,10 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-11-20.acacia" as any });
     const env: "sandbox" | "live" = stripeKey.startsWith("sk_test_") ? "sandbox" : "live";
 
+    const origin = req.headers.get("origin") ?? "";
+    const successUrl = returnUrl || `${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${origin}/?checkout=cancelled`;
+
     const session = await stripe.checkout.sessions.create({
       line_items: [{
         price_data: {
@@ -88,8 +92,8 @@ serve(async (req) => {
         quantity: 1,
       }],
       mode: "payment",
-      ui_mode: "embedded",
-      return_url: returnUrl || `${req.headers.get("origin")}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       customer_email: user.email ?? undefined,
       metadata: {
         userId: user.id,
@@ -108,7 +112,7 @@ serve(async (req) => {
       environment: env,
     });
 
-    return new Response(JSON.stringify({ clientSecret: session.client_secret }), {
+    return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
