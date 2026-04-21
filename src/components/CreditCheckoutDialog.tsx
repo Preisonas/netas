@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getStripe } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,9 +19,8 @@ export function CreditCheckoutDialog({
   onSuccess,
 }: CreditCheckoutDialogProps) {
   const [error, setError] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const stripePromise = useMemo(() => getStripe(), []);
   const onSuccessRef = useRef(onSuccess);
 
   useEffect(() => {
@@ -33,7 +30,7 @@ export function CreditCheckoutDialog({
   useEffect(() => {
     if (!open) {
       setError(null);
-      setClientSecret(null);
+      setCheckoutUrl(null);
       setLoading(false);
       return;
     }
@@ -41,7 +38,7 @@ export function CreditCheckoutDialog({
     let active = true;
     setError(null);
     setLoading(true);
-    setClientSecret(null);
+    setCheckoutUrl(null);
 
     (async () => {
       try {
@@ -55,7 +52,7 @@ export function CreditCheckoutDialog({
 
         if (!active) return;
 
-        if (error || !data?.clientSecret) {
+        if (error || !data?.url) {
           const msg = (error as any)?.message || data?.error || "Nepavyko pradėti mokėjimo";
           console.error("create-credit-checkout failed:", error, data);
           setError(msg);
@@ -63,7 +60,9 @@ export function CreditCheckoutDialog({
           return;
         }
 
-        setClientSecret(data.clientSecret as string);
+        const url = String(data.url);
+        setCheckoutUrl(url);
+        window.location.assign(url);
       } catch (e: any) {
         if (!active) return;
         const msg = e?.message || "Nepavyko pradėti mokėjimo";
@@ -79,36 +78,39 @@ export function CreditCheckoutDialog({
     };
   }, [open, credits, discountCode]);
 
-  const handleComplete = useCallback(() => {
-    onSuccessRef.current?.();
-  }, []);
-
-  const checkoutOptions = useMemo(
-    () => (clientSecret ? { clientSecret, onComplete: handleComplete } : null),
-    [clientSecret, handleComplete],
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 overflow-hidden border-0 bg-card max-w-3xl w-screen h-[100dvh] sm:w-[95vw] sm:h-auto sm:max-h-[90vh] sm:rounded-lg flex flex-col">
-        <DialogHeader className="px-6 pt-5 pb-4 bg-card border-0 shrink-0">
+      <DialogContent className="max-w-md">
+        <DialogHeader className="px-1 pt-1">
           <DialogTitle className="text-foreground">Apmokėjimas — {credits} kreditų</DialogTitle>
-          <DialogDescription className="sr-only">Stripe apmokėjimo langas kreditų pirkimui.</DialogDescription>
+          <DialogDescription>
+            Tave nukreipiame į saugų Stripe apmokėjimo puslapį.
+          </DialogDescription>
         </DialogHeader>
-        <div className="checkout-scroll flex-1 overflow-y-auto overflow-x-hidden bg-white -webkit-overflow-scrolling-touch">
+        <div className="px-1 pb-1">
           {error ? (
-            <div className="p-6 text-sm text-destructive">{error}</div>
-          ) : loading ? (
-            <div className="p-6 text-sm text-muted-foreground">Kraunamas apmokėjimas...</div>
-          ) : open && checkoutOptions ? (
-            <div className="min-h-full w-full">
-              <EmbeddedCheckoutProvider
-                stripe={stripePromise}
-                options={checkoutOptions}
-              >
-                <EmbeddedCheckout />
-              </EmbeddedCheckoutProvider>
+            <div className="space-y-3 rounded-md border border-border bg-secondary/30 p-4 text-sm">
+              <p className="text-destructive">{error}</p>
+              {checkoutUrl ? (
+                <button
+                  onClick={() => window.location.assign(checkoutUrl)}
+                  className="w-full rounded-md bg-[image:var(--gradient-brand)] px-4 py-2 font-medium text-primary-foreground"
+                >
+                  Atidaryti apmokėjimą
+                </button>
+              ) : null}
             </div>
+          ) : loading ? (
+            <div className="rounded-md border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">
+              Ruošiamas apmokėjimas...
+            </div>
+          ) : checkoutUrl ? (
+            <button
+              onClick={() => window.location.assign(checkoutUrl)}
+              className="w-full rounded-md bg-[image:var(--gradient-brand)] px-4 py-2 font-medium text-primary-foreground"
+            >
+              Atidaryti apmokėjimą
+            </button>
           ) : null}
         </div>
       </DialogContent>
