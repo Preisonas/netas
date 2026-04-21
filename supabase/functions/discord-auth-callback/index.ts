@@ -98,21 +98,26 @@ Deno.serve(async (req) => {
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
-  // 3. Create or fetch user
-  // Try to find existing user by email via listUsers (paginated; for small projects this is fine)
+  // 3. Create or fetch user — paginate through all users to find existing email
   let userId: string | null = null;
-  const { data: existing, error: listErr } = await admin.auth.admin.listUsers();
-  if (listErr) {
-    console.error("listUsers failed", listErr);
-    return htmlRedirect(`${targetBase}#discord_error=list_users_failed`, "Could not look up user.");
+  let found: { id: string; email?: string; user_metadata?: Record<string, unknown> } | undefined;
+  const targetEmail = dUser.email!.toLowerCase();
+  for (let page = 1; page <= 50; page++) {
+    const { data: pageData, error: listErr } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (listErr) {
+      console.error("listUsers failed", listErr);
+      return htmlRedirect(`${targetBase}#discord_error=list_users_failed`, "Could not look up user.");
+    }
+    found = pageData.users.find((u) => u.email?.toLowerCase() === targetEmail);
+    if (found) break;
+    if (!pageData.users.length || pageData.users.length < 1000) break;
   }
-  const found = existing.users.find((u) => u.email?.toLowerCase() === dUser.email!.toLowerCase());
+
   if (found) {
     userId = found.id;
-    // Update metadata so profile stays fresh
     await admin.auth.admin.updateUserById(userId, {
       user_metadata: {
-        ...found.user_metadata,
+        ...(found.user_metadata ?? {}),
         discord_id: dUser.id,
         username,
         avatar_url: avatarUrl,
@@ -132,10 +137,22 @@ Deno.serve(async (req) => {
       },
     });
     if (createErr || !created.user) {
-      console.error("createUser failed", createErr);
-      return htmlRedirect(`${targetBase}#discord_error=create_user_failed`, "Could not create user.");
+      // Race / pagination miss — try one more lookup before giving up
+      if ((createErr as { code?: string } | null)?.code === "email_exists") {
+        for (let page = 1; page <= 50; page++) {
+          const { data: pageData } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+          const f = pageData?.users.find((u) => u.email?.toLowerCase() === targetEmail);
+          if (f) { userId = f.id; break; }
+          if (!pageData?.users.length || pageData.users.length < 1000) break;
+        }
+      }
+      if (!userId) {
+        console.error("createUser failed", createErr);
+        return htmlRedirect(`${targetBase}#discord_error=create_user_failed`, "Could not create user.");
+      }
+    } else {
+      userId = created.user.id;
     }
-    userId = created.user.id;
   }
 
   // 4. Upsert profile (defensive — trigger should also have inserted)
