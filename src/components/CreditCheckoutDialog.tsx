@@ -63,7 +63,6 @@ export function CreditCheckoutDialog({
         const url = String(data.url);
         setCheckoutUrl(url);
         window.location.assign(url);
-        onSuccessRef.current?.();
       } catch (e: any) {
         if (!active) return;
         const msg = e?.message || "Nepavyko pradėti mokėjimo";
