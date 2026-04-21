@@ -90,23 +90,25 @@ export function CreditCheckoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden border-0 bg-card sm:max-w-3xl w-[95vw]">
-        <DialogHeader className="px-6 pt-5 pb-4 bg-card border-0">
+      <DialogContent className="p-0 overflow-hidden border-0 bg-card max-w-3xl w-screen h-[100dvh] sm:w-[95vw] sm:h-auto sm:max-h-[90vh] sm:rounded-lg flex flex-col">
+        <DialogHeader className="px-6 pt-5 pb-4 bg-card border-0 shrink-0">
           <DialogTitle className="text-foreground">Apmokėjimas — {credits} kreditų</DialogTitle>
           <DialogDescription className="sr-only">Stripe apmokėjimo langas kreditų pirkimui.</DialogDescription>
         </DialogHeader>
-        <div className="checkout-scroll max-h-[85vh] overflow-y-auto bg-white" style={{ minHeight: 720 }}>
+        <div className="checkout-scroll flex-1 overflow-y-auto overflow-x-hidden bg-white -webkit-overflow-scrolling-touch">
           {error ? (
             <div className="p-6 text-sm text-destructive">{error}</div>
           ) : loading ? (
             <div className="p-6 text-sm text-muted-foreground">Kraunamas apmokėjimas...</div>
           ) : open && checkoutOptions ? (
-            <EmbeddedCheckoutProvider
-              stripe={stripePromise}
-              options={checkoutOptions}
-            >
-              <EmbeddedCheckout />
-            </EmbeddedCheckoutProvider>
+            <div className="min-h-full w-full">
+              <EmbeddedCheckoutProvider
+                stripe={stripePromise}
+                options={checkoutOptions}
+              >
+                <EmbeddedCheckout />
+              </EmbeddedCheckoutProvider>
+            </div>
           ) : null}
         </div>
       </DialogContent>
