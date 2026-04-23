@@ -11,6 +11,7 @@ interface Vehicle {
   model: string;
   model_name: string;
   image_url: string | null;
+  images: string[];
   price: number;
   top_speed: number;
   trunk: number | null;
@@ -19,8 +20,11 @@ interface Vehicle {
 }
 
 const empty: Vehicle = {
-  id: "", brand: "", model: "", model_name: "", image_url: null, price: 0, top_speed: 0, trunk: null, features: [], video_url: null,
+  id: "", brand: "", model: "", model_name: "", image_url: null, images: [], price: 0, top_speed: 0, trunk: null, features: [], video_url: null,
 };
+
+const MAX_FEATURES = 10;
+const MAX_IMAGES = 10;
 
 const VehiclesManager = () => {
   const [list, setList] = useState<Vehicle[]>([]);
