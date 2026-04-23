@@ -705,6 +705,7 @@ interface ShopVehicle {
   speed: number;
   trunk?: number;
   image?: string;
+  images: string[];
   videoUrl?: string;
   features: string[];
 }
@@ -737,7 +738,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
     (async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, brand, model, price, top_speed, trunk, image_url, features, video_url")
+        .select("id, brand, model, price, top_speed, trunk, image_url, images, features, video_url")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         if (!error && data) {
@@ -750,6 +751,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
               speed: v.top_speed,
               trunk: v.trunk ?? undefined,
               image: v.image_url ?? undefined,
+              images: (v as { images?: string[] }).images ?? [],
               videoUrl: v.video_url ?? undefined,
               features: v.features ?? [],
             })),
@@ -833,6 +835,9 @@ const VehicleCard = ({
 }) => {
   const [playing, setPlaying] = useState(false);
   const ytId = getYoutubeId(v.videoUrl);
+  const gallery = [v.image, ...(v.images ?? [])].filter((x): x is string => Boolean(x));
+  const [imgIdx, setImgIdx] = useState(0);
+  const currentImg = gallery[imgIdx];
   return (
     <article className="group relative rounded-xl overflow-hidden bg-secondary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-20px_hsl(var(--primary)/0.4)]">
       <div className="relative aspect-[16/10] overflow-hidden bg-background/60">
@@ -846,9 +851,9 @@ const VehicleCard = ({
           />
         ) : (
           <>
-            {v.image ? (
+            {currentImg ? (
               <img
-                src={v.image}
+                src={currentImg}
                 alt={`${v.brand} ${v.model}`}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
@@ -876,6 +881,19 @@ const VehicleCard = ({
                   </svg>
                 </span>
               </button>
+            )}
+            {gallery.length > 1 && !ytId && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 px-2 py-1 rounded-full bg-background/60 backdrop-blur-sm">
+                {gallery.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setImgIdx(i); }}
+                    aria-label={`Nuotrauka ${i + 1}`}
+                    className={`h-1.5 rounded-full transition-all ${i === imgIdx ? "w-5 bg-primary" : "w-1.5 bg-foreground/40 hover:bg-foreground/70"}`}
+                  />
+                ))}
+              </div>
             )}
           </>
         )}
