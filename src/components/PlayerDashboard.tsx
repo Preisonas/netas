@@ -705,6 +705,7 @@ interface ShopVehicle {
   speed: number;
   trunk?: number;
   image?: string;
+  images: string[];
   videoUrl?: string;
   features: string[];
 }
