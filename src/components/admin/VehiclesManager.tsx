@@ -145,8 +145,38 @@ const VehiclesManager = () => {
         </div>
 
         <div>
-          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">Paveikslėlis</label>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">Pagrindinis paveikslėlis</label>
           <ImageUploader value={editing.image_url} onChange={(u) => setEditing({ ...editing, image_url: u })} folder="vehicles" />
+        </div>
+
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">
+            Papildomos nuotraukos ({editing.images.length}/{MAX_IMAGES})
+          </label>
+          <div className="flex flex-wrap gap-3">
+            {editing.images.map((img, i) => (
+              <div key={i} className="relative">
+                <img src={img} alt="" className="h-24 w-32 object-cover rounded-md border border-border/60" />
+                <button
+                  type="button"
+                  onClick={() => setEditing({ ...editing, images: editing.images.filter((_, idx) => idx !== i) })}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-card border border-border grid place-items-center hover:bg-destructive/20 hover:text-destructive"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {editing.images.length < MAX_IMAGES && (
+              <ImageUploader
+                value={null}
+                onChange={(u) => {
+                  if (u) setEditing({ ...editing, images: [...editing.images, u] });
+                }}
+                folder="vehicles"
+              />
+            )}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">Iki {MAX_IMAGES} papildomų nuotraukų galerijai.</p>
         </div>
 
         <div>
@@ -161,25 +191,29 @@ const VehiclesManager = () => {
         </div>
 
         <div>
-          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">Modelio informacija</label>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">
+            Modelio informacija ({editing.features.length}/{MAX_FEATURES})
+          </label>
           <div className="flex gap-2 mb-2">
             <input
               value={featInput}
               onChange={(e) => setFeatInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && featInput.trim()) {
+                if (e.key === "Enter" && featInput.trim() && editing.features.length < MAX_FEATURES) {
                   e.preventDefault();
                   setEditing({ ...editing, features: [...editing.features, featInput.trim()] });
                   setFeatInput("");
                 }
               }}
               placeholder="pvz. Dirt map"
-              className="flex-1 rounded-md bg-secondary/60 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary/60"
+              disabled={editing.features.length >= MAX_FEATURES}
+              className="flex-1 rounded-md bg-secondary/60 border border-border/60 px-3 py-2 text-sm outline-none focus:border-primary/60 disabled:opacity-50"
             />
             <Button
               type="button"
+              disabled={editing.features.length >= MAX_FEATURES}
               onClick={() => {
-                if (!featInput.trim()) return;
+                if (!featInput.trim() || editing.features.length >= MAX_FEATURES) return;
                 setEditing({ ...editing, features: [...editing.features, featInput.trim()] });
                 setFeatInput("");
               }}
