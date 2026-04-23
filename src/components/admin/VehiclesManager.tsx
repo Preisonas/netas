@@ -60,6 +60,7 @@ const VehiclesManager = () => {
       model: editing.model,
       model_name: editing.model_name,
       image_url: editing.image_url,
+      images: editing.images,
       price: editing.price,
       top_speed: editing.top_speed,
       trunk: editing.trunk,
