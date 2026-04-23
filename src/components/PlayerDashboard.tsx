@@ -738,7 +738,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
     (async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, brand, model, price, top_speed, trunk, image_url, features, video_url")
+        .select("id, brand, model, price, top_speed, trunk, image_url, images, features, video_url")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         if (!error && data) {
@@ -751,6 +751,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
               speed: v.top_speed,
               trunk: v.trunk ?? undefined,
               image: v.image_url ?? undefined,
+              images: (v as { images?: string[] }).images ?? [],
               videoUrl: v.video_url ?? undefined,
               features: v.features ?? [],
             })),
