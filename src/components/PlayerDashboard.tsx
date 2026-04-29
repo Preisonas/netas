@@ -256,6 +256,7 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
             />
           )}
           {active === "shop" && <ShopSection discordId={discordId} userId={session.user.id} />}
+          {active === "vip" && <VipSection userId={session.user.id} discordId={discordId} />}
           {active === "credits" && <CreditsSection />}
           {active === "boxes" && <BoxesSection discordId={discordId} userId={session.user.id} />}
           {active === "admin-credits" && isOwner && <AdminCreditsSection />}
@@ -279,6 +280,7 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
           )}
           {active !== "profile" &&
             active !== "shop" &&
+            active !== "vip" &&
             active !== "credits" &&
             active !== "boxes" &&
             active !== "admin-credits" &&
