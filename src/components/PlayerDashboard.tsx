@@ -1122,72 +1122,42 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
             return (
               <article
                 key={tier.id}
-                className={`group relative flex flex-col rounded-2xl overflow-hidden border bg-card/70 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${
+                className={`group relative flex flex-col rounded-2xl overflow-hidden border bg-card/80 transition-colors duration-200 ${
                   active ? "border-primary/50" : "border-border/60 hover:border-border"
                 }`}
                 style={{
                   boxShadow: active
                     ? `0 24px 70px -25px hsl(var(--primary) / 0.45)`
-                    : `0 20px 60px -30px ${theme.glow}, inset 0 1px 0 rgba(255,255,255,0.04)`,
+                    : `0 20px 60px -30px ${theme.glow}`,
                 }}
               >
-                {/* Left accent stripe */}
-                <div
-                  aria-hidden
-                  className="absolute left-0 top-0 bottom-0 w-1"
-                  style={{ background: `linear-gradient(180deg, ${theme.accent}, transparent 110%)` }}
-                />
-
                 {/* Subtle corner glow */}
                 <div
                   aria-hidden
-                  className="absolute -top-24 -right-24 w-56 h-56 rounded-full pointer-events-none opacity-60 transition-opacity duration-500 group-hover:opacity-100"
+                  className="absolute -top-24 -right-24 w-56 h-56 rounded-full pointer-events-none opacity-60"
                   style={{ background: `radial-gradient(circle, ${theme.glow} 0%, transparent 70%)` }}
-                />
-
-                {/* Logo watermark */}
-                <img
-                  src="/logo.png"
-                  alt=""
-                  aria-hidden
-                  className="pointer-events-none select-none absolute -bottom-6 -right-6 w-40 h-40 object-contain opacity-[0.04] grayscale"
                 />
 
                 {/* Header */}
                 <div className="relative px-6 pt-6 pb-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="relative h-10 w-10 rounded-full grid place-items-center border"
-                        style={{ borderColor: `${theme.accent}55`, background: theme.soft }}
-                      >
-                        <img src="/logo.png" alt="logo" className="h-6 w-6 object-contain" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                          Membership
-                        </span>
-                        <span
-                          className="text-[11px] uppercase tracking-[0.3em] font-semibold"
-                          style={{ color: theme.accent }}
-                        >
-                          {tier.tier}
-                        </span>
-                      </div>
-                    </div>
-
-                    <span
-                      aria-hidden
-                      className="font-black italic leading-none select-none text-5xl"
-                      style={{
-                        color: "transparent",
-                        WebkitTextStroke: `1px ${theme.accent}40`,
-                        fontFamily: "'Inter', system-ui, sans-serif",
-                        letterSpacing: "-0.05em",
-                      }}
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="relative h-10 w-10 rounded-full grid place-items-center border"
+                      style={{ borderColor: `${theme.accent}55`, background: theme.soft }}
                     >
-                      {theme.letter}
-                    </span>
+                      <img src="/logo.png" alt="logo" className="h-6 w-6 object-contain" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                        Membership
+                      </span>
+                      <span
+                        className="text-[11px] uppercase tracking-[0.3em] font-semibold"
+                        style={{ color: theme.accent }}
+                      >
+                        {tier.tier}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="mt-5 flex items-baseline justify-between gap-2">
@@ -1219,15 +1189,6 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                       </span>
                     )}
                   </div>
-                </div>
-
-                {/* Perforated divider — ticket feel */}
-                <div
-                  className="relative h-px mx-6"
-                  style={{ background: `linear-gradient(90deg, transparent, ${theme.accent}40, transparent)` }}
-                >
-                  <span className="absolute -left-9 -top-2 h-4 w-4 rounded-full bg-background border border-border/60" />
-                  <span className="absolute -right-9 -top-2 h-4 w-4 rounded-full bg-background border border-border/60" />
                 </div>
 
                 {/* Body */}
