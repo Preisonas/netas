@@ -1143,7 +1143,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                   src="/logo.png"
                   alt=""
                   aria-hidden
-                  className="pointer-events-none select-none absolute -bottom-8 -right-8 w-44 h-44 object-contain opacity-[0.05]"
+                  className="pointer-events-none select-none absolute -bottom-6 -right-6 w-40 h-40 object-contain opacity-[0.04] grayscale"
                 />
 
                 {/* Header */}
