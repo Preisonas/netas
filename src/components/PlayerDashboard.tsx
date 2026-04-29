@@ -1083,9 +1083,9 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
   const myVipByTier = new Map(myVips.map((v) => [v.tier_id, v]));
 
   const tierIcons: Record<string, typeof Crown> = {
-    bronze: Shield,
-    silver: Sparkles,
-    gold: Crown,
+    silver: Shield,
+    gold: Sparkles,
+    platinum: Crown,
   };
 
   return (
