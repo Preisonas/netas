@@ -1083,9 +1083,9 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
   const myVipByTier = new Map(myVips.map((v) => [v.tier_id, v]));
 
   const tierIcons: Record<string, typeof Crown> = {
-    bronze: Shield,
-    silver: Sparkles,
-    gold: Crown,
+    silver: Shield,
+    gold: Sparkles,
+    platinum: Crown,
   };
 
   return (
@@ -1130,12 +1130,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
 
                 {/* Header */}
                 <div className="flex items-center gap-3">
-                  <div
-                    className="h-11 w-11 grid place-items-center rounded-lg border border-border/50 bg-secondary/40"
-                    style={{ color: tier.color }}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
+                  <Icon className="h-7 w-7 shrink-0" style={{ color: tier.color }} />
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">VIP</p>
                     <h3 className="text-lg font-bold leading-tight truncate">{tier.name}</h3>
