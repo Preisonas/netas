@@ -44,21 +44,27 @@ Deno.serve(async (req) => {
 
   let body: Body;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
-  if (!body.type || !body.character_id) return json({ error: "Missing fields" }, 400);
+  if (!body.type) return json({ error: "Missing fields" }, 400);
+  if (body.type !== "vip" && !body.character_id) return json({ error: "Missing character_id" }, 400);
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
-  // Profile + character ownership
+  // Profile (always required)
   const { data: profile, error: profErr } = await admin
     .from("profiles").select("credits, discord_id").eq("user_id", user.id).maybeSingle();
   if (profErr || !profile) return json({ error: "Profile not found" }, 404);
-  if (!profile.discord_id) return json({ error: "Discord not linked" }, 400);
 
-  const { data: character, error: charErr } = await admin
-    .from("characters").select("id, identifier, discord_id, first_name, last_name")
-    .eq("id", body.character_id).maybeSingle();
-  if (charErr || !character) return json({ error: "Character not found" }, 404);
-  if (character.discord_id !== profile.discord_id) return json({ error: "Not your character" }, 403);
+  // Character ownership check (skip for VIP purchases)
+  let character: { id: string; identifier: string; discord_id: string; first_name: string | null; last_name: string | null } | null = null;
+  if (body.type !== "vip") {
+    if (!profile.discord_id) return json({ error: "Discord not linked" }, 400);
+    const { data: ch, error: charErr } = await admin
+      .from("characters").select("id, identifier, discord_id, first_name, last_name")
+      .eq("id", body.character_id!).maybeSingle();
+    if (charErr || !ch) return json({ error: "Character not found" }, 404);
+    if (ch.discord_id !== profile.discord_id) return json({ error: "Not your character" }, 403);
+    character = ch;
+  }
 
   // Compute price + reward server-side
   let price = 0;
