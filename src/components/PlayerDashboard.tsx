@@ -1100,7 +1100,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
       ) : (tiersQuery.data ?? []).length === 0 ? (
         <p className="text-center text-muted-foreground py-12">Nėra prieinamų VIP lygių.</p>
       ) : (
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-3 gap-5 items-stretch">
           {(tiersQuery.data ?? []).map((tier) => {
             const Icon = tierIcons[tier.tier] ?? Crown;
             const myVip = myVipByTier.get(tier.id);
@@ -1111,74 +1111,81 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
             return (
               <article
                 key={tier.id}
-                className="relative rounded-xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-0.5 overflow-hidden"
-                style={{
-                  boxShadow: active
-                    ? `0 20px 60px -20px ${tier.color}66`
-                    : undefined,
-                }}
+                className={`relative flex flex-col rounded-xl border bg-card/40 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-0.5 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.35)] ${
+                  active ? "border-primary/50" : "border-border/50 hover:border-border"
+                }`}
               >
+                {/* Top accent bar in tier color */}
                 <div
                   aria-hidden
-                  className="absolute inset-x-0 top-0 h-1"
+                  className="absolute inset-x-0 top-0 h-[3px] opacity-80"
                   style={{ background: tier.color }}
                 />
 
                 {active && (
-                  <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-primary/20 text-primary font-bold">
+                  <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-primary/15 text-primary font-bold border border-primary/30">
                     Aktyvus
                   </span>
                 )}
 
-                <div
-                  className="h-12 w-12 grid place-items-center rounded-lg mb-4"
-                  style={{ background: `${tier.color}26`, color: tier.color }}
-                >
-                  <Icon className="h-6 w-6" />
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="h-11 w-11 grid place-items-center rounded-lg border border-border/50 bg-secondary/40"
+                    style={{ color: tier.color }}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">VIP</p>
+                    <h3 className="text-lg font-bold leading-tight truncate">{tier.name}</h3>
+                  </div>
                 </div>
 
-                <h3 className="text-xl font-bold">{tier.name}</h3>
                 {tier.description && (
-                  <p className="text-sm text-muted-foreground mt-1">{tier.description}</p>
+                  <p className="mt-3 text-sm text-muted-foreground">{tier.description}</p>
                 )}
 
-                <div className="mt-4 flex items-baseline gap-1.5">
-                  <span className="text-3xl font-black" style={{ color: tier.color }}>
-                    {tier.price}
-                  </span>
+                {/* Price */}
+                <div className="mt-5 flex items-baseline gap-1.5">
+                  <span className="text-4xl font-black text-foreground">{tier.price}</span>
                   <span className="text-sm text-muted-foreground">€ / {tier.duration_days} d.</span>
                 </div>
 
-                <ul className="mt-5 space-y-2">
+                <div className="mt-5 h-px bg-border/50" />
+
+                {/* Perks — flex-1 pushes button to the bottom */}
+                <ul className="mt-5 space-y-2.5 flex-1">
                   {tier.perks.map((perk, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: tier.color }} />
+                      <Check className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
                       <span>{perk}</span>
                     </li>
                   ))}
                 </ul>
 
-                <button
-                  onClick={() => buy(tier)}
-                  disabled={buyingId === tier.id}
-                  className="mt-6 w-full h-10 rounded-md text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background: tier.color,
-                    color: "#0a0a0a",
-                  }}
-                >
-                  {buyingId === tier.id
-                    ? "Apdorojama…"
-                    : active
-                    ? `Pratęsti (+${tier.duration_days} d.)`
-                    : "Pirkti"}
-                </button>
+                {/* Footer: button + expiry, always at bottom */}
+                <div className="mt-6 pt-1">
+                  <button
+                    onClick={() => buy(tier)}
+                    disabled={buyingId === tier.id}
+                    className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {buyingId === tier.id
+                      ? "Apdorojama…"
+                      : active
+                      ? `Pratęsti (+${tier.duration_days} d.)`
+                      : "Pirkti"}
+                  </button>
 
-                {active && expiresLabel && (
-                  <p className="mt-3 text-center text-xs text-muted-foreground">
-                    Galioja iki <span className="text-foreground font-medium">{expiresLabel}</span>
-                  </p>
-                )}
+                  {active && expiresLabel ? (
+                    <p className="mt-3 text-center text-xs text-muted-foreground">
+                      Galioja iki <span className="text-foreground font-medium">{expiresLabel}</span>
+                    </p>
+                  ) : (
+                    <p className="mt-3 text-center text-xs text-muted-foreground/60">&nbsp;</p>
+                  )}
+                </div>
               </article>
             );
           })}
