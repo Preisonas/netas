@@ -1117,112 +1117,85 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
               : null;
             const isFeatured = tier.tier === "platinum";
 
-            // Holographic metallic banners per tier (matches reference image)
-            const banners: Record<string, { bg: string; vip: string; vipShadow: string; sheen: string }> = {
-              silver: {
-                bg: "linear-gradient(125deg, #f5f1ea 0%, #e6dfd2 25%, #ffffff 50%, #d8d2c4 75%, #ece5d6 100%)",
-                vip: "linear-gradient(180deg, #ffffff 0%, #cfc7b6 100%)",
-                vipShadow: "0 2px 0 rgba(120,110,90,0.25), 0 8px 20px rgba(0,0,0,0.15)",
-                sheen: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.55) 48%, rgba(255,255,255,0.0) 60%)",
-              },
-              gold: {
-                bg: "linear-gradient(125deg, #f0a020 0%, #ffcb45 30%, #fff2a8 50%, #f5b324 72%, #b87212 100%)",
-                vip: "linear-gradient(180deg, #ffffff 0%, #f7e6a8 100%)",
-                vipShadow: "0 2px 0 rgba(120,80,10,0.35), 0 8px 20px rgba(0,0,0,0.2)",
-                sheen: "linear-gradient(115deg, transparent 28%, rgba(255,255,255,0.65) 48%, rgba(255,255,255,0.0) 62%)",
-              },
-              platinum: {
-                bg: "linear-gradient(125deg, #2bb3e6 0%, #6fd8ee 28%, #b6f0e6 50%, #4ec5c8 72%, #1f6f9c 100%)",
-                vip: "linear-gradient(180deg, #ffffff 0%, #c7f0ee 100%)",
-                vipShadow: "0 2px 0 rgba(10,60,80,0.35), 0 8px 20px rgba(0,0,0,0.2)",
-                sheen: "linear-gradient(115deg, transparent 28%, rgba(255,255,255,0.55) 48%, rgba(255,255,255,0.0) 62%)",
-              },
-            };
-            const banner = banners[tier.tier] ?? banners.silver;
+            const theme = tierTheme[tier.tier] ?? tierTheme.silver;
 
             return (
               <article
                 key={tier.id}
-                className={`group relative flex flex-col rounded-2xl border bg-card/60 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgba(0,0,0,0.4)] ${
-                  active
-                    ? "border-primary/60"
-                    : "border-border/60 hover:border-border"
+                className={`group relative flex flex-col rounded-2xl overflow-hidden border bg-card/70 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${
+                  active ? "border-primary/50" : "border-border/60 hover:border-border"
                 }`}
                 style={{
                   boxShadow: active
-                    ? `0 24px 70px -20px hsl(var(--primary) / 0.45)`
-                    : isFeatured
-                    ? `0 24px 70px -25px ${tier.color}55`
-                    : undefined,
+                    ? `0 24px 70px -25px hsl(var(--primary) / 0.45)`
+                    : `0 20px 60px -30px ${theme.glow}, inset 0 1px 0 rgba(255,255,255,0.04)`,
                 }}
               >
-                {/* ============ Holographic banner ============ */}
+                {/* Left accent stripe */}
                 <div
-                  className="relative aspect-[16/9] w-full overflow-hidden"
-                  style={{ background: banner.bg }}
-                >
-                  {/* diagonal sheen */}
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 mix-blend-screen pointer-events-none transition-transform duration-700 group-hover:translate-x-2"
-                    style={{ background: banner.sheen }}
-                  />
-                  {/* subtle grain via radial spots */}
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-30 mix-blend-overlay pointer-events-none"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.6), transparent 40%), radial-gradient(circle at 80% 70%, rgba(0,0,0,0.25), transparent 45%)",
-                    }}
-                  />
+                  aria-hidden
+                  className="absolute left-0 top-0 bottom-0 w-1"
+                  style={{ background: `linear-gradient(180deg, ${theme.accent}, transparent 110%)` }}
+                />
 
-                  {/* Top-right badges over banner */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
-                    {isFeatured && !active && (
-                      <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-black/40 text-white font-bold backdrop-blur-sm border border-white/20">
-                        Populiariausias
-                      </span>
-                    )}
-                    {active && (
-                      <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-black/40 text-white font-bold backdrop-blur-sm border border-white/20">
-                        Aktyvus
-                      </span>
-                    )}
-                  </div>
+                {/* Subtle corner glow */}
+                <div
+                  aria-hidden
+                  className="absolute -top-24 -right-24 w-56 h-56 rounded-full pointer-events-none opacity-60 transition-opacity duration-500 group-hover:opacity-100"
+                  style={{ background: `radial-gradient(circle, ${theme.glow} 0%, transparent 70%)` }}
+                />
 
-                  {/* VIP wordmark */}
-                  <div className="absolute inset-0 grid place-items-center">
+                {/* Logo watermark */}
+                <img
+                  src="/logo.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none select-none absolute -bottom-6 -right-6 w-40 h-40 object-contain opacity-[0.04] grayscale"
+                />
+
+                {/* Header */}
+                <div className="relative px-6 pt-6 pb-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="relative h-10 w-10 rounded-full grid place-items-center border"
+                        style={{ borderColor: `${theme.accent}55`, background: theme.soft }}
+                      >
+                        <img src="/logo.png" alt="logo" className="h-6 w-6 object-contain" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                          Membership
+                        </span>
+                        <span
+                          className="text-[11px] uppercase tracking-[0.3em] font-semibold"
+                          style={{ color: theme.accent }}
+                        >
+                          {tier.tier}
+                        </span>
+                      </div>
+                    </div>
+
                     <span
-                      className="font-black italic tracking-tight text-[5.5rem] leading-none select-none"
+                      aria-hidden
+                      className="font-black italic leading-none select-none text-5xl"
                       style={{
-                        background: banner.vip,
-                        WebkitBackgroundClip: "text",
-                        backgroundClip: "text",
                         color: "transparent",
-                        WebkitTextStroke: "1px rgba(255,255,255,0.4)",
-                        filter: `drop-shadow(${banner.vipShadow})`,
+                        WebkitTextStroke: `1px ${theme.accent}40`,
                         fontFamily: "'Inter', system-ui, sans-serif",
-                        letterSpacing: "-0.04em",
+                        letterSpacing: "-0.05em",
                       }}
                     >
-                      VIP
+                      {theme.letter}
                     </span>
                   </div>
 
-                  {/* Tier label bottom-center */}
-                  <div className="absolute bottom-2 inset-x-0 flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-[0.3em] font-semibold text-black/50">
-                    <Icon className="h-3 w-3" />
-                    {tier.tier}
-                  </div>
-                </div>
-
-                {/* ============ Body ============ */}
-                <div className="relative flex flex-col flex-1 p-6">
-                  <div className="flex items-baseline justify-between gap-2">
+                  <div className="mt-5 flex items-baseline justify-between gap-2">
                     <h3 className="text-xl font-bold leading-tight">{tier.name}</h3>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-black text-foreground tracking-tight">{tier.price}</span>
+                      <span className="text-3xl font-black tracking-tight" style={{ color: theme.accent }}>
+                        {tier.price}
+                      </span>
                       <span className="text-xs text-muted-foreground">€/{tier.duration_days}d</span>
                     </div>
                   </div>
@@ -1231,22 +1204,53 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                     <p className="mt-2 text-sm text-muted-foreground">{tier.description}</p>
                   )}
 
-                  <div className="mt-4 h-px bg-border/50" />
+                  <div className="mt-4 flex items-center gap-2 min-h-[24px]">
+                    {isFeatured && !active && (
+                      <span
+                        className="text-[10px] uppercase tracking-[0.2em] px-2 py-1 rounded-full font-semibold"
+                        style={{ background: theme.soft, color: theme.accent, border: `1px solid ${theme.accent}33` }}
+                      >
+                        Populiariausias
+                      </span>
+                    )}
+                    {active && (
+                      <span className="text-[10px] uppercase tracking-[0.2em] px-2 py-1 rounded-full font-semibold bg-primary/15 text-primary border border-primary/30">
+                        Aktyvus
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-                  <ul className="mt-4 space-y-2.5 flex-1">
+                {/* Perforated divider — ticket feel */}
+                <div
+                  className="relative h-px mx-6"
+                  style={{ background: `linear-gradient(90deg, transparent, ${theme.accent}40, transparent)` }}
+                >
+                  <span className="absolute -left-9 -top-2 h-4 w-4 rounded-full bg-background border border-border/60" />
+                  <span className="absolute -right-9 -top-2 h-4 w-4 rounded-full bg-background border border-border/60" />
+                </div>
+
+                {/* Body */}
+                <div className="relative flex flex-col flex-1 px-6 pt-5 pb-6">
+                  <ul className="space-y-2.5 flex-1">
                     {tier.perks.map((perk, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: tier.color }} />
+                        <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: theme.accent }} />
                         <span>{perk}</span>
                       </li>
                     ))}
                   </ul>
 
-                  <div className="mt-6 pt-1">
+                  <div className="mt-6">
                     <button
                       onClick={() => buy(tier)}
                       disabled={buyingId === tier.id}
-                      className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full h-10 rounded-md text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed border hover:brightness-125"
+                      style={{
+                        background: `linear-gradient(180deg, ${theme.accent}22, ${theme.accent}10)`,
+                        borderColor: `${theme.accent}55`,
+                        color: theme.accent,
+                      }}
                     >
                       {buyingId === tier.id
                         ? "Apdorojama…"
