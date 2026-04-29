@@ -1082,11 +1082,18 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
   const myVips = myVipsQuery.data ?? [];
   const myVipByTier = new Map(myVips.map((v) => [v.tier_id, v]));
 
-  const tierIcons: Record<string, typeof Crown> = {
-    silver: Shield,
-    gold: Sparkles,
-    platinum: Crown,
-  };
+   const tierIcons: Record<string, typeof Crown> = {
+     silver: Shield,
+     gold: Sparkles,
+     platinum: Crown,
+   };
+
+   // Tier accent themes — single accent hue per tier, used sparingly for a clean look
+   const tierTheme: Record<string, { accent: string; soft: string; glow: string; letter: string }> = {
+     silver:   { accent: "#c9d1da", soft: "rgba(201,209,218,0.10)", glow: "rgba(201,209,218,0.25)", letter: "S" },
+     gold:     { accent: "#e8c25a", soft: "rgba(232,194,90,0.10)",  glow: "rgba(232,194,90,0.30)",  letter: "G" },
+     platinum: { accent: "#7ad9e0", soft: "rgba(122,217,224,0.10)", glow: "rgba(122,217,224,0.30)", letter: "P" },
+   };
 
   return (
     <>
