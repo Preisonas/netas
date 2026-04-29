@@ -309,6 +309,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_vips: {
+        Row: {
+          created_at: string
+          discord_id: string | null
+          expires_at: string
+          id: string
+          tier_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discord_id?: string | null
+          expires_at: string
+          id?: string
+          tier_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discord_id?: string | null
+          expires_at?: string
+          id?: string
+          tier_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_vips_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "vip_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           brand: string
@@ -357,6 +395,51 @@ export type Database = {
           trunk?: number | null
           updated_at?: string
           video_url?: string | null
+        }
+        Relationships: []
+      }
+      vip_tiers: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          description: string | null
+          duration_days: number
+          id: string
+          name: string
+          perks: string[]
+          price: number
+          sort_order: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          id?: string
+          name: string
+          perks?: string[]
+          price?: number
+          sort_order?: number
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          id?: string
+          name?: string
+          perks?: string[]
+          price?: number
+          sort_order?: number
+          tier?: string
+          updated_at?: string
         }
         Relationships: []
       }

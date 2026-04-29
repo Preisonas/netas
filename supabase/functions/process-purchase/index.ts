@@ -8,10 +8,11 @@ const corsHeaders = {
 };
 
 type Body = {
-  type: "vehicle" | "case_item";
+  type: "vehicle" | "case_item" | "vip";
   vehicle_id?: string;
   case_id?: string;
-  character_id: string;
+  vip_tier_id?: string;
+  character_id?: string;
   // Vehicle-only extras (each +5 credits, server-validated)
   custom_plate?: string | null;
   full_tune?: boolean;
@@ -43,21 +44,27 @@ Deno.serve(async (req) => {
 
   let body: Body;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
-  if (!body.type || !body.character_id) return json({ error: "Missing fields" }, 400);
+  if (!body.type) return json({ error: "Missing fields" }, 400);
+  if (body.type !== "vip" && !body.character_id) return json({ error: "Missing character_id" }, 400);
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
-  // Profile + character ownership
+  // Profile (always required)
   const { data: profile, error: profErr } = await admin
     .from("profiles").select("credits, discord_id").eq("user_id", user.id).maybeSingle();
   if (profErr || !profile) return json({ error: "Profile not found" }, 404);
-  if (!profile.discord_id) return json({ error: "Discord not linked" }, 400);
 
-  const { data: character, error: charErr } = await admin
-    .from("characters").select("id, identifier, discord_id, first_name, last_name")
-    .eq("id", body.character_id).maybeSingle();
-  if (charErr || !character) return json({ error: "Character not found" }, 404);
-  if (character.discord_id !== profile.discord_id) return json({ error: "Not your character" }, 403);
+  // Character ownership check (skip for VIP purchases)
+  let character: { id: string; identifier: string; discord_id: string; first_name: string | null; last_name: string | null } | null = null;
+  if (body.type !== "vip") {
+    if (!profile.discord_id) return json({ error: "Discord not linked" }, 400);
+    const { data: ch, error: charErr } = await admin
+      .from("characters").select("id, identifier, discord_id, first_name, last_name")
+      .eq("id", body.character_id!).maybeSingle();
+    if (charErr || !ch) return json({ error: "Character not found" }, 404);
+    if (ch.discord_id !== profile.discord_id) return json({ error: "Not your character" }, 403);
+    character = ch;
+  }
 
   // Compute price + reward server-side
   let price = 0;
@@ -65,6 +72,7 @@ Deno.serve(async (req) => {
   let label = "";
   let plate: string | null = null;
   let deliveryMetadata: Record<string, unknown> | null = null;
+  let vipResult: { tier: string; expires_at: string } | null = null;
 
   if (body.type === "vehicle") {
     if (!body.vehicle_id) return json({ error: "vehicle_id required" }, 400);
@@ -119,6 +127,18 @@ Deno.serve(async (req) => {
     const picked = pickWeighted(items);
     itemName = picked.item_name;
     label = `${c.name} → ${picked.label}`;
+  } else if (body.type === "vip") {
+    if (!body.vip_tier_id) return json({ error: "vip_tier_id required" }, 400);
+    const { data: tier, error: tErr } = await admin
+      .from("vip_tiers")
+      .select("id, tier, name, price, duration_days, active")
+      .eq("id", body.vip_tier_id).maybeSingle();
+    if (tErr || !tier) return json({ error: "VIP tier not found" }, 404);
+    if (!tier.active) return json({ error: "VIP tier inactive" }, 400);
+    price = tier.price;
+    label = tier.name;
+    itemName = `vip_${tier.tier}`;
+    vipResult = { tier: tier.tier, expires_at: "" }; // filled after upsert
   } else {
     return json({ error: "Invalid type" }, 400);
   }
@@ -137,13 +157,56 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (updErr || !updData) return json({ error: "Credit deduction failed, retry" }, 409);
 
-  // Create delivery row
+  // VIP path: extend or create membership
+  if (body.type === "vip") {
+    const { data: tier } = await admin
+      .from("vip_tiers").select("tier, duration_days").eq("id", body.vip_tier_id!).maybeSingle();
+    const days = tier?.duration_days ?? 30;
+    const { data: existing } = await admin
+      .from("user_vips").select("id, expires_at").eq("user_id", user.id).eq("tier_id", body.vip_tier_id!).maybeSingle();
+    const now = Date.now();
+    const base = existing && new Date(existing.expires_at).getTime() > now
+      ? new Date(existing.expires_at).getTime()
+      : now;
+    const expiresAt = new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
+
+    if (existing) {
+      const { error: upErr } = await admin.from("user_vips").update({ expires_at: expiresAt }).eq("id", existing.id);
+      if (upErr) {
+        await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
+        return json({ error: "VIP update failed: " + upErr.message }, 500);
+      }
+    } else {
+      const { error: insErr } = await admin.from("user_vips").insert({
+        user_id: user.id,
+        discord_id: profile.discord_id,
+        tier_id: body.vip_tier_id!,
+        expires_at: expiresAt,
+      });
+      if (insErr) {
+        await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
+        return json({ error: "VIP create failed: " + insErr.message }, 500);
+      }
+    }
+
+    return json({
+      success: true,
+      type: "vip",
+      label,
+      tier: tier?.tier,
+      expires_at: expiresAt,
+      price,
+      credits_remaining: updData.credits,
+    });
+  }
+
+  // Create delivery row (vehicle / case_item)
   const { data: delivery, error: delErr } = await admin
     .from("pending_deliveries").insert({
       user_id: user.id,
       discord_id: profile.discord_id,
-      character_id: character.id,
-      character_identifier: character.identifier,
+      character_id: character!.id,
+      character_identifier: character!.identifier,
       type: body.type,
       item_name: itemName,
       label,
@@ -163,7 +226,7 @@ Deno.serve(async (req) => {
     plate,
     price,
     credits_remaining: updData.credits,
-    character: { first_name: character.first_name, last_name: character.last_name },
+    character: { first_name: character!.first_name, last_name: character!.last_name },
   });
 });
 
