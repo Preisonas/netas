@@ -8,10 +8,11 @@ const corsHeaders = {
 };
 
 type Body = {
-  type: "vehicle" | "case_item";
+  type: "vehicle" | "case_item" | "vip";
   vehicle_id?: string;
   case_id?: string;
-  character_id: string;
+  vip_tier_id?: string;
+  character_id?: string;
   // Vehicle-only extras (each +5 credits, server-validated)
   custom_plate?: string | null;
   full_tune?: boolean;
