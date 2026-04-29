@@ -56,6 +56,7 @@ interface PlayerDashboardProps {
 type SectionKey =
   | "profile"
   | "shop"
+  | "vip"
   | "boxes"
   | "credits"
   | "admin-credits"
@@ -71,6 +72,7 @@ const baseNavGroups: NavGroup[] = [
     items: [
       { key: "profile", title: "Profilis", icon: User },
       { key: "shop", title: "Parduotuvė", icon: ShoppingBag },
+      { key: "vip", title: "VIP", icon: Crown },
       { key: "boxes", title: "Dėžės", icon: Package },
     ],
   },
