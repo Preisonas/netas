@@ -1108,59 +1108,90 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
             const expiresLabel = active
               ? new Date(myVip!.expires_at).toLocaleDateString("lt-LT")
               : null;
+            const isFeatured = tier.tier === "platinum";
             return (
               <article
                 key={tier.id}
-                className={`relative flex flex-col rounded-xl border bg-card/40 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-0.5 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.35)] ${
-                  active ? "border-primary/50" : "border-border/50 hover:border-border"
+                className={`group relative flex flex-col rounded-2xl border bg-card/50 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-1 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.4)] ${
+                  active
+                    ? "border-primary/60"
+                    : isFeatured
+                    ? "border-border"
+                    : "border-border/50 hover:border-border"
                 }`}
+                style={{
+                  boxShadow: active
+                    ? `0 20px 60px -20px hsl(var(--primary) / 0.45)`
+                    : isFeatured
+                    ? `0 20px 60px -25px ${tier.color}55`
+                    : undefined,
+                }}
               >
-                {/* Top accent bar in tier color */}
+                {/* Ambient color glow in corner */}
                 <div
                   aria-hidden
-                  className="absolute inset-x-0 top-0 h-[3px] opacity-80"
+                  className="absolute -top-24 -right-24 h-56 w-56 rounded-full opacity-20 blur-3xl pointer-events-none transition-opacity duration-500 group-hover:opacity-40"
                   style={{ background: tier.color }}
                 />
+                {/* Subtle radial vignette */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 pointer-events-none opacity-[0.04]"
+                  style={{
+                    background: `radial-gradient(circle at top right, ${tier.color}, transparent 60%)`,
+                  }}
+                />
 
-                {active && (
-                  <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-primary/15 text-primary font-bold border border-primary/30">
-                    Aktyvus
-                  </span>
-                )}
+                {/* Top-right badges */}
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 z-10">
+                  {isFeatured && !active && (
+                    <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-foreground/10 text-foreground font-bold border border-border/60">
+                      Populiariausias
+                    </span>
+                  )}
+                  {active && (
+                    <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-primary/15 text-primary font-bold border border-primary/30">
+                      Aktyvus
+                    </span>
+                  )}
+                </div>
 
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                  <Icon className="h-7 w-7 shrink-0" style={{ color: tier.color }} />
+                <div className="relative flex items-center gap-3">
+                  <Icon
+                    className="h-8 w-8 shrink-0 transition-transform duration-300 group-hover:scale-110"
+                    style={{ color: tier.color, filter: `drop-shadow(0 0 8px ${tier.color}55)` }}
+                  />
                   <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">VIP</p>
-                    <h3 className="text-lg font-bold leading-tight truncate">{tier.name}</h3>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">VIP narystė</p>
+                    <h3 className="text-xl font-bold leading-tight truncate">{tier.name}</h3>
                   </div>
                 </div>
 
                 {tier.description && (
-                  <p className="mt-3 text-sm text-muted-foreground">{tier.description}</p>
+                  <p className="relative mt-3 text-sm text-muted-foreground">{tier.description}</p>
                 )}
 
                 {/* Price */}
-                <div className="mt-5 flex items-baseline gap-1.5">
-                  <span className="text-4xl font-black text-foreground">{tier.price}</span>
+                <div className="relative mt-5 flex items-baseline gap-1.5">
+                  <span className="text-5xl font-black text-foreground tracking-tight">{tier.price}</span>
                   <span className="text-sm text-muted-foreground">€ / {tier.duration_days} d.</span>
                 </div>
 
-                <div className="mt-5 h-px bg-border/50" />
+                <div className="relative mt-5 h-px bg-border/50" />
 
                 {/* Perks — flex-1 pushes button to the bottom */}
-                <ul className="mt-5 space-y-2.5 flex-1">
+                <ul className="relative mt-5 space-y-2.5 flex-1">
                   {tier.perks.map((perk, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <Check className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                      <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: tier.color }} />
                       <span>{perk}</span>
                     </li>
                   ))}
                 </ul>
 
                 {/* Footer: button + expiry, always at bottom */}
-                <div className="mt-6 pt-1">
+                <div className="relative mt-6 pt-1">
                   <button
                     onClick={() => buy(tier)}
                     disabled={buyingId === tier.id}
