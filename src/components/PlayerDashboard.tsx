@@ -1138,15 +1138,17 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                   style={{ background: `radial-gradient(circle, ${theme.glow} 0%, transparent 70%)` }}
                 />
 
+                {/* Logo watermark */}
+                <img
+                  src="/logo.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none select-none absolute -bottom-8 -right-8 w-44 h-44 object-contain opacity-[0.05]"
+                />
+
                 {/* Header */}
                 <div className="relative px-6 pt-6 pb-5">
                   <div className="flex items-center gap-2.5">
-                    <div
-                      className="relative h-10 w-10 rounded-full grid place-items-center border"
-                      style={{ borderColor: `${theme.accent}55`, background: theme.soft }}
-                    >
-                      <img src="/logo.png" alt="logo" className="h-6 w-6 object-contain" />
-                    </div>
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
                         Membership
