@@ -996,6 +996,198 @@ const BuyWithCharacter = ({
   );
 };
 
+// =====================================================================
+// VIP Section
+// =====================================================================
+
+interface VipTier {
+  id: string;
+  tier: string;
+  name: string;
+  description: string | null;
+  price: number;
+  duration_days: number;
+  color: string;
+  perks: string[];
+  sort_order: number;
+}
+
+interface UserVipRow {
+  id: string;
+  tier_id: string;
+  expires_at: string;
+}
+
+const VipSection = ({ userId, discordId }: { userId: string; discordId?: string | null }) => {
+  const qc = useQueryClient();
+
+  const tiersQuery = useQuery({
+    queryKey: ["vip-tiers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vip_tiers")
+        .select("id, tier, name, description, price, duration_days, color, perks, sort_order")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as VipTier[];
+    },
+  });
+
+  const myVipsQuery = useQuery({
+    queryKey: ["user-vips", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_vips")
+        .select("id, tier_id, expires_at")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return (data ?? []) as UserVipRow[];
+    },
+    refetchInterval: 10_000,
+  });
+
+  const [buyingId, setBuyingId] = useState<string | null>(null);
+
+  const buy = async (tier: VipTier) => {
+    if (!discordId) {
+      toast.error("Prisijunk per Discord");
+      return;
+    }
+    setBuyingId(tier.id);
+    const { data, error } = await supabase.functions.invoke("process-purchase", {
+      body: { type: "vip", vip_tier_id: tier.id },
+    });
+    setBuyingId(null);
+    if (error || (data && (data as { error?: string }).error)) {
+      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Pirkimas nepavyko";
+      toast.error("Nepavyko nupirkti VIP", { description: msg });
+      return;
+    }
+    const result = data as { credits_remaining?: number; expires_at?: string };
+    if (typeof result.credits_remaining === "number") {
+      qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
+        old ? { ...old, credits: result.credits_remaining } : old,
+      );
+    }
+    qc.invalidateQueries({ queryKey: ["user-vips", userId] });
+    qc.invalidateQueries({ queryKey: ["profile", userId] });
+    toast.success(`${tier.name} aktyvuotas!`, {
+      description: result.expires_at
+        ? `Galioja iki ${new Date(result.expires_at).toLocaleString("lt-LT")}`
+        : undefined,
+    });
+  };
+
+  const myVips = myVipsQuery.data ?? [];
+  const myVipByTier = new Map(myVips.map((v) => [v.tier_id, v]));
+
+  const tierIcons: Record<string, typeof Crown> = {
+    bronze: Shield,
+    silver: Sparkles,
+    gold: Crown,
+  };
+
+  return (
+    <>
+      <SectionHeader
+        title="VIP Narystės"
+        subtitle="Įsigyk VIP statusą ir gauk papildomų privalumų serveryje."
+      />
+
+      {tiersQuery.isLoading ? (
+        <p className="text-center text-muted-foreground py-12">Kraunama…</p>
+      ) : (tiersQuery.data ?? []).length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Nėra prieinamų VIP lygių.</p>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-5">
+          {(tiersQuery.data ?? []).map((tier) => {
+            const Icon = tierIcons[tier.tier] ?? Crown;
+            const myVip = myVipByTier.get(tier.id);
+            const active = myVip && new Date(myVip.expires_at).getTime() > Date.now();
+            const expiresLabel = active
+              ? new Date(myVip!.expires_at).toLocaleDateString("lt-LT")
+              : null;
+            return (
+              <article
+                key={tier.id}
+                className="relative rounded-xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-0.5 overflow-hidden"
+                style={{
+                  boxShadow: active
+                    ? `0 20px 60px -20px ${tier.color}66`
+                    : undefined,
+                }}
+              >
+                <div
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 h-1"
+                  style={{ background: tier.color }}
+                />
+
+                {active && (
+                  <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-primary/20 text-primary font-bold">
+                    Aktyvus
+                  </span>
+                )}
+
+                <div
+                  className="h-12 w-12 grid place-items-center rounded-lg mb-4"
+                  style={{ background: `${tier.color}26`, color: tier.color }}
+                >
+                  <Icon className="h-6 w-6" />
+                </div>
+
+                <h3 className="text-xl font-bold">{tier.name}</h3>
+                {tier.description && (
+                  <p className="text-sm text-muted-foreground mt-1">{tier.description}</p>
+                )}
+
+                <div className="mt-4 flex items-baseline gap-1.5">
+                  <span className="text-3xl font-black" style={{ color: tier.color }}>
+                    {tier.price}
+                  </span>
+                  <span className="text-sm text-muted-foreground">€ / {tier.duration_days} d.</span>
+                </div>
+
+                <ul className="mt-5 space-y-2">
+                  {tier.perks.map((perk, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: tier.color }} />
+                      <span>{perk}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => buy(tier)}
+                  disabled={buyingId === tier.id}
+                  className="mt-6 w-full h-10 rounded-md text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: tier.color,
+                    color: "#0a0a0a",
+                  }}
+                >
+                  {buyingId === tier.id
+                    ? "Apdorojama…"
+                    : active
+                    ? `Pratęsti (+${tier.duration_days} d.)`
+                    : "Pirkti"}
+                </button>
+
+                {active && expiresLabel && (
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    Galioja iki <span className="text-foreground font-medium">{expiresLabel}</span>
+                  </p>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+};
+
 const CreditsSection = () => {
   const [amount, setAmount] = useState(10);
   const [code, setCode] = useState("");
