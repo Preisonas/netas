@@ -1109,108 +1109,153 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
               ? new Date(myVip!.expires_at).toLocaleDateString("lt-LT")
               : null;
             const isFeatured = tier.tier === "platinum";
+
+            // Holographic metallic banners per tier (matches reference image)
+            const banners: Record<string, { bg: string; vip: string; vipShadow: string; sheen: string }> = {
+              silver: {
+                bg: "linear-gradient(125deg, #f5f1ea 0%, #e6dfd2 25%, #ffffff 50%, #d8d2c4 75%, #ece5d6 100%)",
+                vip: "linear-gradient(180deg, #ffffff 0%, #cfc7b6 100%)",
+                vipShadow: "0 2px 0 rgba(120,110,90,0.25), 0 8px 20px rgba(0,0,0,0.15)",
+                sheen: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.55) 48%, rgba(255,255,255,0.0) 60%)",
+              },
+              gold: {
+                bg: "linear-gradient(125deg, #f0a020 0%, #ffcb45 30%, #fff2a8 50%, #f5b324 72%, #b87212 100%)",
+                vip: "linear-gradient(180deg, #ffffff 0%, #f7e6a8 100%)",
+                vipShadow: "0 2px 0 rgba(120,80,10,0.35), 0 8px 20px rgba(0,0,0,0.2)",
+                sheen: "linear-gradient(115deg, transparent 28%, rgba(255,255,255,0.65) 48%, rgba(255,255,255,0.0) 62%)",
+              },
+              platinum: {
+                bg: "linear-gradient(125deg, #2bb3e6 0%, #6fd8ee 28%, #b6f0e6 50%, #4ec5c8 72%, #1f6f9c 100%)",
+                vip: "linear-gradient(180deg, #ffffff 0%, #c7f0ee 100%)",
+                vipShadow: "0 2px 0 rgba(10,60,80,0.35), 0 8px 20px rgba(0,0,0,0.2)",
+                sheen: "linear-gradient(115deg, transparent 28%, rgba(255,255,255,0.55) 48%, rgba(255,255,255,0.0) 62%)",
+              },
+            };
+            const banner = banners[tier.tier] ?? banners.silver;
+
             return (
               <article
                 key={tier.id}
-                className={`group relative flex flex-col rounded-2xl border bg-card/50 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-1 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.4)] ${
+                className={`group relative flex flex-col rounded-2xl border bg-card/60 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgba(0,0,0,0.4)] ${
                   active
                     ? "border-primary/60"
-                    : isFeatured
-                    ? "border-border"
-                    : "border-border/50 hover:border-border"
+                    : "border-border/60 hover:border-border"
                 }`}
                 style={{
                   boxShadow: active
-                    ? `0 20px 60px -20px hsl(var(--primary) / 0.45)`
+                    ? `0 24px 70px -20px hsl(var(--primary) / 0.45)`
                     : isFeatured
-                    ? `0 20px 60px -25px ${tier.color}55`
+                    ? `0 24px 70px -25px ${tier.color}55`
                     : undefined,
                 }}
               >
-                {/* Ambient color glow in corner */}
+                {/* ============ Holographic banner ============ */}
                 <div
-                  aria-hidden
-                  className="absolute -top-24 -right-24 h-56 w-56 rounded-full opacity-20 blur-3xl pointer-events-none transition-opacity duration-500 group-hover:opacity-40"
-                  style={{ background: tier.color }}
-                />
-                {/* Subtle radial vignette */}
-                <div
-                  aria-hidden
-                  className="absolute inset-0 pointer-events-none opacity-[0.04]"
-                  style={{
-                    background: `radial-gradient(circle at top right, ${tier.color}, transparent 60%)`,
-                  }}
-                />
-
-                {/* Top-right badges */}
-                <div className="absolute top-4 right-4 flex items-center gap-1.5 z-10">
-                  {isFeatured && !active && (
-                    <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-foreground/10 text-foreground font-bold border border-border/60">
-                      Populiariausias
-                    </span>
-                  )}
-                  {active && (
-                    <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-primary/15 text-primary font-bold border border-primary/30">
-                      Aktyvus
-                    </span>
-                  )}
-                </div>
-
-                {/* Header */}
-                <div className="relative flex items-center gap-3">
-                  <Icon
-                    className="h-8 w-8 shrink-0 transition-transform duration-300 group-hover:scale-110"
-                    style={{ color: tier.color, filter: `drop-shadow(0 0 8px ${tier.color}55)` }}
+                  className="relative aspect-[16/9] w-full overflow-hidden"
+                  style={{ background: banner.bg }}
+                >
+                  {/* diagonal sheen */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 mix-blend-screen pointer-events-none transition-transform duration-700 group-hover:translate-x-2"
+                    style={{ background: banner.sheen }}
                   />
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">VIP narystė</p>
-                    <h3 className="text-xl font-bold leading-tight truncate">{tier.name}</h3>
+                  {/* subtle grain via radial spots */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 opacity-30 mix-blend-overlay pointer-events-none"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.6), transparent 40%), radial-gradient(circle at 80% 70%, rgba(0,0,0,0.25), transparent 45%)",
+                    }}
+                  />
+
+                  {/* Top-right badges over banner */}
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
+                    {isFeatured && !active && (
+                      <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-black/40 text-white font-bold backdrop-blur-sm border border-white/20">
+                        Populiariausias
+                      </span>
+                    )}
+                    {active && (
+                      <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full bg-black/40 text-white font-bold backdrop-blur-sm border border-white/20">
+                        Aktyvus
+                      </span>
+                    )}
+                  </div>
+
+                  {/* VIP wordmark */}
+                  <div className="absolute inset-0 grid place-items-center">
+                    <span
+                      className="font-black italic tracking-tight text-[5.5rem] leading-none select-none"
+                      style={{
+                        background: banner.vip,
+                        WebkitBackgroundClip: "text",
+                        backgroundClip: "text",
+                        color: "transparent",
+                        WebkitTextStroke: "1px rgba(255,255,255,0.4)",
+                        filter: `drop-shadow(${banner.vipShadow})`,
+                        fontFamily: "'Inter', system-ui, sans-serif",
+                        letterSpacing: "-0.04em",
+                      }}
+                    >
+                      VIP
+                    </span>
+                  </div>
+
+                  {/* Tier label bottom-center */}
+                  <div className="absolute bottom-2 inset-x-0 flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-[0.3em] font-semibold text-black/50">
+                    <Icon className="h-3 w-3" />
+                    {tier.tier}
                   </div>
                 </div>
 
-                {tier.description && (
-                  <p className="relative mt-3 text-sm text-muted-foreground">{tier.description}</p>
-                )}
+                {/* ============ Body ============ */}
+                <div className="relative flex flex-col flex-1 p-6">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="text-xl font-bold leading-tight">{tier.name}</h3>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-foreground tracking-tight">{tier.price}</span>
+                      <span className="text-xs text-muted-foreground">€/{tier.duration_days}d</span>
+                    </div>
+                  </div>
 
-                {/* Price */}
-                <div className="relative mt-5 flex items-baseline gap-1.5">
-                  <span className="text-5xl font-black text-foreground tracking-tight">{tier.price}</span>
-                  <span className="text-sm text-muted-foreground">€ / {tier.duration_days} d.</span>
-                </div>
-
-                <div className="relative mt-5 h-px bg-border/50" />
-
-                {/* Perks — flex-1 pushes button to the bottom */}
-                <ul className="relative mt-5 space-y-2.5 flex-1">
-                  {tier.perks.map((perk, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: tier.color }} />
-                      <span>{perk}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Footer: button + expiry, always at bottom */}
-                <div className="relative mt-6 pt-1">
-                  <button
-                    onClick={() => buy(tier)}
-                    disabled={buyingId === tier.id}
-                    className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {buyingId === tier.id
-                      ? "Apdorojama…"
-                      : active
-                      ? `Pratęsti (+${tier.duration_days} d.)`
-                      : "Pirkti"}
-                  </button>
-
-                  {active && expiresLabel ? (
-                    <p className="mt-3 text-center text-xs text-muted-foreground">
-                      Galioja iki <span className="text-foreground font-medium">{expiresLabel}</span>
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-center text-xs text-muted-foreground/60">&nbsp;</p>
+                  {tier.description && (
+                    <p className="mt-2 text-sm text-muted-foreground">{tier.description}</p>
                   )}
+
+                  <div className="mt-4 h-px bg-border/50" />
+
+                  <ul className="mt-4 space-y-2.5 flex-1">
+                    {tier.perks.map((perk, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: tier.color }} />
+                        <span>{perk}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-6 pt-1">
+                    <button
+                      onClick={() => buy(tier)}
+                      disabled={buyingId === tier.id}
+                      className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {buyingId === tier.id
+                        ? "Apdorojama…"
+                        : active
+                        ? `Pratęsti (+${tier.duration_days} d.)`
+                        : "Pirkti"}
+                    </button>
+
+                    {active && expiresLabel ? (
+                      <p className="mt-3 text-center text-xs text-muted-foreground">
+                        Galioja iki <span className="text-foreground font-medium">{expiresLabel}</span>
+                      </p>
+                    ) : (
+                      <p className="mt-3 text-center text-xs text-muted-foreground/60">&nbsp;</p>
+                    )}
+                  </div>
                 </div>
               </article>
             );
