@@ -157,13 +157,56 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (updErr || !updData) return json({ error: "Credit deduction failed, retry" }, 409);
 
-  // Create delivery row
+  // VIP path: extend or create membership
+  if (body.type === "vip") {
+    const { data: tier } = await admin
+      .from("vip_tiers").select("tier, duration_days").eq("id", body.vip_tier_id!).maybeSingle();
+    const days = tier?.duration_days ?? 30;
+    const { data: existing } = await admin
+      .from("user_vips").select("id, expires_at").eq("user_id", user.id).eq("tier_id", body.vip_tier_id!).maybeSingle();
+    const now = Date.now();
+    const base = existing && new Date(existing.expires_at).getTime() > now
+      ? new Date(existing.expires_at).getTime()
+      : now;
+    const expiresAt = new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
+
+    if (existing) {
+      const { error: upErr } = await admin.from("user_vips").update({ expires_at: expiresAt }).eq("id", existing.id);
+      if (upErr) {
+        await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
+        return json({ error: "VIP update failed: " + upErr.message }, 500);
+      }
+    } else {
+      const { error: insErr } = await admin.from("user_vips").insert({
+        user_id: user.id,
+        discord_id: profile.discord_id,
+        tier_id: body.vip_tier_id!,
+        expires_at: expiresAt,
+      });
+      if (insErr) {
+        await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
+        return json({ error: "VIP create failed: " + insErr.message }, 500);
+      }
+    }
+
+    return json({
+      success: true,
+      type: "vip",
+      label,
+      tier: tier?.tier,
+      expires_at: expiresAt,
+      price,
+      credits_remaining: updData.credits,
+    });
+  }
+
+  // Create delivery row (vehicle / case_item)
   const { data: delivery, error: delErr } = await admin
     .from("pending_deliveries").insert({
       user_id: user.id,
       discord_id: profile.discord_id,
-      character_id: character.id,
-      character_identifier: character.identifier,
+      character_id: character!.id,
+      character_identifier: character!.identifier,
       type: body.type,
       item_name: itemName,
       label,
@@ -183,7 +226,7 @@ Deno.serve(async (req) => {
     plate,
     price,
     credits_remaining: updData.credits,
-    character: { first_name: character.first_name, last_name: character.last_name },
+    character: { first_name: character!.first_name, last_name: character!.last_name },
   });
 });
 
