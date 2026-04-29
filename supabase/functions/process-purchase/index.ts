@@ -127,6 +127,18 @@ Deno.serve(async (req) => {
     const picked = pickWeighted(items);
     itemName = picked.item_name;
     label = `${c.name} → ${picked.label}`;
+  } else if (body.type === "vip") {
+    if (!body.vip_tier_id) return json({ error: "vip_tier_id required" }, 400);
+    const { data: tier, error: tErr } = await admin
+      .from("vip_tiers")
+      .select("id, tier, name, price, duration_days, active")
+      .eq("id", body.vip_tier_id).maybeSingle();
+    if (tErr || !tier) return json({ error: "VIP tier not found" }, 404);
+    if (!tier.active) return json({ error: "VIP tier inactive" }, 400);
+    price = tier.price;
+    label = tier.name;
+    itemName = `vip_${tier.tier}`;
+    vipResult = { tier: tier.tier, expires_at: "" }; // filled after upsert
   } else {
     return json({ error: "Invalid type" }, 400);
   }
