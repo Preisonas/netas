@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
   let label = "";
   let plate: string | null = null;
   let deliveryMetadata: Record<string, unknown> | null = null;
+  let vipResult: { tier: string; expires_at: string } | null = null;
 
   if (body.type === "vehicle") {
     if (!body.vehicle_id) return json({ error: "vehicle_id required" }, 400);
