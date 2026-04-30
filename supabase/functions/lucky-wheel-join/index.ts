@@ -68,9 +68,6 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (!wheel) return json({ error: "Ratas nerastas" }, 404);
   if (wheel.status !== "pending") return json({ error: "Ratas jau uždarytas" }, 409);
-  if (wheel.starts_at && new Date(wheel.starts_at).getTime() > Date.now()) {
-    return json({ error: "Ratas dar neprasidėjo" }, 409);
-  }
   if (new Date(wheel.ends_at).getTime() <= Date.now()) {
     return json({ error: "Laikas pasibaigė" }, 409);
   }
