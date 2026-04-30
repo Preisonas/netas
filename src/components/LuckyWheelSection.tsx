@@ -184,7 +184,7 @@ export const LuckyWheelSection = ({
   const notStartedYet = wheel?.status === "pending" && now < startsAtMs;
   const startsInMs = Math.max(0, startsAtMs - now);
   const remainingMs = Math.max(0, endsAtMs - now);
-  const expired = wheel?.status === "pending" && !notStartedYet && remainingMs <= 0;
+  const expired = !!wheel && (wheel.status === "pending" || wheel.status === "spinning") && !notStartedYet && remainingMs <= 0;
 
   useEffect(() => {
     if (!expired || !wheel) return;
@@ -196,12 +196,13 @@ export const LuckyWheelSection = ({
       });
       if (error) {
         console.error("spin error", error);
+        spinTriggeredRef.current = null;
       } else {
         console.log("spin result", data);
       }
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
     })();
-  }, [expired, wheel, qc]);
+  }, [expired, wheel?.id, wheel?.status, now, qc]);
 
   // When wheel becomes finished, animate the spin (synced for everyone via spun_at)
   useEffect(() => {
