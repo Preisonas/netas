@@ -143,19 +143,26 @@ Deno.serve(async (req) => {
     return json({ error: "Invalid type" }, 400);
   }
 
-  if (profile.credits < price) {
+  // TEST MODE: VIP purchases are free — skip credit check & deduction
+  const isTestFreeVip = body.type === "vip";
+
+  if (!isTestFreeVip && profile.credits < price) {
     return json({ error: "Insufficient credits", credits: profile.credits, price }, 402);
   }
 
-  // Deduct credits with optimistic check
-  const { error: updErr, data: updData } = await admin
-    .from("profiles")
-    .update({ credits: profile.credits - price })
-    .eq("user_id", user.id)
-    .eq("credits", profile.credits) // optimistic concurrency
-    .select("credits")
-    .maybeSingle();
-  if (updErr || !updData) return json({ error: "Credit deduction failed, retry" }, 409);
+  // Deduct credits with optimistic check (skipped in test-free VIP mode)
+  let updData: { credits: number } | null = { credits: profile.credits };
+  if (!isTestFreeVip) {
+    const { error: updErr, data: upd } = await admin
+      .from("profiles")
+      .update({ credits: profile.credits - price })
+      .eq("user_id", user.id)
+      .eq("credits", profile.credits) // optimistic concurrency
+      .select("credits")
+      .maybeSingle();
+    if (updErr || !upd) return json({ error: "Credit deduction failed, retry" }, 409);
+    updData = upd;
+  }
 
   // VIP path: extend or create membership
   if (body.type === "vip") {
