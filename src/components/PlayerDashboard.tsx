@@ -1267,6 +1267,10 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
               ? new Date(myVip!.expires_at).toLocaleDateString("lt-LT")
               : null;
             const isFeatured = tier.tier === "platinum";
+            const isDowngrade =
+              !!currentActiveTier &&
+              currentActiveVip?.tier_id !== tier.id &&
+              tier.sort_order < currentActiveTier.sort_order;
 
             const theme = tierTheme[tier.tier] ?? tierTheme.silver;
 
@@ -1369,11 +1373,14 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                   <div className="mt-6 space-y-2">
                     <button
                       onClick={() => buy(tier)}
-                      disabled={buyingId === tier.id}
+                      disabled={buyingId === tier.id || isDowngrade}
+                      title={isDowngrade ? "Negalima žemesnio VIP — turi aukštesnį aktyvų lygį." : undefined}
                       className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {buyingId === tier.id
                         ? "Apdorojama…"
+                        : isDowngrade
+                        ? "Žemesnis lygis"
                         : active
                         ? `Pratęsti (+${tier.duration_days} d.)`
                         : hasAnyActive

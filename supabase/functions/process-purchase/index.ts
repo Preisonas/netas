@@ -163,9 +163,18 @@ Deno.serve(async (req) => {
       if (currentActive && currentActive.tier_id !== body.vip_tier_id) {
         const { data: oldTier } = await admin
           .from("vip_tiers")
-          .select("price, duration_days")
+          .select("price, duration_days, sort_order")
           .eq("id", currentActive.tier_id)
           .maybeSingle();
+        const { data: newTierMeta } = await admin
+          .from("vip_tiers")
+          .select("sort_order")
+          .eq("id", body.vip_tier_id)
+          .maybeSingle();
+        // Block downgrades — user must wait until current VIP expires.
+        if (oldTier && newTierMeta && newTierMeta.sort_order < oldTier.sort_order) {
+          return json({ error: "Negalima žemesnio VIP — turi aukštesnį aktyvų lygį." }, 400);
+        }
         if (oldTier && oldTier.duration_days > 0) {
           const msLeft = new Date(currentActive.expires_at).getTime() - Date.now();
           const daysLeft = Math.max(0, msLeft / (24 * 60 * 60 * 1000));
