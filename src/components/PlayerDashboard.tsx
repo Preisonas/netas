@@ -149,6 +149,26 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
   const { characters: sidebarCharacters } = usePlayerCharacters(discordId);
   const characterCount = sidebarCharacters.length;
 
+  // Active VIP for sidebar badge
+  const activeVipQuery = useQuery({
+    queryKey: ["user-vips", session.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_vips")
+        .select("expires_at, tier_id, vip_tiers(tier, name, color)")
+        .eq("user_id", session.user.id)
+        .gt("expires_at", new Date().toISOString())
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { expires_at: string; tier_id: string; vip_tiers: { tier: string; name: string; color: string } | null } | null;
+    },
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+  });
+  const activeVip = activeVipQuery.data;
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Atsijungta");
@@ -178,8 +198,24 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
                   <User className="h-5 w-5 text-muted-foreground" />
                 </div>
               )}
-              <div className="min-w-0">
-                <p className="text-sm font-semibold truncate">{username}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold truncate">{username}</p>
+                  {activeVip?.vip_tiers && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                      style={{
+                        backgroundColor: `${activeVip.vip_tiers.color}22`,
+                        color: activeVip.vip_tiers.color,
+                        border: `1px solid ${activeVip.vip_tiers.color}55`,
+                      }}
+                      title={`Galioja iki ${new Date(activeVip.expires_at).toLocaleDateString("lt-LT")}`}
+                    >
+                      <Crown className="h-2.5 w-2.5" />
+                      {activeVip.vip_tiers.tier}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground truncate">
                   {characterCount > 0
                     ? `${characterCount} veikėj${characterCount === 1 ? "as" : "ai"}`
