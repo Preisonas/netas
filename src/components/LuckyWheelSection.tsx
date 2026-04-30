@@ -226,6 +226,21 @@ export const LuckyWheelSection = ({
     qc.invalidateQueries({ queryKey: ["lucky-wheel-entries"] });
   };
 
+  const cancelWheel = async () => {
+    if (!wheel) return;
+    if (!confirm("Tikrai atšaukti šį ratą? Dalyviai negaus prizo.")) return;
+    const { error } = await supabase
+      .from("lucky_wheels")
+      .update({ status: "cancelled" })
+      .eq("id", wheel.id);
+    if (error) {
+      toast.error("Nepavyko atšaukti", { description: error.message });
+      return;
+    }
+    toast.success("Ratas atšauktas");
+    qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
+  };
+
   const isWinner =
     wheel?.status === "finished" && wheel.winner_user_id === userId && !wheel.delivery_id;
 
