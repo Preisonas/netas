@@ -738,7 +738,7 @@ const ClaimDialog = ({
                 <SelectContent>
                   {characters.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.first_name} {c.last_name} ({c.identifier})
+                      {c.firstName} {c.lastName} ({c.identifier})
                     </SelectItem>
                   ))}
                 </SelectContent>
