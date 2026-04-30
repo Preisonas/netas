@@ -302,7 +302,11 @@ export const LuckyWheelSection = ({
                   </div>
                 </div>
                 {wheel.status === "pending" && (
-                  <Countdown ms={remainingMs} />
+                  notStartedYet ? (
+                    <Countdown ms={startsInMs} label="Prasidės" />
+                  ) : (
+                    <Countdown ms={remainingMs} />
+                  )
                 )}
               </div>
             </article>
