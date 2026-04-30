@@ -198,19 +198,39 @@ export const LuckyWheelSection = ({
     })();
   }, [expired, wheel, qc]);
 
-  // When wheel becomes finished, animate the spin
+  // When wheel becomes finished, animate the spin (synced for everyone via spun_at)
   useEffect(() => {
     if (wheel?.status !== "finished" || !wheel.winner_entry_id || entries.length === 0) return;
     const winnerIdx = entries.findIndex((e) => e.id === wheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
-    // Final angle so winner segment center lands at top (-90deg pointer)
     const targetAngle = 360 * 6 - (winnerIdx * segment + segment / 2);
+
+    // If spun more than 6s ago (late joiner), snap to final state without animation
+    const spunAgo = wheel.spun_at ? Date.now() - new Date(wheel.spun_at).getTime() : 0;
+    if (spunAgo > 6000) {
+      setSpinning(false);
+      // Snap pointer onto winner instantly
+      setSpinAngle(-(winnerIdx * segment + segment / 2));
+      return;
+    }
     setSpinning(true);
     setSpinAngle(targetAngle);
-    const t = setTimeout(() => setSpinning(false), 5200);
+    const remaining = Math.max(200, 5200 - spunAgo);
+    const t = setTimeout(() => setSpinning(false), remaining);
     return () => clearTimeout(t);
-  }, [wheel?.status, wheel?.winner_entry_id, entries]);
+  }, [wheel?.status, wheel?.winner_entry_id, wheel?.spun_at, entries]);
+
+  // Heartbeat: poll every 5s as a safety net in case realtime drops, so even
+  // late or backgrounded clients converge to the server-side finished state.
+  useEffect(() => {
+    if (!wheel || wheel.status === "finished" || wheel.status === "cancelled") return;
+    const i = setInterval(() => {
+      qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
+      qc.invalidateQueries({ queryKey: ["lucky-wheel-entries"] });
+    }, 5000);
+    return () => clearInterval(i);
+  }, [wheel?.id, wheel?.status, qc]);
 
   const join = async () => {
     if (!wheel) return;
