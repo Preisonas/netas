@@ -72,6 +72,7 @@ export const LuckyWheelSection = ({
   const [spinAngle, setSpinAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const spinTriggeredRef = useRef<string | null>(null);
+  const animatedWheelRef = useRef<string | null>(null);
 
   // Tick every second for countdown
   useEffect(() => {
@@ -125,6 +126,14 @@ export const LuckyWheelSection = ({
   });
 
   const entries = entriesQuery.data ?? [];
+  const entriesSignature = useMemo(() => entries.map((entry) => entry.id).join("|"), [entries]);
+
+  useEffect(() => {
+    setSpinning(false);
+    setSpinAngle(0);
+    animatedWheelRef.current = null;
+    spinTriggeredRef.current = null;
+  }, [wheel?.id]);
 
   // Prize vehicle
   const vehicleQuery = useQuery({
@@ -188,8 +197,9 @@ export const LuckyWheelSection = ({
 
   useEffect(() => {
     if (!expired || !wheel) return;
-    if (spinTriggeredRef.current === wheel.id) return;
-    spinTriggeredRef.current = wheel.id;
+    const triggerKey = `${wheel.id}:${wheel.status}`;
+    if (spinTriggeredRef.current === triggerKey) return;
+    spinTriggeredRef.current = triggerKey;
     (async () => {
       const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
         body: { wheel_id: wheel.id },
@@ -207,6 +217,9 @@ export const LuckyWheelSection = ({
   // When wheel becomes finished, animate the spin (synced for everyone via spun_at)
   useEffect(() => {
     if (wheel?.status !== "finished" || !wheel.winner_entry_id || entries.length === 0) return;
+    const animationKey = `${wheel.id}:${wheel.spun_at ?? "done"}:${wheel.winner_entry_id}:${entriesSignature}`;
+    if (animatedWheelRef.current === animationKey) return;
+    animatedWheelRef.current = animationKey;
     const winnerIdx = entries.findIndex((e) => e.id === wheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
@@ -220,12 +233,21 @@ export const LuckyWheelSection = ({
       setSpinAngle(-(winnerIdx * segment + segment / 2));
       return;
     }
-    setSpinning(true);
-    setSpinAngle(targetAngle);
+    setSpinning(false);
+    setSpinAngle(0);
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setSpinning(true);
+        setSpinAngle(targetAngle);
+      });
+    });
     const remaining = Math.max(200, 5200 - spunAgo);
     const t = setTimeout(() => setSpinning(false), remaining);
-    return () => clearTimeout(t);
-  }, [wheel?.status, wheel?.winner_entry_id, wheel?.spun_at, entries]);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
+  }, [wheel?.id, wheel?.status, wheel?.winner_entry_id, wheel?.spun_at, entriesSignature]);
 
   // Heartbeat: poll every 5s as a safety net in case realtime drops, so even
   // late or backgrounded clients converge to the server-side finished state.
