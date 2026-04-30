@@ -1084,15 +1084,21 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
   });
 
   const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [giftDialog, setGiftDialog] = useState<VipTier | null>(null);
+  const [giftDiscordId, setGiftDiscordId] = useState("");
 
-  const buy = async (tier: VipTier) => {
+  const buy = async (tier: VipTier, giftTo?: string) => {
     if (!discordId) {
       toast.error("Prisijunk per Discord");
       return;
     }
     setBuyingId(tier.id);
     const { data, error } = await supabase.functions.invoke("process-purchase", {
-      body: { type: "vip", vip_tier_id: tier.id },
+      body: {
+        type: "vip",
+        vip_tier_id: tier.id,
+        ...(giftTo ? { gift_to_discord_id: giftTo } : {}),
+      },
     });
     setBuyingId(null);
     if (error || (data && (data as { error?: string }).error)) {
@@ -1100,23 +1106,41 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
       toast.error("Nepavyko nupirkti VIP", { description: msg });
       return;
     }
-    const result = data as { credits_remaining?: number; expires_at?: string };
+    const result = data as { credits_remaining?: number; expires_at?: string; gifted?: boolean };
     if (typeof result.credits_remaining === "number") {
       qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
         old ? { ...old, credits: result.credits_remaining } : old,
       );
     }
     qc.invalidateQueries({ queryKey: ["user-vips", userId] });
+    qc.invalidateQueries({ queryKey: ["active-vip", userId] });
     qc.invalidateQueries({ queryKey: ["profile", userId] });
-    toast.success(`${tier.name} aktyvuotas!`, {
-      description: result.expires_at
-        ? `Galioja iki ${new Date(result.expires_at).toLocaleString("lt-LT")}`
-        : undefined,
-    });
+    if (result.gifted) {
+      toast.success(`${tier.name} padovanotas draugui!`);
+    } else {
+      toast.success(`${tier.name} aktyvuotas!`, {
+        description: result.expires_at
+          ? `Galioja iki ${new Date(result.expires_at).toLocaleString("lt-LT")}`
+          : undefined,
+      });
+    }
+  };
+
+  const submitGift = async () => {
+    if (!giftDialog) return;
+    const id = giftDiscordId.trim();
+    if (!/^\d{5,32}$/.test(id)) {
+      toast.error("Įvesk teisingą Discord ID (tik skaičiai)");
+      return;
+    }
+    await buy(giftDialog, id);
+    setGiftDialog(null);
+    setGiftDiscordId("");
   };
 
   const myVips = myVipsQuery.data ?? [];
   const myVipByTier = new Map(myVips.map((v) => [v.tier_id, v]));
+  const hasAnyActive = myVips.some((v) => new Date(v.expires_at).getTime() > Date.now());
 
    const tierIcons: Record<string, typeof Crown> = {
      silver: Shield,
