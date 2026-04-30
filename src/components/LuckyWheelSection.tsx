@@ -174,9 +174,12 @@ export const LuckyWheelSection = ({
   }, [qc]);
 
   // Auto-spin: when timer expires and wheel is still pending, trigger spin
+  const startsAtMs = wheel ? new Date(wheel.starts_at).getTime() : 0;
   const endsAtMs = wheel ? new Date(wheel.ends_at).getTime() : 0;
+  const notStartedYet = wheel?.status === "pending" && now < startsAtMs;
+  const startsInMs = Math.max(0, startsAtMs - now);
   const remainingMs = Math.max(0, endsAtMs - now);
-  const expired = wheel?.status === "pending" && remainingMs <= 0;
+  const expired = wheel?.status === "pending" && !notStartedYet && remainingMs <= 0;
 
   useEffect(() => {
     if (!expired || !wheel) return;
