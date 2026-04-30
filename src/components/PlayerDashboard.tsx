@@ -46,6 +46,8 @@ import VehiclesManager from "@/components/admin/VehiclesManager";
 import DiscountCodesManager from "@/components/admin/DiscountCodesManager";
 import { usePlayerCharacters, generatePlate, type PlayerCharacter } from "@/hooks/usePlayerCharacters";
 import { CreditCheckoutDialog } from "@/components/CreditCheckoutDialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface PlayerDashboardProps {
   session: Session;
