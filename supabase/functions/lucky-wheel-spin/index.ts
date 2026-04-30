@@ -12,20 +12,25 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-    auth: { persistSession: false },
-  });
-  const token = authHeader.replace("Bearer ", "");
-  const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
-  if (claimsErr || !claims?.claims?.sub) return json({ error: "Unauthorized" }, 401);
+  // Allow either: an authenticated user OR the service role key (for cron)
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const apiKey = req.headers.get("apikey") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const isServiceCall = token === serviceKey || apiKey === serviceKey;
+
+  if (!isServiceCall) {
+    if (!token) return json({ error: "Unauthorized" }, 401);
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false },
+    });
+    const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
+    if (claimsErr || !claims?.claims?.sub) return json({ error: "Unauthorized" }, 401);
+  }
 
   let body: { wheel_id?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
