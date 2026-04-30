@@ -633,8 +633,14 @@ const CreateWheelDialog = ({
   onCreated: () => void;
 }) => {
   const [vehicleId, setVehicleId] = useState("");
+  const [days, setDays] = useState(0);
+  const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(15);
+  const [scheduleLater, setScheduleLater] = useState(false);
+  const [startAt, setStartAt] = useState(""); // datetime-local string
   const [submitting, setSubmitting] = useState(false);
+
+  const totalMinutes = days * 1440 + hours * 60 + minutes;
 
   const vehiclesQuery = useQuery({
     queryKey: ["wheel-vehicles"],
@@ -653,14 +659,29 @@ const CreateWheelDialog = ({
       toast.error("Pasirink automobilį");
       return;
     }
-    if (minutes < 1 || minutes > 1440) {
-      toast.error("Trukmė turi būti 1–1440 min.");
+    if (totalMinutes < 1 || totalMinutes > 60 * 24 * 30) {
+      toast.error("Trukmė turi būti tarp 1 min ir 30 dienų.");
       return;
     }
+    let startsAtIso = new Date().toISOString();
+    if (scheduleLater) {
+      if (!startAt) {
+        toast.error("Nurodyk pradžios datą / laiką.");
+        return;
+      }
+      const startMs = new Date(startAt).getTime();
+      if (Number.isNaN(startMs) || startMs <= Date.now()) {
+        toast.error("Pradžios laikas turi būti ateityje.");
+        return;
+      }
+      startsAtIso = new Date(startMs).toISOString();
+    }
+    const startMs = new Date(startsAtIso).getTime();
+    const endsAt = new Date(startMs + totalMinutes * 60 * 1000).toISOString();
     setSubmitting(true);
-    const endsAt = new Date(Date.now() + minutes * 60 * 1000).toISOString();
     const { error } = await supabase.from("lucky_wheels").insert({
       vehicle_id: vehicleId,
+      starts_at: startsAtIso,
       ends_at: endsAt,
       created_by: userId,
       status: "pending",
@@ -674,7 +695,11 @@ const CreateWheelDialog = ({
     onCreated();
     onOpenChange(false);
     setVehicleId("");
+    setDays(0);
+    setHours(0);
     setMinutes(15);
+    setScheduleLater(false);
+    setStartAt("");
   };
 
   return (
@@ -685,7 +710,7 @@ const CreateWheelDialog = ({
             <Sparkles className="h-4 w-4 text-primary" /> Sukurti Sėkmės Ratą
           </DialogTitle>
           <DialogDescription>
-            Pasirink prizą ir kiek laiko vartotojai galės dalyvauti.
+            Pasirink prizą, trukmę ir (nebūtinai) pradžios laiką.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -703,17 +728,50 @@ const CreateWheelDialog = ({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Trukmė (minutės)</Label>
-            <Input
-              type="number"
-              min={1}
-              max={1440}
-              value={minutes}
-              onChange={(e) => setMinutes(parseInt(e.target.value) || 0)}
-            />
+            <Label>Trukmė</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Input type="number" min={0} max={30} value={days}
+                  onChange={(e) => setDays(Math.max(0, parseInt(e.target.value) || 0))} />
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1 text-center">Dienos</p>
+              </div>
+              <div>
+                <Input type="number" min={0} max={23} value={hours}
+                  onChange={(e) => setHours(Math.max(0, parseInt(e.target.value) || 0))} />
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1 text-center">Valandos</p>
+              </div>
+              <div>
+                <Input type="number" min={0} max={59} value={minutes}
+                  onChange={(e) => setMinutes(Math.max(0, parseInt(e.target.value) || 0))} />
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1 text-center">Minutės</p>
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Kai laikas baigsis, ratas automatiškai išrinks laimėtoją.
+              Iš viso: <span className="text-foreground font-medium">{totalMinutes} min</span>. Kai laikas baigsis, ratas automatiškai išrinks laimėtoją.
             </p>
+          </div>
+          <div className="space-y-2 rounded-md border border-border/40 bg-secondary/20 p-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={scheduleLater}
+                onChange={(e) => setScheduleLater(e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <span className="text-sm font-medium">Pradėti vėliau (suplanuoti)</span>
+            </label>
+            {scheduleLater && (
+              <div className="space-y-1">
+                <Input
+                  type="datetime-local"
+                  value={startAt}
+                  onChange={(e) => setStartAt(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ratas bus matomas, bet dalyvavimas atsivers nuo nurodyto laiko.
+                </p>
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>
