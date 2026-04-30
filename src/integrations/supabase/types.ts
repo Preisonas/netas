@@ -263,6 +263,7 @@ export type Database = {
           ends_at: string
           id: string
           spun_at: string | null
+          starts_at: string
           status: string
           updated_at: string
           vehicle_id: string
@@ -279,6 +280,7 @@ export type Database = {
           ends_at: string
           id?: string
           spun_at?: string | null
+          starts_at?: string
           status?: string
           updated_at?: string
           vehicle_id: string
@@ -295,6 +297,7 @@ export type Database = {
           ends_at?: string
           id?: string
           spun_at?: string | null
+          starts_at?: string
           status?: string
           updated_at?: string
           vehicle_id?: string

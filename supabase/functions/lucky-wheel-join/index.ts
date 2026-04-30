@@ -60,14 +60,17 @@ Deno.serve(async (req) => {
     return json({ error: "Reikalingas Gold arba Platinum VIP" }, 403);
   }
 
-  // Wheel must be pending and not expired
+  // Wheel must be pending, started, and not expired
   const { data: wheel } = await admin
     .from("lucky_wheels")
-    .select("id, status, ends_at")
+    .select("id, status, starts_at, ends_at")
     .eq("id", body.wheel_id)
     .maybeSingle();
   if (!wheel) return json({ error: "Ratas nerastas" }, 404);
   if (wheel.status !== "pending") return json({ error: "Ratas jau uždarytas" }, 409);
+  if (wheel.starts_at && new Date(wheel.starts_at).getTime() > Date.now()) {
+    return json({ error: "Ratas dar neprasidėjo" }, 409);
+  }
   if (new Date(wheel.ends_at).getTime() <= Date.now()) {
     return json({ error: "Laikas pasibaigė" }, 409);
   }
