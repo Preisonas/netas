@@ -151,7 +151,7 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
 
   // Active VIP for sidebar badge
   const activeVipQuery = useQuery({
-    queryKey: ["user-vips", session.user.id],
+    queryKey: ["active-vip", session.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_vips")
