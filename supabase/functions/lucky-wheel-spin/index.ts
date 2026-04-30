@@ -16,21 +16,11 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-  // Allow either: an authenticated user OR the service role key (for cron)
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const apiKey = req.headers.get("apikey") ?? "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  const isServiceCall = token === serviceKey || apiKey === serviceKey;
-
-  if (!isServiceCall) {
-    if (!token) return json({ error: "Unauthorized" }, 401);
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { persistSession: false },
-    });
-    const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
-    if (claimsErr || !claims?.claims?.sub) return json({ error: "Unauthorized" }, 401);
-  }
+  // This function is idempotent and only acts on already-expired wheels.
+  // It's safe to allow any caller (anon/user/service) so cron, late joiners,
+  // and any viewer can converge the wheel to its finished state.
+  // No auth required.
+  void anonKey;
 
   let body: { wheel_id?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
