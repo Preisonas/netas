@@ -1206,12 +1206,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                     <button
                       onClick={() => buy(tier)}
                       disabled={buyingId === tier.id}
-                      className="w-full h-10 rounded-md text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed border hover:brightness-125"
-                      style={{
-                        background: `linear-gradient(180deg, ${theme.accent}22, ${theme.accent}10)`,
-                        borderColor: `${theme.accent}55`,
-                        color: theme.accent,
-                      }}
+                      className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {buyingId === tier.id
                         ? "Apdorojama…"
