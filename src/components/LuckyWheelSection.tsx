@@ -20,6 +20,7 @@ interface Wheel {
   id: string;
   vehicle_id: string;
   status: "pending" | "spinning" | "finished" | "cancelled";
+  starts_at: string;
   ends_at: string;
   spun_at: string | null;
   winner_user_id: string | null;
