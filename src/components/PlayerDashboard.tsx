@@ -1262,7 +1262,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                     ))}
                   </ul>
 
-                  <div className="mt-6">
+                  <div className="mt-6 space-y-2">
                     <button
                       onClick={() => buy(tier)}
                       disabled={buyingId === tier.id}
@@ -1272,15 +1272,26 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                         ? "Apdorojama…"
                         : active
                         ? `Pratęsti (+${tier.duration_days} d.)`
+                        : hasAnyActive
+                        ? "Pakeisti į šį"
                         : "Pirkti"}
                     </button>
 
+                    <button
+                      onClick={() => { setGiftDialog(tier); setGiftDiscordId(""); }}
+                      disabled={buyingId === tier.id}
+                      className="w-full h-9 rounded-md text-xs font-medium border border-border/60 bg-secondary/40 text-foreground hover:bg-secondary/70 transition inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      <Gift className="h-3.5 w-3.5" />
+                      Padovanoti draugui
+                    </button>
+
                     {active && expiresLabel ? (
-                      <p className="mt-3 text-center text-xs text-muted-foreground">
+                      <p className="pt-1 text-center text-xs text-muted-foreground">
                         Galioja iki <span className="text-foreground font-medium">{expiresLabel}</span>
                       </p>
                     ) : (
-                      <p className="mt-3 text-center text-xs text-muted-foreground/60">&nbsp;</p>
+                      <p className="pt-1 text-center text-xs text-muted-foreground/60">&nbsp;</p>
                     )}
                   </div>
                 </div>
