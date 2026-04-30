@@ -1127,6 +1127,40 @@ const GiftRecipientPreview = ({ discordId }: { discordId: string }) => {
 };
 
 const VipSection = ({ userId, discordId }: { userId: string; discordId?: string | null }) => {
+  const [tab, setTab] = useState<"tiers" | "wheel">("tiers");
+  const isOwner = !!discordId && OWNER_DISCORD_IDS.includes(discordId);
+  return (
+    <>
+      <div className="mb-6 inline-flex p-1 rounded-lg bg-secondary/40 border border-border/40">
+        <button
+          onClick={() => setTab("tiers")}
+          className={`px-4 h-9 rounded-md text-sm font-medium inline-flex items-center gap-2 transition ${
+            tab === "tiers"
+              ? "bg-[image:var(--gradient-brand)] text-primary-foreground shadow"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Crown className="h-4 w-4" /> VIP Lygiai
+        </button>
+        <button
+          onClick={() => setTab("wheel")}
+          className={`px-4 h-9 rounded-md text-sm font-medium inline-flex items-center gap-2 transition ${
+            tab === "wheel"
+              ? "bg-[image:var(--gradient-brand)] text-primary-foreground shadow"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Sparkles className="h-4 w-4" /> Sėkmės Ratas
+        </button>
+      </div>
+      {tab === "tiers"
+        ? <VipTiersSection userId={userId} discordId={discordId} />
+        : <LuckyWheelSection userId={userId} discordId={discordId} isOwner={isOwner} />}
+    </>
+  );
+};
+
+const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: string | null }) => {
   const qc = useQueryClient();
 
   const tiersQuery = useQuery({
