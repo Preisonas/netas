@@ -81,7 +81,7 @@ export const LuckyWheelSection = ({
 
   // Active wheel: prefer pending/spinning. Fall back to a recently-finished wheel
   // for ~5 minutes so participants see the result, then it auto-hides.
-  const FINISHED_VISIBLE_MS = 5 * 60 * 1000;
+  const FINISHED_VISIBLE_MS = 20 * 1000;
   const wheelQuery = useQuery({
     queryKey: ["lucky-wheel-active"],
     queryFn: async () => {
