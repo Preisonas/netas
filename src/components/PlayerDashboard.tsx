@@ -149,6 +149,26 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
   const { characters: sidebarCharacters } = usePlayerCharacters(discordId);
   const characterCount = sidebarCharacters.length;
 
+  // Active VIP for sidebar badge
+  const activeVipQuery = useQuery({
+    queryKey: ["user-vips", session.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_vips")
+        .select("expires_at, tier_id, vip_tiers(tier, name, color)")
+        .eq("user_id", session.user.id)
+        .gt("expires_at", new Date().toISOString())
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { expires_at: string; tier_id: string; vip_tiers: { tier: string; name: string; color: string } | null } | null;
+    },
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+  });
+  const activeVip = activeVipQuery.data;
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Atsijungta");
