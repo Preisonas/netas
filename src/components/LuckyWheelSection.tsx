@@ -1,0 +1,767 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Crown, Sparkles, Clock, Car, Users, Trophy, Plus, X, Gift } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usePlayerCharacters } from "@/hooks/usePlayerCharacters";
+
+interface Wheel {
+  id: string;
+  vehicle_id: string;
+  status: "pending" | "spinning" | "finished" | "cancelled";
+  ends_at: string;
+  spun_at: string | null;
+  winner_user_id: string | null;
+  winner_discord_id: string | null;
+  winner_username: string | null;
+  winner_entry_id: string | null;
+  winner_character_id: string | null;
+  delivery_id: string | null;
+  created_at: string;
+}
+
+interface Entry {
+  id: string;
+  wheel_id: string;
+  user_id: string;
+  discord_id: string;
+  username: string | null;
+  avatar_url: string | null;
+  vip_tier: string | null;
+  joined_at: string;
+}
+
+interface Vehicle {
+  id: string;
+  brand: string;
+  model: string;
+  price: number;
+  image_url: string | null;
+}
+
+const ENTRY_COLORS = [
+  "#e8c25a", "#7ad9e0", "#f97373", "#a78bfa", "#34d399",
+  "#fb923c", "#60a5fa", "#f472b6", "#facc15", "#22d3ee",
+];
+
+export const LuckyWheelSection = ({
+  userId,
+  discordId,
+  isOwner,
+}: {
+  userId: string;
+  discordId?: string | null;
+  isOwner: boolean;
+}) => {
+  const qc = useQueryClient();
+  const [now, setNow] = useState(Date.now());
+  const [createOpen, setCreateOpen] = useState(false);
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [spinAngle, setSpinAngle] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const spinTriggeredRef = useRef<string | null>(null);
+
+  // Tick every second for countdown
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Active wheel (most recent non-finished, or most recent finished if nothing active)
+  const wheelQuery = useQuery({
+    queryKey: ["lucky-wheel-active"],
+    queryFn: async () => {
+      // Try active first
+      const { data: active } = await supabase
+        .from("lucky_wheels")
+        .select("*")
+        .in("status", ["pending", "spinning"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (active) return active as Wheel;
+      // Fallback: most recent finished/cancelled
+      const { data: latest } = await supabase
+        .from("lucky_wheels")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (latest ?? null) as Wheel | null;
+    },
+  });
+
+  const wheel = wheelQuery.data;
+
+  // Entries for current wheel
+  const entriesQuery = useQuery({
+    queryKey: ["lucky-wheel-entries", wheel?.id],
+    enabled: !!wheel?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lucky_wheel_entries")
+        .select("*")
+        .eq("wheel_id", wheel!.id)
+        .order("joined_at", { ascending: true });
+      return (data ?? []) as Entry[];
+    },
+  });
+
+  const entries = entriesQuery.data ?? [];
+
+  // Prize vehicle
+  const vehicleQuery = useQuery({
+    queryKey: ["lucky-wheel-vehicle", wheel?.vehicle_id],
+    enabled: !!wheel?.vehicle_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("vehicles")
+        .select("id, brand, model, price, image_url")
+        .eq("id", wheel!.vehicle_id)
+        .maybeSingle();
+      return data as Vehicle | null;
+    },
+  });
+
+  const vehicle = vehicleQuery.data;
+
+  // User's active VIP tier (gold/platinum required)
+  const myVipQuery = useQuery({
+    queryKey: ["my-vip-tier", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_vips")
+        .select("expires_at, vip_tiers(tier)")
+        .eq("user_id", userId)
+        .gt("expires_at", new Date().toISOString())
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      // deno-lint-ignore no-explicit-any
+      const tier = (data as any)?.vip_tiers?.tier as string | undefined;
+      return tier ?? null;
+    },
+  });
+
+  const myTier = myVipQuery.data;
+  const eligible = myTier === "gold" || myTier === "platinum";
+  const alreadyJoined = entries.some((e) => e.user_id === userId);
+
+  // Realtime subscriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel("lucky-wheels-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "lucky_wheels" }, () => {
+        qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "lucky_wheel_entries" }, () => {
+        qc.invalidateQueries({ queryKey: ["lucky-wheel-entries"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
+  // Auto-spin: when timer expires and wheel is still pending, trigger spin
+  const endsAtMs = wheel ? new Date(wheel.ends_at).getTime() : 0;
+  const remainingMs = Math.max(0, endsAtMs - now);
+  const expired = wheel?.status === "pending" && remainingMs <= 0;
+
+  useEffect(() => {
+    if (!expired || !wheel) return;
+    if (spinTriggeredRef.current === wheel.id) return;
+    spinTriggeredRef.current = wheel.id;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
+        body: { wheel_id: wheel.id },
+      });
+      if (error) {
+        console.error("spin error", error);
+      } else {
+        console.log("spin result", data);
+      }
+      qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
+    })();
+  }, [expired, wheel, qc]);
+
+  // When wheel becomes finished, animate the spin
+  useEffect(() => {
+    if (wheel?.status !== "finished" || !wheel.winner_entry_id || entries.length === 0) return;
+    const winnerIdx = entries.findIndex((e) => e.id === wheel.winner_entry_id);
+    if (winnerIdx < 0) return;
+    const segment = 360 / entries.length;
+    // Final angle so winner segment center lands at top (-90deg pointer)
+    const targetAngle = 360 * 6 - (winnerIdx * segment + segment / 2);
+    setSpinning(true);
+    setSpinAngle(targetAngle);
+    const t = setTimeout(() => setSpinning(false), 5200);
+    return () => clearTimeout(t);
+  }, [wheel?.status, wheel?.winner_entry_id, entries]);
+
+  const join = async () => {
+    if (!wheel) return;
+    const { data, error } = await supabase.functions.invoke("lucky-wheel-join", {
+      body: { wheel_id: wheel.id },
+    });
+    if (error || (data as { error?: string })?.error) {
+      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Klaida";
+      toast.error("Nepavyko prisijungti", { description: msg });
+      return;
+    }
+    toast.success("Tu dalyvauji! 🎰");
+    qc.invalidateQueries({ queryKey: ["lucky-wheel-entries"] });
+  };
+
+  const isWinner =
+    wheel?.status === "finished" && wheel.winner_user_id === userId && !wheel.delivery_id;
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" /> Sėkmės Ratas
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Gold ir Platinum VIP nariai gali laimėti automobilį. Vienas dalyvis per ratą.
+          </p>
+        </div>
+        {isOwner && (
+          <button
+            onClick={() => setCreateOpen(true)}
+            disabled={wheel?.status === "pending" || wheel?.status === "spinning"}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="h-4 w-4" />
+            Sukurti ratą
+          </button>
+        )}
+      </div>
+
+      {!wheel ? (
+        <div className="rounded-lg border border-border/40 bg-card/50 p-12 text-center">
+          <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+          <p className="text-muted-foreground">Šiuo metu nėra aktyvaus rato.</p>
+          {isOwner && <p className="text-xs text-muted-foreground/70 mt-1">Sukurk naują ratą viršuje.</p>}
+        </div>
+      ) : (
+        <div className="grid lg:grid-cols-[1fr_360px] gap-6">
+          {/* Left: prize + wheel */}
+          <div className="space-y-5">
+            {/* Prize card */}
+            <article className="rounded-lg border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent overflow-hidden">
+              <div className="flex flex-col sm:flex-row gap-4 p-5">
+                <div className="w-full sm:w-44 h-32 rounded-md bg-secondary/40 overflow-hidden flex items-center justify-center shrink-0">
+                  {vehicle?.image_url ? (
+                    <img src={vehicle.image_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Car className="h-10 w-10 text-muted-foreground/40" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">
+                    Prizas
+                  </div>
+                  <h3 className="text-2xl font-bold mt-1 truncate">
+                    {vehicle ? `${vehicle.brand} ${vehicle.model}` : "Kraunama…"}
+                  </h3>
+                  <div className="mt-3 flex items-center gap-4 text-sm">
+                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                      <Users className="h-4 w-4" /> {entries.length} dalyvių
+                    </span>
+                    <StatusBadge status={wheel.status} />
+                  </div>
+                </div>
+                {wheel.status === "pending" && (
+                  <Countdown ms={remainingMs} />
+                )}
+              </div>
+            </article>
+
+            {/* Wheel */}
+            <div className="rounded-lg border border-border/40 bg-card/50 p-6 flex flex-col items-center">
+              <WheelGraphic
+                entries={entries}
+                angle={spinAngle}
+                spinning={spinning}
+                winnerEntryId={wheel.status === "finished" ? wheel.winner_entry_id : null}
+              />
+              {wheel.status === "finished" && wheel.winner_username && !spinning && (
+                <div className="mt-6 text-center animate-fade-in">
+                  <Trophy className="h-8 w-8 mx-auto text-primary mb-2" />
+                  <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Laimėtojas</p>
+                  <p className="text-2xl font-bold mt-1">{wheel.winner_username}</p>
+                  {isWinner && (
+                    <button
+                      onClick={() => setClaimOpen(true)}
+                      className="mt-4 inline-flex items-center gap-2 h-10 px-5 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition"
+                    >
+                      <Gift className="h-4 w-4" /> Atsiimti prizą
+                    </button>
+                  )}
+                  {wheel.winner_user_id === userId && wheel.delivery_id && (
+                    <p className="mt-4 text-sm text-emerald-400">✓ Prizas atsiimtas</p>
+                  )}
+                </div>
+              )}
+              {wheel.status === "cancelled" && (
+                <p className="mt-6 text-sm text-muted-foreground">Atšauktas — nebuvo dalyvių.</p>
+              )}
+            </div>
+
+            {/* Join button area */}
+            {wheel.status === "pending" && (
+              <div className="rounded-lg border border-border/40 bg-card/50 p-5 flex items-center justify-between gap-4">
+                <div className="text-sm">
+                  {!eligible ? (
+                    <p className="text-muted-foreground">
+                      Reikalingas <span className="text-primary font-semibold">Gold</span> arba{" "}
+                      <span className="text-primary font-semibold">Platinum</span> VIP, kad galėtum dalyvauti.
+                    </p>
+                  ) : alreadyJoined ? (
+                    <p className="text-emerald-400 font-medium">✓ Tu jau dalyvauji</p>
+                  ) : (
+                    <p className="text-foreground">Pasirengęs išmėginti sėkmę?</p>
+                  )}
+                </div>
+                <button
+                  onClick={join}
+                  disabled={!eligible || alreadyJoined || remainingMs <= 0}
+                  className="h-10 px-5 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Dalyvauti
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: participants list */}
+          <div className="rounded-lg border border-border/40 bg-card/50 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold">Dalyviai ({entries.length})</h4>
+            </div>
+            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+              {entries.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">Dar nėra dalyvių.</p>
+              ) : (
+                entries.map((e, i) => {
+                  const isWin = wheel.winner_entry_id === e.id && wheel.status === "finished";
+                  return (
+                    <div
+                      key={e.id}
+                      className={`flex items-center gap-3 p-2 rounded-md transition ${
+                        isWin ? "bg-primary/15 border border-primary/40" : "bg-secondary/30"
+                      }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ background: ENTRY_COLORS[i % ENTRY_COLORS.length] }}
+                      />
+                      {e.avatar_url ? (
+                        <img src={e.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                      ) : (
+                        <div className="h-7 w-7 rounded-full bg-muted" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{e.username ?? "Be vardo"}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          {e.vip_tier}
+                        </p>
+                      </div>
+                      {isWin && <Trophy className="h-4 w-4 text-primary shrink-0" />}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOwner && (
+        <CreateWheelDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          userId={userId}
+          onCreated={() => qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] })}
+        />
+      )}
+
+      <ClaimDialog
+        open={claimOpen}
+        onOpenChange={setClaimOpen}
+        wheelId={wheel?.id ?? ""}
+        discordId={discordId}
+        onClaimed={() => qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] })}
+      />
+    </>
+  );
+};
+
+const StatusBadge = ({ status }: { status: Wheel["status"] }) => {
+  const map = {
+    pending: { label: "Aktyvus", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+    spinning: { label: "Sukasi…", cls: "bg-primary/15 text-primary border-primary/30 animate-pulse" },
+    finished: { label: "Baigtas", cls: "bg-muted/40 text-muted-foreground border-border" },
+    cancelled: { label: "Atšauktas", cls: "bg-destructive/15 text-destructive border-destructive/30" },
+  }[status];
+  return (
+    <span className={`inline-flex items-center text-[10px] uppercase tracking-[0.2em] px-2 py-1 rounded-full font-semibold border ${map.cls}`}>
+      {map.label}
+    </span>
+  );
+};
+
+const Countdown = ({ ms }: { ms: number }) => {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    <div className="flex flex-col items-end shrink-0">
+      <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground inline-flex items-center gap-1">
+        <Clock className="h-3 w-3" /> Liko
+      </span>
+      <span className="font-mono text-2xl font-bold text-primary tabular-nums mt-0.5">
+        {h > 0 ? `${pad(h)}:` : ""}{pad(m)}:{pad(s)}
+      </span>
+    </div>
+  );
+};
+
+const WheelGraphic = ({
+  entries,
+  angle,
+  spinning,
+  winnerEntryId,
+}: {
+  entries: Entry[];
+  angle: number;
+  spinning: boolean;
+  winnerEntryId: string | null;
+}) => {
+  const size = 360;
+  const radius = size / 2;
+  const cx = radius;
+  const cy = radius;
+
+  // Empty placeholder
+  if (entries.length === 0) {
+    return (
+      <div
+        className="rounded-full border-4 border-dashed border-border/50 flex items-center justify-center text-muted-foreground text-sm"
+        style={{ width: size, height: size }}
+      >
+        Laukiama dalyvių…
+      </div>
+    );
+  }
+
+  const segCount = entries.length;
+  const segAngle = 360 / segCount;
+
+  const segments = entries.map((e, i) => {
+    const startA = (i * segAngle - 90) * (Math.PI / 180);
+    const endA = ((i + 1) * segAngle - 90) * (Math.PI / 180);
+    const x1 = cx + radius * Math.cos(startA);
+    const y1 = cy + radius * Math.sin(startA);
+    const x2 = cx + radius * Math.cos(endA);
+    const y2 = cy + radius * Math.sin(endA);
+    const largeArc = segAngle > 180 ? 1 : 0;
+    const path = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    const labelA = ((i + 0.5) * segAngle - 90) * (Math.PI / 180);
+    const labelR = radius * 0.65;
+    const lx = cx + labelR * Math.cos(labelA);
+    const ly = cy + labelR * Math.sin(labelA);
+    const labelRotation = (i + 0.5) * segAngle;
+    return {
+      id: e.id,
+      path,
+      color: ENTRY_COLORS[i % ENTRY_COLORS.length],
+      label: e.username?.slice(0, 10) ?? "?",
+      lx, ly,
+      rotation: labelRotation,
+      isWinner: e.id === winnerEntryId,
+    };
+  });
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      {/* Pointer */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 z-10"
+        style={{ top: -4 }}
+      >
+        <div
+          className="w-0 h-0"
+          style={{
+            borderLeft: "12px solid transparent",
+            borderRight: "12px solid transparent",
+            borderTop: "20px solid hsl(var(--primary))",
+            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.4))",
+          }}
+        />
+      </div>
+
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={{
+          transform: `rotate(${angle}deg)`,
+          transition: spinning ? "transform 5s cubic-bezier(0.17, 0.67, 0.21, 0.99)" : "none",
+          filter: "drop-shadow(0 10px 30px rgba(0,0,0,0.4))",
+        }}
+      >
+        <defs>
+          <radialGradient id="wheelShade" cx="50%" cy="50%" r="50%">
+            <stop offset="80%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.35)" />
+          </radialGradient>
+        </defs>
+        {segments.map((s) => (
+          <g key={s.id}>
+            <path d={s.path} fill={s.color} stroke="hsl(var(--background))" strokeWidth={2} />
+            {segCount <= 20 && (
+              <text
+                x={s.lx}
+                y={s.ly}
+                fill="#0a0a0a"
+                fontSize={segCount > 12 ? 10 : 12}
+                fontWeight={600}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                transform={`rotate(${s.rotation} ${s.lx} ${s.ly})`}
+              >
+                {s.label}
+              </text>
+            )}
+          </g>
+        ))}
+        <circle cx={cx} cy={cy} r={radius} fill="url(#wheelShade)" />
+        <circle cx={cx} cy={cy} r={28} fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth={3} />
+      </svg>
+    </div>
+  );
+};
+
+const CreateWheelDialog = ({
+  open,
+  onOpenChange,
+  userId,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  userId: string;
+  onCreated: () => void;
+}) => {
+  const [vehicleId, setVehicleId] = useState("");
+  const [minutes, setMinutes] = useState(15);
+  const [submitting, setSubmitting] = useState(false);
+
+  const vehiclesQuery = useQuery({
+    queryKey: ["wheel-vehicles"],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("vehicles")
+        .select("id, brand, model, price, image_url")
+        .order("brand", { ascending: true });
+      return (data ?? []) as Vehicle[];
+    },
+  });
+
+  const submit = async () => {
+    if (!vehicleId) {
+      toast.error("Pasirink automobilį");
+      return;
+    }
+    if (minutes < 1 || minutes > 1440) {
+      toast.error("Trukmė turi būti 1–1440 min.");
+      return;
+    }
+    setSubmitting(true);
+    const endsAt = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+    const { error } = await supabase.from("lucky_wheels").insert({
+      vehicle_id: vehicleId,
+      ends_at: endsAt,
+      created_by: userId,
+      status: "pending",
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error("Nepavyko sukurti", { description: error.message });
+      return;
+    }
+    toast.success("Sėkmės ratas sukurtas! 🎰");
+    onCreated();
+    onOpenChange(false);
+    setVehicleId("");
+    setMinutes(15);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" /> Sukurti Sėkmės Ratą
+          </DialogTitle>
+          <DialogDescription>
+            Pasirink prizą ir kiek laiko vartotojai galės dalyvauti.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label>Automobilis (prizas)</Label>
+            <Select value={vehicleId} onValueChange={setVehicleId}>
+              <SelectTrigger><SelectValue placeholder="Pasirink automobilį…" /></SelectTrigger>
+              <SelectContent>
+                {(vehiclesQuery.data ?? []).map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.brand} {v.model} — {v.price} €
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Trukmė (minutės)</Label>
+            <Input
+              type="number"
+              min={1}
+              max={1440}
+              value={minutes}
+              onChange={(e) => setMinutes(parseInt(e.target.value) || 0)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Kai laikas baigsis, ratas automatiškai išrinks laimėtoją.
+            </p>
+          </div>
+        </div>
+        <DialogFooter>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="h-9 px-4 rounded-md text-sm font-medium border border-border bg-secondary/40 hover:bg-secondary/70 transition"
+          >
+            Atšaukti
+          </button>
+          <button
+            onClick={submit}
+            disabled={submitting || !vehicleId}
+            className="h-9 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
+          >
+            {submitting ? "Kuriama…" : "Sukurti"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const ClaimDialog = ({
+  open,
+  onOpenChange,
+  wheelId,
+  discordId,
+  onClaimed,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  wheelId: string;
+  discordId?: string | null;
+  onClaimed: () => void;
+}) => {
+  const { characters, loading } = usePlayerCharacters(discordId);
+  const [characterId, setCharacterId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open && characters.length > 0 && !characterId) {
+      setCharacterId(characters[0].id);
+    }
+  }, [open, characters, characterId]);
+
+  const submit = async () => {
+    if (!characterId) {
+      toast.error("Pasirink personažą");
+      return;
+    }
+    setSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("lucky-wheel-claim", {
+      body: { wheel_id: wheelId, character_id: characterId },
+    });
+    setSubmitting(false);
+    if (error || (data as { error?: string })?.error) {
+      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Klaida";
+      toast.error("Nepavyko atsiimti", { description: msg });
+      return;
+    }
+    toast.success("🎉 Prizas atsiųstas į garažą!");
+    onClaimed();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-primary" /> Atsiimti prizą
+          </DialogTitle>
+          <DialogDescription>
+            Pasirink, kuriam personažui bus atiduotas automobilis.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Kraunama…</p>
+          ) : characters.length === 0 ? (
+            <p className="text-sm text-destructive">Neturi personažų.</p>
+          ) : (
+            <div className="space-y-2">
+              <Label>Personažas</Label>
+              <Select value={characterId} onValueChange={setCharacterId}>
+                <SelectTrigger><SelectValue placeholder="Pasirink personažą…" /></SelectTrigger>
+                <SelectContent>
+                  {characters.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.first_name} {c.last_name} ({c.identifier})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="h-9 px-4 rounded-md text-sm font-medium border border-border bg-secondary/40 hover:bg-secondary/70 transition"
+          >
+            Vėliau
+          </button>
+          <button
+            onClick={submit}
+            disabled={submitting || !characterId || characters.length === 0}
+            className="h-9 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
+          >
+            {submitting ? "Siunčiama…" : "Atsiimti"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
