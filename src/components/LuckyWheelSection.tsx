@@ -79,11 +79,12 @@ export const LuckyWheelSection = ({
     return () => clearInterval(t);
   }, []);
 
-  // Active wheel (most recent non-finished, or most recent finished if nothing active)
+  // Active wheel: prefer pending/spinning. Fall back to a recently-finished wheel
+  // for ~5 minutes so participants see the result, then it auto-hides.
+  const FINISHED_VISIBLE_MS = 5 * 60 * 1000;
   const wheelQuery = useQuery({
     queryKey: ["lucky-wheel-active"],
     queryFn: async () => {
-      // Try active first
       const { data: active } = await supabase
         .from("lucky_wheels")
         .select("*")
@@ -92,15 +93,19 @@ export const LuckyWheelSection = ({
         .limit(1)
         .maybeSingle();
       if (active) return active as Wheel;
-      // Fallback: most recent finished/cancelled
+      // Fallback: recently finished wheel, only if spun within the visibility window
+      const cutoff = new Date(Date.now() - FINISHED_VISIBLE_MS).toISOString();
       const { data: latest } = await supabase
         .from("lucky_wheels")
         .select("*")
-        .order("created_at", { ascending: false })
+        .eq("status", "finished")
+        .gt("spun_at", cutoff)
+        .order("spun_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       return (latest ?? null) as Wheel | null;
     },
+    refetchInterval: 30000,
   });
 
   const wheel = wheelQuery.data;
