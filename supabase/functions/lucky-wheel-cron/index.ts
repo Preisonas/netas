@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   const { data: expired, error } = await admin
     .from("lucky_wheels")
     .select("id")
-    .eq("status", "pending")
+    .in("status", ["pending", "spinning"])
     .lte("ends_at", nowIso);
 
   if (error) {
@@ -29,17 +29,29 @@ Deno.serve(async (req) => {
   const results: Array<{ id: string; outcome: string }> = [];
 
   for (const w of expired ?? []) {
-    // Atomic lock: pending -> spinning
-    const { data: locked } = await admin
+    const { data: current } = await admin
       .from("lucky_wheels")
-      .update({ status: "spinning" })
+      .select("id, status")
       .eq("id", w.id)
-      .eq("status", "pending")
-      .select("id")
       .maybeSingle();
-    if (!locked) {
+
+    if (!current || (current.status !== "pending" && current.status !== "spinning")) {
       results.push({ id: w.id, outcome: "skipped" });
       continue;
+    }
+
+    if (current.status === "pending") {
+      const { data: locked } = await admin
+        .from("lucky_wheels")
+        .update({ status: "spinning" })
+        .eq("id", w.id)
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
+      if (!locked) {
+        results.push({ id: w.id, outcome: "skipped" });
+        continue;
+      }
     }
 
     const { data: entries } = await admin
@@ -51,7 +63,8 @@ Deno.serve(async (req) => {
       await admin
         .from("lucky_wheels")
         .update({ status: "cancelled", spun_at: new Date().toISOString() })
-        .eq("id", w.id);
+        .eq("id", w.id)
+        .eq("status", "spinning");
       results.push({ id: w.id, outcome: "cancelled_no_entries" });
       continue;
     }
@@ -67,7 +80,9 @@ Deno.serve(async (req) => {
         winner_username: winner.username,
         winner_entry_id: winner.id,
       })
-      .eq("id", w.id);
+      .eq("id", w.id)
+      .eq("status", "spinning")
+      .is("winner_entry_id", null);
     results.push({ id: w.id, outcome: "finished" });
   }
 
