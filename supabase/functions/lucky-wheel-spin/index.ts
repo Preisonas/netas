@@ -30,34 +30,35 @@ Deno.serve(async (req) => {
 
   const { data: wheel } = await admin
     .from("lucky_wheels")
-    .select("id, status, ends_at")
+    .select("id, status, ends_at, winner_entry_id")
     .eq("id", body.wheel_id)
     .maybeSingle();
   if (!wheel) return json({ error: "Ratas nerastas" }, 404);
   if (wheel.status === "finished") return json({ success: true, already: true });
   if (wheel.status === "cancelled") return json({ error: "Atšauktas" }, 409);
+  if (wheel.status !== "pending" && wheel.status !== "spinning") return json({ error: "Netinkama būsena" }, 409);
   if (new Date(wheel.ends_at).getTime() > Date.now()) {
     return json({ error: "Dar nepasibaigė" }, 425);
   }
 
-  // Atomic transition pending -> spinning to lock the wheel for one spinner
-  const { data: locked, error: lockErr } = await admin
-    .from("lucky_wheels")
-    .update({ status: "spinning" })
-    .eq("id", wheel.id)
-    .eq("status", "pending")
-    .select("id")
-    .maybeSingle();
-  if (lockErr) return json({ error: lockErr.message }, 500);
-
-  if (!locked) {
-    // Someone else is spinning or already finished — return current state
-    const { data: latest } = await admin
+  // Atomic transition pending -> spinning. If it is already spinning, recover/finalize it.
+  if (wheel.status === "pending") {
+    const { data: locked, error: lockErr } = await admin
       .from("lucky_wheels")
-      .select("*")
+      .update({ status: "spinning" })
       .eq("id", wheel.id)
+      .eq("status", "pending")
+      .select("id")
       .maybeSingle();
-    return json({ success: true, wheel: latest, already: true });
+    if (lockErr) return json({ error: lockErr.message }, 500);
+    if (!locked) {
+      const { data: latest } = await admin
+        .from("lucky_wheels")
+        .select("*")
+        .eq("id", wheel.id)
+        .maybeSingle();
+      if (latest?.status !== "spinning") return json({ success: true, wheel: latest, already: true });
+    }
   }
 
   const { data: entries } = await admin
@@ -71,6 +72,7 @@ Deno.serve(async (req) => {
       .from("lucky_wheels")
       .update({ status: "cancelled", spun_at: new Date().toISOString() })
       .eq("id", wheel.id)
+      .eq("status", "spinning")
       .select()
       .single();
     return json({ success: true, wheel: updated, no_entries: true });
@@ -89,9 +91,19 @@ Deno.serve(async (req) => {
       winner_entry_id: winner.id,
     })
     .eq("id", wheel.id)
+    .eq("status", "spinning")
+    .is("winner_entry_id", null)
     .select()
-    .single();
+    .maybeSingle();
   if (finErr) return json({ error: finErr.message }, 500);
+  if (!finished) {
+    const { data: latest } = await admin
+      .from("lucky_wheels")
+      .select("*")
+      .eq("id", wheel.id)
+      .maybeSingle();
+    return json({ success: true, wheel: latest, already: true });
+  }
 
   return json({ success: true, wheel: finished });
 });
