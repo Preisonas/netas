@@ -49,6 +49,7 @@ import { CreditCheckoutDialog } from "@/components/CreditCheckoutDialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { LuckyWheelSection } from "@/components/LuckyWheelSection";
+import { VipInventorySection, useUnclaimedWinsCount } from "@/components/VipInventorySection";
 
 interface PlayerDashboardProps {
   session: Session;
