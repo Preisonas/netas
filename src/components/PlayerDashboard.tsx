@@ -1267,6 +1267,10 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
               ? new Date(myVip!.expires_at).toLocaleDateString("lt-LT")
               : null;
             const isFeatured = tier.tier === "platinum";
+            const isDowngrade =
+              !!currentActiveTier &&
+              currentActiveVip?.tier_id !== tier.id &&
+              tier.sort_order < currentActiveTier.sort_order;
 
             const theme = tierTheme[tier.tier] ?? tierTheme.silver;
 
