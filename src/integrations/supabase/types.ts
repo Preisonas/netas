@@ -214,6 +214,106 @@ export type Database = {
         }
         Relationships: []
       }
+      lucky_wheel_entries: {
+        Row: {
+          avatar_url: string | null
+          discord_id: string
+          id: string
+          joined_at: string
+          user_id: string
+          username: string | null
+          vip_tier: string | null
+          wheel_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          discord_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+          username?: string | null
+          vip_tier?: string | null
+          wheel_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          discord_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+          username?: string | null
+          vip_tier?: string | null
+          wheel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lucky_wheel_entries_wheel_id_fkey"
+            columns: ["wheel_id"]
+            isOneToOne: false
+            referencedRelation: "lucky_wheels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lucky_wheels: {
+        Row: {
+          created_at: string
+          created_by: string
+          delivery_id: string | null
+          ends_at: string
+          id: string
+          spun_at: string | null
+          status: string
+          updated_at: string
+          vehicle_id: string
+          winner_character_id: string | null
+          winner_discord_id: string | null
+          winner_entry_id: string | null
+          winner_user_id: string | null
+          winner_username: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          delivery_id?: string | null
+          ends_at: string
+          id?: string
+          spun_at?: string | null
+          status?: string
+          updated_at?: string
+          vehicle_id: string
+          winner_character_id?: string | null
+          winner_discord_id?: string | null
+          winner_entry_id?: string | null
+          winner_user_id?: string | null
+          winner_username?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          delivery_id?: string | null
+          ends_at?: string
+          id?: string
+          spun_at?: string | null
+          status?: string
+          updated_at?: string
+          vehicle_id?: string
+          winner_character_id?: string | null
+          winner_discord_id?: string | null
+          winner_entry_id?: string | null
+          winner_user_id?: string | null
+          winner_username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lucky_wheels_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_deliveries: {
         Row: {
           character_id: string
