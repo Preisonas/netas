@@ -145,6 +145,36 @@ Deno.serve(async (req) => {
     label = tier.name;
     itemName = `vip_${tier.tier}`;
     vipResult = { tier: tier.tier, expires_at: "" }; // filled after upsert
+
+    // Prorated upgrade pricing (only for self-purchase, not gifts):
+    // If user has a different active tier, credit the unused portion of the old tier.
+    const giftDiscordRaw = (body.gift_to_discord_id ?? "").trim();
+    const isGiftBuy = giftDiscordRaw.length > 0 && giftDiscordRaw !== profile.discord_id;
+    if (!isGiftBuy) {
+      const nowIsoCheck = new Date().toISOString();
+      const { data: currentActive } = await admin
+        .from("user_vips")
+        .select("tier_id, expires_at, created_at")
+        .eq("user_id", user.id)
+        .gt("expires_at", nowIsoCheck)
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (currentActive && currentActive.tier_id !== body.vip_tier_id) {
+        const { data: oldTier } = await admin
+          .from("vip_tiers")
+          .select("price, duration_days")
+          .eq("id", currentActive.tier_id)
+          .maybeSingle();
+        if (oldTier && oldTier.duration_days > 0) {
+          const msLeft = new Date(currentActive.expires_at).getTime() - Date.now();
+          const daysLeft = Math.max(0, msLeft / (24 * 60 * 60 * 1000));
+          const remainingValue = (oldTier.price * daysLeft) / oldTier.duration_days;
+          const discounted = Math.max(1, Math.ceil(price - remainingValue));
+          price = Math.min(price, discounted);
+        }
+      }
+    }
   } else {
     return json({ error: "Invalid type" }, 400);
   }

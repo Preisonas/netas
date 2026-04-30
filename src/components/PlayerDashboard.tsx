@@ -1144,6 +1144,25 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
   const myVipByTier = new Map(myVips.map((v) => [v.tier_id, v]));
   const hasAnyActive = myVips.some((v) => new Date(v.expires_at).getTime() > Date.now());
 
+  // Currently active VIP (any tier) — used to compute prorated upgrade prices.
+  const tiersList = tiersQuery.data ?? [];
+  const currentActiveVip = myVips
+    .filter((v) => new Date(v.expires_at).getTime() > Date.now())
+    .sort((a, b) => new Date(b.expires_at).getTime() - new Date(a.expires_at).getTime())[0];
+  const currentActiveTier = currentActiveVip
+    ? tiersList.find((t) => t.id === currentActiveVip.tier_id)
+    : undefined;
+
+  const computeDiscountedPrice = (tier: VipTier): number => {
+    if (!currentActiveVip || !currentActiveTier) return tier.price;
+    if (currentActiveVip.tier_id === tier.id) return tier.price; // same tier = extend, full price
+    if (!currentActiveTier.duration_days) return tier.price;
+    const msLeft = new Date(currentActiveVip.expires_at).getTime() - Date.now();
+    const daysLeft = Math.max(0, msLeft / (24 * 60 * 60 * 1000));
+    const remaining = (currentActiveTier.price * daysLeft) / currentActiveTier.duration_days;
+    return Math.max(1, Math.ceil(tier.price - remaining));
+  };
+
    const tierIcons: Record<string, typeof Crown> = {
      silver: Shield,
      gold: Sparkles,
@@ -1224,11 +1243,24 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
 
                   <div className="mt-5 flex items-baseline justify-between gap-2">
                     <h3 className="text-xl font-bold leading-tight">{tier.name}</h3>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-black tracking-tight" style={{ color: theme.accent }}>
-                        {tier.price}
-                      </span>
-                      <span className="text-xs text-muted-foreground">€/{tier.duration_days}d</span>
+                    <div className="flex items-baseline gap-1.5">
+                      {(() => {
+                        const discounted = computeDiscountedPrice(tier);
+                        const isDiscounted = discounted < tier.price;
+                        return (
+                          <>
+                            {isDiscounted && (
+                              <span className="text-sm text-muted-foreground line-through">
+                                {tier.price}
+                              </span>
+                            )}
+                            <span className="text-3xl font-black tracking-tight" style={{ color: theme.accent }}>
+                              {discounted}
+                            </span>
+                            <span className="text-xs text-muted-foreground">€/{tier.duration_days}d</span>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 
