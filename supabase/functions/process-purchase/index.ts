@@ -16,6 +16,8 @@ type Body = {
   // Vehicle-only extras (each +5 credits, server-validated)
   custom_plate?: string | null;
   full_tune?: boolean;
+  // VIP gifting (optional): Discord ID of recipient
+  gift_to_discord_id?: string | null;
 };
 
 const PLATE_EXTRA_COST = 5;
@@ -168,34 +170,76 @@ Deno.serve(async (req) => {
     updData = upd;
   }
 
-  // VIP path: extend or create membership
+  // VIP path: extend, upgrade, or gift
   if (body.type === "vip") {
     const { data: tier } = await admin
       .from("vip_tiers").select("tier, duration_days").eq("id", body.vip_tier_id!).maybeSingle();
     const days = tier?.duration_days ?? 30;
-    const { data: existing } = await admin
-      .from("user_vips").select("id, expires_at").eq("user_id", user.id).eq("tier_id", body.vip_tier_id!).maybeSingle();
+
+    // Resolve recipient: gift target (by discord_id) or self
+    let recipientUserId = user.id;
+    let recipientDiscordId: string | null = profile.discord_id;
+    const giftDiscord = (body.gift_to_discord_id ?? "").trim();
+    const isGift = giftDiscord.length > 0 && giftDiscord !== profile.discord_id;
+    if (isGift) {
+      if (!/^\d{5,32}$/.test(giftDiscord)) {
+        return json({ error: "Netinkamas Discord ID" }, 400);
+      }
+      const { data: recip } = await admin
+        .from("profiles")
+        .select("user_id, discord_id, username")
+        .eq("discord_id", giftDiscord)
+        .maybeSingle();
+      if (!recip) {
+        return json({ error: "Vartotojas su tokiu Discord ID nerastas" }, 404);
+      }
+      recipientUserId = recip.user_id;
+      recipientDiscordId = recip.discord_id;
+    }
+
+    // Find ANY active VIP for the recipient (for upgrade/extend logic)
+    const nowIso = new Date().toISOString();
+    const { data: anyActive } = await admin
+      .from("user_vips")
+      .select("id, tier_id, expires_at")
+      .eq("user_id", recipientUserId)
+      .gt("expires_at", nowIso)
+      .order("expires_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const sameTier = anyActive && anyActive.tier_id === body.vip_tier_id;
     const now = Date.now();
-    const base = existing && new Date(existing.expires_at).getTime() > now
-      ? new Date(existing.expires_at).getTime()
+    // If same tier → extend from current expiry; otherwise start fresh from now (upgrade/downgrade replaces)
+    const base = sameTier
+      ? new Date(anyActive!.expires_at).getTime()
       : now;
     const expiresAt = new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
 
-    if (existing) {
-      const { error: upErr } = await admin.from("user_vips").update({ expires_at: expiresAt }).eq("id", existing.id);
+    if (sameTier) {
+      const { error: upErr } = await admin
+        .from("user_vips").update({ expires_at: expiresAt }).eq("id", anyActive!.id);
       if (upErr) {
-        await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
+        if (!isTestFreeVip) {
+          await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
+        }
         return json({ error: "VIP update failed: " + upErr.message }, 500);
       }
     } else {
+      // Remove any other active VIPs for this user (upgrade replaces previous tier)
+      if (anyActive) {
+        await admin.from("user_vips").delete().eq("user_id", recipientUserId);
+      }
       const { error: insErr } = await admin.from("user_vips").insert({
-        user_id: user.id,
-        discord_id: profile.discord_id,
+        user_id: recipientUserId,
+        discord_id: recipientDiscordId,
         tier_id: body.vip_tier_id!,
         expires_at: expiresAt,
       });
       if (insErr) {
-        await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
+        if (!isTestFreeVip) {
+          await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
+        }
         return json({ error: "VIP create failed: " + insErr.message }, 500);
       }
     }
@@ -207,7 +251,9 @@ Deno.serve(async (req) => {
       tier: tier?.tier,
       expires_at: expiresAt,
       price,
-      credits_remaining: updData.credits,
+      credits_remaining: updData!.credits,
+      gifted: isGift,
+      recipient_discord_id: isGift ? recipientDiscordId : null,
     });
   }
 

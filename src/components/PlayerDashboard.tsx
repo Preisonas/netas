@@ -46,6 +46,8 @@ import VehiclesManager from "@/components/admin/VehiclesManager";
 import DiscountCodesManager from "@/components/admin/DiscountCodesManager";
 import { usePlayerCharacters, generatePlate, type PlayerCharacter } from "@/hooks/usePlayerCharacters";
 import { CreditCheckoutDialog } from "@/components/CreditCheckoutDialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface PlayerDashboardProps {
   session: Session;
@@ -1084,15 +1086,21 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
   });
 
   const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [giftDialog, setGiftDialog] = useState<VipTier | null>(null);
+  const [giftDiscordId, setGiftDiscordId] = useState("");
 
-  const buy = async (tier: VipTier) => {
+  const buy = async (tier: VipTier, giftTo?: string) => {
     if (!discordId) {
       toast.error("Prisijunk per Discord");
       return;
     }
     setBuyingId(tier.id);
     const { data, error } = await supabase.functions.invoke("process-purchase", {
-      body: { type: "vip", vip_tier_id: tier.id },
+      body: {
+        type: "vip",
+        vip_tier_id: tier.id,
+        ...(giftTo ? { gift_to_discord_id: giftTo } : {}),
+      },
     });
     setBuyingId(null);
     if (error || (data && (data as { error?: string }).error)) {
@@ -1100,23 +1108,41 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
       toast.error("Nepavyko nupirkti VIP", { description: msg });
       return;
     }
-    const result = data as { credits_remaining?: number; expires_at?: string };
+    const result = data as { credits_remaining?: number; expires_at?: string; gifted?: boolean };
     if (typeof result.credits_remaining === "number") {
       qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
         old ? { ...old, credits: result.credits_remaining } : old,
       );
     }
     qc.invalidateQueries({ queryKey: ["user-vips", userId] });
+    qc.invalidateQueries({ queryKey: ["active-vip", userId] });
     qc.invalidateQueries({ queryKey: ["profile", userId] });
-    toast.success(`${tier.name} aktyvuotas!`, {
-      description: result.expires_at
-        ? `Galioja iki ${new Date(result.expires_at).toLocaleString("lt-LT")}`
-        : undefined,
-    });
+    if (result.gifted) {
+      toast.success(`${tier.name} padovanotas draugui!`);
+    } else {
+      toast.success(`${tier.name} aktyvuotas!`, {
+        description: result.expires_at
+          ? `Galioja iki ${new Date(result.expires_at).toLocaleString("lt-LT")}`
+          : undefined,
+      });
+    }
+  };
+
+  const submitGift = async () => {
+    if (!giftDialog) return;
+    const id = giftDiscordId.trim();
+    if (!/^\d{5,32}$/.test(id)) {
+      toast.error("Įvesk teisingą Discord ID (tik skaičiai)");
+      return;
+    }
+    await buy(giftDialog, id);
+    setGiftDialog(null);
+    setGiftDiscordId("");
   };
 
   const myVips = myVipsQuery.data ?? [];
   const myVipByTier = new Map(myVips.map((v) => [v.tier_id, v]));
+  const hasAnyActive = myVips.some((v) => new Date(v.expires_at).getTime() > Date.now());
 
    const tierIcons: Record<string, typeof Crown> = {
      silver: Shield,
@@ -1238,7 +1264,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                     ))}
                   </ul>
 
-                  <div className="mt-6">
+                  <div className="mt-6 space-y-2">
                     <button
                       onClick={() => buy(tier)}
                       disabled={buyingId === tier.id}
@@ -1248,15 +1274,26 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
                         ? "Apdorojama…"
                         : active
                         ? `Pratęsti (+${tier.duration_days} d.)`
+                        : hasAnyActive
+                        ? "Pakeisti į šį"
                         : "Pirkti"}
                     </button>
 
+                    <button
+                      onClick={() => { setGiftDialog(tier); setGiftDiscordId(""); }}
+                      disabled={buyingId === tier.id}
+                      className="w-full h-9 rounded-md text-xs font-medium border border-border/60 bg-secondary/40 text-foreground hover:bg-secondary/70 transition inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      <Gift className="h-3.5 w-3.5" />
+                      Padovanoti draugui
+                    </button>
+
                     {active && expiresLabel ? (
-                      <p className="mt-3 text-center text-xs text-muted-foreground">
+                      <p className="pt-1 text-center text-xs text-muted-foreground">
                         Galioja iki <span className="text-foreground font-medium">{expiresLabel}</span>
                       </p>
                     ) : (
-                      <p className="mt-3 text-center text-xs text-muted-foreground/60">&nbsp;</p>
+                      <p className="pt-1 text-center text-xs text-muted-foreground/60">&nbsp;</p>
                     )}
                   </div>
                 </div>
@@ -1265,6 +1302,49 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
           })}
         </div>
       )}
+
+      <Dialog open={!!giftDialog} onOpenChange={(o) => { if (!o) { setGiftDialog(null); setGiftDiscordId(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="h-4 w-4 text-primary" />
+              Padovanoti {giftDialog?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Įvesk draugo Discord ID — jam bus iškart aktyvuotas {giftDialog?.name} ({giftDialog?.duration_days} d.).
+              Kreditai ({giftDialog?.price} €) bus nuskaityti iš tavo balanso.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <label className="text-xs uppercase tracking-wider text-muted-foreground">Discord ID</label>
+            <Input
+              value={giftDiscordId}
+              onChange={(e) => setGiftDiscordId(e.target.value.replace(/\D/g, "").slice(0, 32))}
+              placeholder="pvz. 528409152024870922"
+              inputMode="numeric"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              Draugas turi būti bent kartą prisijungęs prie panelės per Discord.
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => { setGiftDialog(null); setGiftDiscordId(""); }}
+              className="h-9 px-4 rounded-md text-sm font-medium border border-border bg-secondary/40 hover:bg-secondary/70 transition"
+            >
+              Atšaukti
+            </button>
+            <button
+              onClick={submitGift}
+              disabled={!giftDiscordId || (giftDialog ? buyingId === giftDialog.id : false)}
+              className="h-9 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
+            >
+              {giftDialog && buyingId === giftDialog.id ? "Apdorojama…" : "Padovanoti"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
