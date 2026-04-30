@@ -1302,6 +1302,49 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
           })}
         </div>
       )}
+
+      <Dialog open={!!giftDialog} onOpenChange={(o) => { if (!o) { setGiftDialog(null); setGiftDiscordId(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="h-4 w-4 text-primary" />
+              Padovanoti {giftDialog?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Įvesk draugo Discord ID — jam bus iškart aktyvuotas {giftDialog?.name} ({giftDialog?.duration_days} d.).
+              Kreditai ({giftDialog?.price} €) bus nuskaityti iš tavo balanso.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <label className="text-xs uppercase tracking-wider text-muted-foreground">Discord ID</label>
+            <Input
+              value={giftDiscordId}
+              onChange={(e) => setGiftDiscordId(e.target.value.replace(/\D/g, "").slice(0, 32))}
+              placeholder="pvz. 528409152024870922"
+              inputMode="numeric"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              Draugas turi būti bent kartą prisijungęs prie panelės per Discord.
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => { setGiftDialog(null); setGiftDiscordId(""); }}
+              className="h-9 px-4 rounded-md text-sm font-medium border border-border bg-secondary/40 hover:bg-secondary/70 transition"
+            >
+              Atšaukti
+            </button>
+            <button
+              onClick={submitGift}
+              disabled={!giftDiscordId || (giftDialog ? buyingId === giftDialog.id : false)}
+              className="h-9 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
+            >
+              {giftDialog && buyingId === giftDialog.id ? "Apdorojama…" : "Padovanoti"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
