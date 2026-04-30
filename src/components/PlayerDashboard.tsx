@@ -1056,6 +1056,76 @@ interface UserVipRow {
   expires_at: string;
 }
 
+const GiftRecipientPreview = ({ discordId }: { discordId: string }) => {
+  const trimmed = discordId.trim();
+  const valid = /^\d{5,32}$/.test(trimmed);
+  const [debounced, setDebounced] = useState(trimmed);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(trimmed), 300);
+    return () => clearTimeout(t);
+  }, [trimmed]);
+
+  const lookupQuery = useQuery({
+    queryKey: ["gift-recipient", debounced],
+    enabled: valid && debounced === trimmed && debounced.length >= 5,
+    queryFn: async () => {
+      // NOTE: deliberately exclude `credits` — we never reveal balances.
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, discord_id, username, avatar_url")
+        .eq("discord_id", debounced)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+  if (!trimmed) return null;
+  if (!valid) {
+    return (
+      <p className="text-xs text-destructive">Discord ID turi būti 5–32 skaitmenys.</p>
+    );
+  }
+  if (lookupQuery.isFetching) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-border/50 bg-secondary/30 px-3 py-2 text-xs text-muted-foreground">
+        <div className="h-7 w-7 rounded-full bg-muted animate-pulse" />
+        Ieškoma…
+      </div>
+    );
+  }
+  if (lookupQuery.data) {
+    const p = lookupQuery.data;
+    const initials = (p.username || "?").slice(0, 2).toUpperCase();
+    return (
+      <div className="flex items-center gap-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+        {p.avatar_url ? (
+          <img
+            src={p.avatar_url}
+            alt=""
+            className="h-9 w-9 rounded-full object-cover border border-border/50"
+          />
+        ) : (
+          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
+            {initials}
+          </div>
+        )}
+        <div className="flex flex-col min-w-0">
+          <span className="text-sm font-semibold truncate">{p.username ?? "Be vardo"}</span>
+          <span className="text-[10px] text-muted-foreground font-mono truncate">{p.discord_id}</span>
+        </div>
+        <Check className="h-4 w-4 text-primary ml-auto shrink-0" />
+      </div>
+    );
+  }
+  return (
+    <p className="text-xs text-destructive">
+      Vartotojas su tokiu Discord ID nerastas. Jis turi būti prisijungęs per Discord bent kartą.
+    </p>
+  );
+};
+
 const VipSection = ({ userId, discordId }: { userId: string; discordId?: string | null }) => {
   const qc = useQueryClient();
 
