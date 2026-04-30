@@ -1122,9 +1122,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
             return (
               <article
                 key={tier.id}
-                className={`group relative flex flex-col rounded-2xl overflow-hidden border bg-card/80 transition-colors duration-200 ${
-                  active ? "border-primary/50" : "border-border/60 hover:border-border"
-                }`}
+                className="group relative flex flex-col rounded-lg overflow-hidden bg-card/80 transition-colors duration-200"
                 style={{
                   boxShadow: active
                     ? `0 24px 70px -25px hsl(var(--primary) / 0.45)`
