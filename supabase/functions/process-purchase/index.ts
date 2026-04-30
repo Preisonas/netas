@@ -27,20 +27,24 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return json({ error: "Unauthorized" }, 401);
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-  // Resolve user from JWT
+  // Resolve user from JWT using signing-keys-compatible getClaims
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
     auth: { persistSession: false },
   });
-  const { data: userData, error: userErr } = await userClient.auth.getUser();
-  if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
-  const user = userData.user;
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
+  if (claimsErr || !claimsData?.claims?.sub) {
+    console.error("auth.getClaims failed", claimsErr);
+    return json({ error: "Unauthorized", detail: claimsErr?.message }, 401);
+  }
+  const user = { id: claimsData.claims.sub as string, email: (claimsData.claims.email as string) ?? null };
 
   let body: Body;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
