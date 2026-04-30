@@ -471,6 +471,10 @@ const WheelGraphic = ({
   const segCount = entries.length;
   const segAngle = 360 / segCount;
 
+  // Avatar size scales down as participant count grows
+  const avatarSize = Math.max(20, Math.min(44, 320 / Math.max(segCount, 4)));
+  const avatarR = radius * 0.68;
+
   const segments = entries.map((e, i) => {
     const startA = (i * segAngle - 90) * (Math.PI / 180);
     const endA = ((i + 1) * segAngle - 90) * (Math.PI / 180);
@@ -480,18 +484,15 @@ const WheelGraphic = ({
     const y2 = cy + radius * Math.sin(endA);
     const largeArc = segAngle > 180 ? 1 : 0;
     const path = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-    const labelA = ((i + 0.5) * segAngle - 90) * (Math.PI / 180);
-    const labelR = radius * 0.65;
-    const lx = cx + labelR * Math.cos(labelA);
-    const ly = cy + labelR * Math.sin(labelA);
-    const labelRotation = (i + 0.5) * segAngle;
+    const midA = ((i + 0.5) * segAngle - 90) * (Math.PI / 180);
+    const ax = cx + avatarR * Math.cos(midA);
+    const ay = cy + avatarR * Math.sin(midA);
     return {
       id: e.id,
       path,
       color: ENTRY_COLORS[i % ENTRY_COLORS.length],
-      label: e.username?.slice(0, 10) ?? "?",
-      lx, ly,
-      rotation: labelRotation,
+      avatarUrl: e.avatar_url,
+      ax, ay,
       isWinner: e.id === winnerEntryId,
     };
   });
@@ -501,15 +502,15 @@ const WheelGraphic = ({
       {/* Pointer */}
       <div
         className="absolute left-1/2 -translate-x-1/2 z-10"
-        style={{ top: -4 }}
+        style={{ top: -6 }}
       >
         <div
           className="w-0 h-0"
           style={{
-            borderLeft: "12px solid transparent",
-            borderRight: "12px solid transparent",
-            borderTop: "20px solid hsl(var(--primary))",
-            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.4))",
+            borderLeft: "14px solid transparent",
+            borderRight: "14px solid transparent",
+            borderTop: "22px solid hsl(var(--primary))",
+            filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))",
           }}
         />
       </div>
@@ -526,31 +527,57 @@ const WheelGraphic = ({
       >
         <defs>
           <radialGradient id="wheelShade" cx="50%" cy="50%" r="50%">
-            <stop offset="80%" stopColor="rgba(0,0,0,0)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0.35)" />
+            <stop offset="75%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.4)" />
           </radialGradient>
+          {segments.map((s) => (
+            <clipPath id={`avatar-clip-${s.id}`} key={`clip-${s.id}`}>
+              <circle cx={s.ax} cy={s.ay} r={avatarSize / 2} />
+            </clipPath>
+          ))}
         </defs>
+        {/* Colored wedges */}
         {segments.map((s) => (
-          <g key={s.id}>
-            <path d={s.path} fill={s.color} stroke="hsl(var(--background))" strokeWidth={2} />
-            {segCount <= 20 && (
-              <text
-                x={s.lx}
-                y={s.ly}
-                fill="#0a0a0a"
-                fontSize={segCount > 12 ? 10 : 12}
-                fontWeight={600}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                transform={`rotate(${s.rotation} ${s.lx} ${s.ly})`}
-              >
-                {s.label}
-              </text>
+          <path
+            key={s.id}
+            d={s.path}
+            fill={s.color}
+            stroke="hsl(var(--background))"
+            strokeWidth={2}
+          />
+        ))}
+        {/* Outer ring */}
+        <circle cx={cx} cy={cy} r={radius - 1} fill="none" stroke="hsl(var(--background))" strokeWidth={2} />
+        <circle cx={cx} cy={cy} r={radius} fill="url(#wheelShade)" pointerEvents="none" />
+        {/* Avatars */}
+        {segments.map((s) => (
+          <g key={`av-${s.id}`}>
+            <circle
+              cx={s.ax}
+              cy={s.ay}
+              r={avatarSize / 2 + 2}
+              fill="hsl(var(--background))"
+              stroke="rgba(0,0,0,0.35)"
+              strokeWidth={1}
+            />
+            {s.avatarUrl ? (
+              <image
+                href={s.avatarUrl}
+                x={s.ax - avatarSize / 2}
+                y={s.ay - avatarSize / 2}
+                width={avatarSize}
+                height={avatarSize}
+                clipPath={`url(#avatar-clip-${s.id})`}
+                preserveAspectRatio="xMidYMid slice"
+              />
+            ) : (
+              <circle cx={s.ax} cy={s.ay} r={avatarSize / 2} fill="hsl(var(--muted))" />
             )}
           </g>
         ))}
-        <circle cx={cx} cy={cy} r={radius} fill="url(#wheelShade)" />
-        <circle cx={cx} cy={cy} r={28} fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth={3} />
+        {/* Center hub */}
+        <circle cx={cx} cy={cy} r={32} fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth={3} />
+        <circle cx={cx} cy={cy} r={6} fill="hsl(var(--primary))" />
       </svg>
     </div>
   );
