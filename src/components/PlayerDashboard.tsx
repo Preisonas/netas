@@ -1356,6 +1356,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
               inputMode="numeric"
               autoFocus
             />
+            <GiftRecipientPreview discordId={giftDiscordId} />
             <p className="text-xs text-muted-foreground">
               Draugas turi būti bent kartą prisijungęs prie panelės per Discord.
             </p>
@@ -1369,7 +1370,7 @@ const VipSection = ({ userId, discordId }: { userId: string; discordId?: string 
             </button>
             <button
               onClick={submitGift}
-              disabled={!giftDiscordId || (giftDialog ? buyingId === giftDialog.id : false)}
+              disabled={!giftDiscordId || !/^\d{5,32}$/.test(giftDiscordId) || (giftDialog ? buyingId === giftDialog.id : false)}
               className="h-9 px-4 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
             >
               {giftDialog && buyingId === giftDialog.id ? "Apdorojama…" : "Padovanoti"}
