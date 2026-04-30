@@ -16,6 +16,8 @@ type Body = {
   // Vehicle-only extras (each +5 credits, server-validated)
   custom_plate?: string | null;
   full_tune?: boolean;
+  // VIP gifting (optional): Discord ID of recipient
+  gift_to_discord_id?: string | null;
 };
 
 const PLATE_EXTRA_COST = 5;
