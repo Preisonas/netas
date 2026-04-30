@@ -344,9 +344,13 @@ export const LuckyWheelSection = ({
 
             {/* Join button area */}
             {wheel.status === "pending" && (
-              <div className="rounded-lg border border-border/40 bg-card/50 p-5 flex items-center justify-between gap-4">
+              <div className="rounded-lg border border-border/40 bg-card/50 p-5 flex flex-wrap items-center justify-between gap-4">
                 <div className="text-sm">
-                  {!eligible ? (
+                  {notStartedYet ? (
+                    <p className="text-muted-foreground">
+                      Ratas dar neprasidėjo — palauk taimerį.
+                    </p>
+                  ) : !eligible ? (
                     <p className="text-muted-foreground">
                       Reikalingas <span className="text-primary font-semibold">Gold</span> arba{" "}
                       <span className="text-primary font-semibold">Platinum</span> VIP, kad galėtum dalyvauti.
@@ -357,13 +361,23 @@ export const LuckyWheelSection = ({
                     <p className="text-foreground">Pasirengęs išmėginti sėkmę?</p>
                   )}
                 </div>
-                <button
-                  onClick={join}
-                  disabled={!eligible || alreadyJoined || remainingMs <= 0}
-                  className="h-10 px-5 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Dalyvauti
-                </button>
+                <div className="flex items-center gap-2">
+                  {isOwner && (
+                    <button
+                      onClick={cancelWheel}
+                      className="h-10 px-4 rounded-md text-sm font-medium border border-destructive/40 text-destructive hover:bg-destructive/10 transition inline-flex items-center gap-1.5"
+                    >
+                      <X className="h-4 w-4" /> Atšaukti ratą
+                    </button>
+                  )}
+                  <button
+                    onClick={join}
+                    disabled={!eligible || alreadyJoined || remainingMs <= 0 || notStartedYet}
+                    className="h-10 px-5 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Dalyvauti
+                  </button>
+                </div>
               </div>
             )}
           </div>
