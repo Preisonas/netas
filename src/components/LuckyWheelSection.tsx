@@ -384,17 +384,15 @@ export const LuckyWheelSection = ({
             {wheel.status === "pending" && (
               <div className="rounded-lg border border-border/40 bg-card/50 p-5 flex flex-wrap items-center justify-between gap-4">
                 <div className="text-sm">
-                  {notStartedYet ? (
-                    <p className="text-muted-foreground">
-                      Ratas dar neprasidėjo — palauk taimerį.
-                    </p>
-                  ) : !eligible ? (
+                  {!eligible ? (
                     <p className="text-muted-foreground">
                       Reikalingas <span className="text-primary font-semibold">Gold</span> arba{" "}
                       <span className="text-primary font-semibold">Platinum</span> VIP, kad galėtum dalyvauti.
                     </p>
                   ) : alreadyJoined ? (
-                    <p className="text-emerald-400 font-medium">✓ Tu jau dalyvauji</p>
+                    <p className="text-emerald-400 font-medium">✓ Tu jau dalyvauji{notStartedYet ? " — laukiam pradžios" : ""}</p>
+                  ) : notStartedYet ? (
+                    <p className="text-foreground">Prisijunk dabar — ratas dar neprasidėjo.</p>
                   ) : (
                     <p className="text-foreground">Pasirengęs išmėginti sėkmę?</p>
                   )}
@@ -410,7 +408,7 @@ export const LuckyWheelSection = ({
                   )}
                   <button
                     onClick={join}
-                    disabled={!eligible || alreadyJoined || remainingMs <= 0 || notStartedYet}
+                    disabled={!eligible || alreadyJoined || remainingMs <= 0}
                     className="h-10 px-5 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Dalyvauti
