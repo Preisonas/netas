@@ -208,10 +208,15 @@ export const LuckyWheelSection = ({
       const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
         body: { wheel_id: wheel.id },
       });
+      const result = data as { not_ready?: boolean; retry_after_ms?: number } | null;
       if (error) {
         console.error("spin error", error);
         spinTriggeredRef.current = null;
         if (!cancelled) retryTimer = setTimeout(resolveSpin, 5000);
+      } else if (result?.not_ready) {
+        spinTriggeredRef.current = null;
+        const retryAfter = Math.max(1000, Math.min(result.retry_after_ms ?? 2000, 10000));
+        if (!cancelled) retryTimer = setTimeout(resolveSpin, retryAfter);
       } else {
         console.log("spin result", data);
       }
