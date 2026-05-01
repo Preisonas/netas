@@ -208,7 +208,7 @@ export const LuckyWheelSection = ({
 
   useEffect(() => {
     if (!wheel || resultReady || (wheel.status !== "pending" && wheel.status !== "spinning")) {
-      console.log("[wheel] skip auto-spin", { hasWheel: !!wheel, status: wheel?.status, resultReady });
+      console.log("[wheel] auto-spin idle", { hasWheel: !!wheel, status: wheel?.status, resultReady });
       return;
     }
 
@@ -265,7 +265,7 @@ export const LuckyWheelSection = ({
     const winnerIdx = entries.findIndex((e) => e.id === animationWheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
-    const targetAngle = spinAngle + 360 * 5 - (winnerIdx * segment + segment / 2);
+    const targetAngle = 360 * 5 - (winnerIdx * segment + segment / 2);
 
     // Only snap (no animation) for very late joiners (>15s after spin).
     // Otherwise, ALWAYS run the full spin animation when this client first sees the winner.
