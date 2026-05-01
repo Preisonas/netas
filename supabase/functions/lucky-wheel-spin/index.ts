@@ -14,13 +14,10 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-
   // This function is idempotent and only acts on already-expired wheels.
   // It's safe to allow any caller (anon/user/service) so cron, late joiners,
   // and any viewer can converge the wheel to its finished state.
   // No auth required.
-  void anonKey;
 
   let body: { wheel_id?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
@@ -37,10 +34,6 @@ Deno.serve(async (req) => {
   if (wheel.status === "finished") return json({ success: true, already: true });
   if (wheel.status === "cancelled") return json({ error: "Atšauktas" }, 409);
   if (wheel.status !== "pending" && wheel.status !== "spinning") return json({ error: "Netinkama būsena" }, 409);
-  const waitMs = new Date(wheel.ends_at).getTime() - Date.now();
-  if (waitMs > 0) {
-    return json({ success: true, not_ready: true, retry_after_ms: Math.ceil(waitMs + 750) });
-  }
 
   const { data: entries } = await admin
     .from("lucky_wheel_entries")
