@@ -196,38 +196,51 @@ export const LuckyWheelSection = ({
   const remainingMs = Math.max(0, endsAtMs - now);
 
   useEffect(() => {
-    if (!wheel || resultReady || (wheel.status !== "pending" && wheel.status !== "spinning")) return;
+    if (!wheel || resultReady || (wheel.status !== "pending" && wheel.status !== "spinning")) {
+      console.log("[wheel] skip auto-spin", { hasWheel: !!wheel, status: wheel?.status, resultReady });
+      return;
+    }
 
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
-    const delay = Math.max(0, endsAtMs - Date.now() + 500);
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+    const delay = Math.max(0, endsAtMs - Date.now());
+    console.log("[wheel] arming spin", { wheelId: wheel.id, endsAt: wheel.ends_at, delayMs: delay, status: wheel.status });
 
     const resolveSpin = async () => {
-      if (cancelled || spinTriggeredRef.current === wheel.id) return;
-      spinTriggeredRef.current = wheel.id;
+      if (cancelled) return;
+      console.log("[wheel] invoking lucky-wheel-spin", { wheelId: wheel.id, nowMs: Date.now(), endsAtMs });
       const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
         body: { wheel_id: wheel.id },
       });
-      const result = data as { not_ready?: boolean; retry_after_ms?: number } | null;
+      console.log("[wheel] spin response", { data, error });
+      const result = data as { not_ready?: boolean; retry_after_ms?: number; success?: boolean } | null;
       if (error) {
-        console.error("spin error", error);
-        spinTriggeredRef.current = null;
-        if (!cancelled) retryTimer = setTimeout(resolveSpin, 5000);
+        console.error("[wheel] spin error", error);
+        if (!cancelled) retryTimer = setTimeout(resolveSpin, 1500);
       } else if (result?.not_ready) {
-        spinTriggeredRef.current = null;
-        const retryAfter = Math.max(1000, Math.min(result.retry_after_ms ?? 2000, 10000));
+        const retryAfter = Math.max(500, Math.min(result.retry_after_ms ?? 1000, 5000));
+        console.log("[wheel] not ready, retry in", retryAfter);
         if (!cancelled) retryTimer = setTimeout(resolveSpin, retryAfter);
       } else {
-        console.log("spin result", data);
+        console.log("[wheel] spin success");
       }
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
     };
 
-    const startTimer = setTimeout(resolveSpin, delay);
+    const startTimer = setTimeout(() => {
+      resolveSpin();
+      // Poll every 2s in case first call fails or wheel got stuck
+      pollTimer = setInterval(() => {
+        if (!cancelled) resolveSpin();
+      }, 2500);
+    }, delay);
+
     return () => {
       cancelled = true;
       clearTimeout(startTimer);
       if (retryTimer) clearTimeout(retryTimer);
+      if (pollTimer) clearInterval(pollTimer);
     };
   }, [wheel?.id, wheel?.status, wheel?.ends_at, resultReady, endsAtMs, qc]);
 
