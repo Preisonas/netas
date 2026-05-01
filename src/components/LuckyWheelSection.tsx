@@ -745,7 +745,7 @@ const CreateWheelDialog = ({
       startsAtIso = new Date(startMs).toISOString();
     }
     const startMs = new Date(startsAtIso).getTime();
-    const endsAt = new Date(startMs + totalMinutes * 60 * 1000).toISOString();
+    const endsAt = new Date(startMs + totalSeconds * 1000).toISOString();
     setSubmitting(true);
     const { error } = await supabase.from("lucky_wheels").insert({
       vehicle_id: vehicleId,
