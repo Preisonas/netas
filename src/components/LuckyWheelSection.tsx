@@ -252,14 +252,15 @@ export const LuckyWheelSection = ({
     const segment = 360 / entries.length;
     const targetAngle = 360 * 2 - (winnerIdx * segment + segment / 2);
 
-    // If spun more than 3s ago (late joiner), snap to final state without animation
+    // Only snap (no animation) for very late joiners (>15s after spin).
+    // Otherwise, ALWAYS run the full spin animation when this client first sees the winner.
     const spunAgo = wheel.spun_at ? Date.now() - new Date(wheel.spun_at).getTime() : 0;
-    if (spunAgo > 3000) {
+    if (spunAgo > 15000) {
       setSpinning(false);
-      // Snap pointer onto winner instantly
       setSpinAngle(-(winnerIdx * segment + segment / 2));
       return;
     }
+    console.log("[wheel] starting spin animation", { winnerIdx, targetAngle, spunAgo });
     setSpinning(false);
     setSpinAngle(0);
     const raf = requestAnimationFrame(() => {
@@ -268,8 +269,7 @@ export const LuckyWheelSection = ({
         setSpinAngle(targetAngle);
       });
     });
-    const remaining = Math.max(200, 2600 - spunAgo);
-    const t = setTimeout(() => setSpinning(false), remaining);
+    const t = setTimeout(() => setSpinning(false), 2700);
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(t);
