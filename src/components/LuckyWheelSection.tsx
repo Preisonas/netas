@@ -294,7 +294,7 @@ export const LuckyWheelSection = ({
     const t = setTimeout(() => {
       setSpinning(false);
       setWinnerRevealKey(animationKey);
-    }, 2700);
+    }, 3200);
     return () => {
       rafs.forEach(cancelAnimationFrame);
       clearTimeout(t);
