@@ -621,13 +621,12 @@ const WheelGraphic = ({
       </div>
 
       <svg
-        className={resolving && !spinning ? "lucky-wheel-spin-loop" : undefined}
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         style={{
           transform: `rotate(${angle}deg)`,
-          transition: spinning ? "transform 3s cubic-bezier(0.17, 0.67, 0.21, 0.99)" : "none",
+          transition: spinning ? "transform 2.6s cubic-bezier(0.08, 0.72, 0.12, 1)" : "none",
           filter: "drop-shadow(0 10px 30px rgba(0,0,0,0.4))",
         }}
       >
