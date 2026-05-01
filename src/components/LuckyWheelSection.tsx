@@ -226,6 +226,10 @@ export const LuckyWheelSection = ({
         if (!cancelled) retryTimer = setTimeout(resolveSpin, 1500);
       } else {
         console.log("[wheel] spin success", result);
+        if (result?.success && result.wheel?.winner_entry_id) {
+          forceSpinAnimationRef.current = `${result.wheel.id}:${result.wheel.winner_entry_id}`;
+          setLocalResolvedWheel(result.wheel);
+        }
         if (pollTimer) clearInterval(pollTimer);
       }
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
@@ -249,24 +253,26 @@ export const LuckyWheelSection = ({
 
   // When wheel becomes finished, animate the spin (synced for everyone via spun_at)
   useEffect(() => {
-    if (!wheel || !resultReady || !wheel.winner_entry_id || entries.length === 0) return;
-    const animationKey = `${wheel.id}:${wheel.spun_at ?? "done"}:${wheel.winner_entry_id}:${entriesSignature}`;
+    if (!animationWheel || !resultReady || !animationWheel.winner_entry_id || entries.length === 0) return;
+    const animationKey = `${animationWheel.id}:${animationWheel.spun_at ?? "done"}:${animationWheel.winner_entry_id}:${entriesSignature}`;
     if (animatedWheelRef.current === animationKey) return;
     animatedWheelRef.current = animationKey;
-    const winnerIdx = entries.findIndex((e) => e.id === wheel.winner_entry_id);
+    const winnerIdx = entries.findIndex((e) => e.id === animationWheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
-    const targetAngle = 360 * 2 - (winnerIdx * segment + segment / 2);
+    const targetAngle = spinAngle + 360 * 5 - (winnerIdx * segment + segment / 2);
 
     // Only snap (no animation) for very late joiners (>15s after spin).
     // Otherwise, ALWAYS run the full spin animation when this client first sees the winner.
-    const spunAgo = wheel.spun_at ? Date.now() - new Date(wheel.spun_at).getTime() : 0;
-    if (spunAgo > 15000) {
+    const forcedKey = `${animationWheel.id}:${animationWheel.winner_entry_id}`;
+    const forceAnimation = forceSpinAnimationRef.current === forcedKey;
+    const spunAgo = animationWheel.spun_at ? Date.now() - new Date(animationWheel.spun_at).getTime() : 0;
+    if (!forceAnimation && spunAgo > 15000) {
       setSpinning(false);
       setSpinAngle(-(winnerIdx * segment + segment / 2));
       return;
     }
-    console.log("[wheel] starting spin animation", { winnerIdx, targetAngle, spunAgo });
+    console.log("[wheel] starting spin animation", { winnerIdx, targetAngle, spunAgo, forceAnimation });
     setSpinning(false);
     setSpinAngle(0);
     const raf = requestAnimationFrame(() => {
@@ -280,7 +286,7 @@ export const LuckyWheelSection = ({
       cancelAnimationFrame(raf);
       clearTimeout(t);
     };
-  }, [wheel?.id, wheel?.status, wheel?.winner_entry_id, wheel?.spun_at, entriesSignature]);
+  }, [animationWheel?.id, animationWheel?.status, animationWheel?.winner_entry_id, animationWheel?.spun_at, entriesSignature]);
 
   // Heartbeat: poll every 5s as a safety net in case realtime drops, so even
   // late or backgrounded clients converge to the server-side finished state.
