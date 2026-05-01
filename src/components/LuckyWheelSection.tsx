@@ -72,6 +72,7 @@ export const LuckyWheelSection = ({
   const [spinAngle, setSpinAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [localResolvedWheel, setLocalResolvedWheel] = useState<Wheel | null>(null);
+  const [winnerRevealKey, setWinnerRevealKey] = useState<string | null>(null);
   const spinTriggeredRef = useRef<string | null>(null);
   const animatedWheelRef = useRef<string | null>(null);
   const forceSpinAnimationRef = useRef<string | null>(null);
@@ -132,11 +133,15 @@ export const LuckyWheelSection = ({
   const resolvedWheel = localResolvedWheel?.id === wheel?.id ? localResolvedWheel : null;
   const animationWheel = resolvedWheel ?? wheel;
   const resultReady = !!animationWheel?.winner_entry_id && (animationWheel.status === "finished" || animationWheel.status === "spinning");
+  const resultAnimationKey = animationWheel?.winner_entry_id
+    ? `${animationWheel.id}:${animationWheel.spun_at ?? "done"}:${animationWheel.winner_entry_id}:${entriesSignature}`
+    : null;
 
   useEffect(() => {
     setSpinning(false);
     setSpinAngle(0);
     setLocalResolvedWheel(null);
+    setWinnerRevealKey(null);
     animatedWheelRef.current = null;
     spinTriggeredRef.current = null;
     forceSpinAnimationRef.current = null;
