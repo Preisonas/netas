@@ -766,6 +766,7 @@ const CreateWheelDialog = ({
     setDays(0);
     setHours(0);
     setMinutes(15);
+    setSeconds(0);
     setScheduleLater(false);
     setStartAt("");
   };
