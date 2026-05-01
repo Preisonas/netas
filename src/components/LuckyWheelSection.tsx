@@ -127,6 +127,7 @@ export const LuckyWheelSection = ({
 
   const entries = entriesQuery.data ?? [];
   const entriesSignature = useMemo(() => entries.map((entry) => entry.id).join("|"), [entries]);
+  const resultReady = !!wheel?.winner_entry_id && (wheel.status === "finished" || wheel.status === "spinning");
 
   useEffect(() => {
     setSpinning(false);
@@ -187,36 +188,47 @@ export const LuckyWheelSection = ({
     return () => { supabase.removeChannel(channel); };
   }, [qc]);
 
-  // Auto-spin: when timer expires and wheel is still pending, trigger spin
+  // Auto-spin: when timer expires, trigger exactly one backend resolve attempt at a time.
   const startsAtMs = wheel ? new Date(wheel.starts_at).getTime() : 0;
   const endsAtMs = wheel ? new Date(wheel.ends_at).getTime() : 0;
   const notStartedYet = wheel?.status === "pending" && now < startsAtMs;
   const startsInMs = Math.max(0, startsAtMs - now);
   const remainingMs = Math.max(0, endsAtMs - now);
-  const expired = !!wheel && (wheel.status === "pending" || wheel.status === "spinning") && !notStartedYet && remainingMs <= 0;
 
   useEffect(() => {
-    if (!expired || !wheel) return;
-    const triggerKey = `${wheel.id}:${wheel.status}`;
-    if (spinTriggeredRef.current === triggerKey) return;
-    spinTriggeredRef.current = triggerKey;
-    (async () => {
+    if (!wheel || resultReady || (wheel.status !== "pending" && wheel.status !== "spinning")) return;
+
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    const delay = Math.max(0, endsAtMs - Date.now() + 500);
+
+    const resolveSpin = async () => {
+      if (cancelled || spinTriggeredRef.current === wheel.id) return;
+      spinTriggeredRef.current = wheel.id;
       const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
         body: { wheel_id: wheel.id },
       });
       if (error) {
         console.error("spin error", error);
         spinTriggeredRef.current = null;
+        if (!cancelled) retryTimer = setTimeout(resolveSpin, 5000);
       } else {
         console.log("spin result", data);
       }
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
-    })();
-  }, [expired, wheel?.id, wheel?.status, now, qc]);
+    };
+
+    const startTimer = setTimeout(resolveSpin, delay);
+    return () => {
+      cancelled = true;
+      clearTimeout(startTimer);
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [wheel?.id, wheel?.status, wheel?.ends_at, resultReady, endsAtMs, qc]);
 
   // When wheel becomes finished, animate the spin (synced for everyone via spun_at)
   useEffect(() => {
-    if (wheel?.status !== "finished" || !wheel.winner_entry_id || entries.length === 0) return;
+    if (!wheel || !resultReady || !wheel.winner_entry_id || entries.length === 0) return;
     const animationKey = `${wheel.id}:${wheel.spun_at ?? "done"}:${wheel.winner_entry_id}:${entriesSignature}`;
     if (animatedWheelRef.current === animationKey) return;
     animatedWheelRef.current = animationKey;
