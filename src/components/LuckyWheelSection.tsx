@@ -798,7 +798,7 @@ const CreateWheelDialog = ({
           </div>
           <div className="space-y-2">
             <Label>Trukmė</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <div>
                 <Input type="number" min={0} max={30} value={days}
                   onChange={(e) => setDays(Math.max(0, parseInt(e.target.value) || 0))} />
@@ -814,9 +814,14 @@ const CreateWheelDialog = ({
                   onChange={(e) => setMinutes(Math.max(0, parseInt(e.target.value) || 0))} />
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1 text-center">Minutės</p>
               </div>
+              <div>
+                <Input type="number" min={0} max={59} value={seconds}
+                  onChange={(e) => setSeconds(Math.max(0, parseInt(e.target.value) || 0))} />
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1 text-center">Sekundės</p>
+              </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Iš viso: <span className="text-foreground font-medium">{totalMinutes} min</span>. Kai laikas baigsis, ratas automatiškai išrinks laimėtoją.
+              Iš viso: <span className="text-foreground font-medium">{totalSeconds} sek</span>. Kai laikas baigsis, ratas automatiškai išrinks laimėtoją.
             </p>
           </div>
           <div className="space-y-2 rounded-md border border-border/40 bg-secondary/20 p-3">
