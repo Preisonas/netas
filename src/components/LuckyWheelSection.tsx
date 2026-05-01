@@ -56,6 +56,9 @@ const ENTRY_COLORS = [
   "#fb923c", "#60a5fa", "#f472b6", "#facc15", "#22d3ee",
 ];
 
+const FINISHED_VISIBLE_MS = 5 * 60 * 1000;
+const SPIN_REVEAL_DELAY_MS = 5600;
+
 export const LuckyWheelSection = ({
   userId,
   discordId,
@@ -85,7 +88,6 @@ export const LuckyWheelSection = ({
 
   // Active wheel: prefer pending/spinning. Fall back to a recently-finished wheel
   // for ~5 minutes so participants see the result, then it auto-hides.
-  const FINISHED_VISIBLE_MS = 20 * 1000;
   const wheelQuery = useQuery({
     queryKey: ["lucky-wheel-active"],
     queryFn: async () => {
@@ -112,7 +114,10 @@ export const LuckyWheelSection = ({
     refetchInterval: 30000,
   });
 
-  const wheel = wheelQuery.data;
+  const remoteWheel = wheelQuery.data ?? null;
+  const wheel = localResolvedWheel && (!remoteWheel || localResolvedWheel.id === remoteWheel.id)
+    ? localResolvedWheel
+    : remoteWheel;
 
   // Entries for current wheel
   const entriesQuery = useQuery({
@@ -130,14 +135,14 @@ export const LuckyWheelSection = ({
 
   const entries = entriesQuery.data ?? [];
   const entriesSignature = useMemo(() => entries.map((entry) => entry.id).join("|"), [entries]);
-  const resolvedWheel = localResolvedWheel?.id === wheel?.id ? localResolvedWheel : null;
-  const animationWheel = resolvedWheel ?? wheel;
+  const animationWheel = wheel;
   const resultReady = !!animationWheel?.winner_entry_id && (animationWheel.status === "finished" || animationWheel.status === "spinning");
   const resultAnimationKey = animationWheel?.winner_entry_id
     ? `${animationWheel.id}:${animationWheel.spun_at ?? "done"}:${animationWheel.winner_entry_id}:${entriesSignature}`
     : null;
 
   useEffect(() => {
+    if (!remoteWheel?.id) return;
     setSpinning(false);
     setSpinAngle(0);
     setLocalResolvedWheel(null);
@@ -145,7 +150,16 @@ export const LuckyWheelSection = ({
     animatedWheelRef.current = null;
     spinTriggeredRef.current = null;
     forceSpinAnimationRef.current = null;
-  }, [wheel?.id]);
+  }, [remoteWheel?.id]);
+
+  useEffect(() => {
+    if (!localResolvedWheel?.spun_at) return;
+    const hideAt = new Date(localResolvedWheel.spun_at).getTime() + FINISHED_VISIBLE_MS;
+    const timer = setTimeout(() => {
+      setLocalResolvedWheel((current) => current?.id === localResolvedWheel.id ? null : current);
+    }, Math.max(0, hideAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [localResolvedWheel?.id, localResolvedWheel?.spun_at]);
 
   // Prize vehicle
   const vehicleQuery = useQuery({
