@@ -71,6 +71,7 @@ export const LuckyWheelSection = ({
   const [claimOpen, setClaimOpen] = useState(false);
   const [spinAngle, setSpinAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
+  const [spinResolving, setSpinResolving] = useState(false);
   const spinTriggeredRef = useRef<string | null>(null);
   const animatedWheelRef = useRef<string | null>(null);
 
@@ -130,6 +131,7 @@ export const LuckyWheelSection = ({
 
   useEffect(() => {
     setSpinning(false);
+    setSpinResolving(false);
     setSpinAngle(0);
     animatedWheelRef.current = null;
     spinTriggeredRef.current = null;
@@ -200,6 +202,7 @@ export const LuckyWheelSection = ({
     const triggerKey = `${wheel.id}:${wheel.status}`;
     if (spinTriggeredRef.current === triggerKey) return;
     spinTriggeredRef.current = triggerKey;
+    setSpinResolving(true);
     (async () => {
       const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
         body: { wheel_id: wheel.id },
@@ -217,6 +220,7 @@ export const LuckyWheelSection = ({
   // When wheel becomes finished, animate the spin (synced for everyone via spun_at)
   useEffect(() => {
     if (wheel?.status !== "finished" || !wheel.winner_entry_id || entries.length === 0) return;
+    setSpinResolving(false);
     const animationKey = `${wheel.id}:${wheel.spun_at ?? "done"}:${wheel.winner_entry_id}:${entriesSignature}`;
     if (animatedWheelRef.current === animationKey) return;
     animatedWheelRef.current = animationKey;
@@ -378,6 +382,7 @@ export const LuckyWheelSection = ({
                 entries={entries}
                 angle={spinAngle}
                 spinning={spinning}
+                resolving={spinResolving || wheel.status === "spinning"}
                 winnerEntryId={wheel.status === "finished" ? wheel.winner_entry_id : null}
               />
               {wheel.status === "finished" && wheel.winner_username && !spinning && (
@@ -541,11 +546,13 @@ const WheelGraphic = ({
   entries,
   angle,
   spinning,
+  resolving,
   winnerEntryId,
 }: {
   entries: Entry[];
   angle: number;
   spinning: boolean;
+  resolving: boolean;
   winnerEntryId: string | null;
 }) => {
   const size = 360;
@@ -613,6 +620,7 @@ const WheelGraphic = ({
       </div>
 
       <svg
+        className={resolving && !spinning ? "lucky-wheel-spin-loop" : undefined}
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
