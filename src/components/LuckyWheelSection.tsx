@@ -727,8 +727,8 @@ const CreateWheelDialog = ({
       toast.error("Pasirink automobilį");
       return;
     }
-    if (totalMinutes < 1 || totalMinutes > 60 * 24 * 30) {
-      toast.error("Trukmė turi būti tarp 1 min ir 30 dienų.");
+    if (totalSeconds < 10 || totalSeconds > 60 * 60 * 24 * 30) {
+      toast.error("Trukmė turi būti tarp 10 sek ir 30 dienų.");
       return;
     }
     let startsAtIso = new Date().toISOString();
