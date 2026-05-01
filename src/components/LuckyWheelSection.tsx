@@ -71,7 +71,6 @@ export const LuckyWheelSection = ({
   const [claimOpen, setClaimOpen] = useState(false);
   const [spinAngle, setSpinAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
-  const [spinResolving, setSpinResolving] = useState(false);
   const spinTriggeredRef = useRef<string | null>(null);
   const animatedWheelRef = useRef<string | null>(null);
 
@@ -131,7 +130,6 @@ export const LuckyWheelSection = ({
 
   useEffect(() => {
     setSpinning(false);
-    setSpinResolving(false);
     setSpinAngle(0);
     animatedWheelRef.current = null;
     spinTriggeredRef.current = null;
@@ -202,7 +200,6 @@ export const LuckyWheelSection = ({
     const triggerKey = `${wheel.id}:${wheel.status}`;
     if (spinTriggeredRef.current === triggerKey) return;
     spinTriggeredRef.current = triggerKey;
-    setSpinResolving(true);
     (async () => {
       const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
         body: { wheel_id: wheel.id },
@@ -220,18 +217,17 @@ export const LuckyWheelSection = ({
   // When wheel becomes finished, animate the spin (synced for everyone via spun_at)
   useEffect(() => {
     if (wheel?.status !== "finished" || !wheel.winner_entry_id || entries.length === 0) return;
-    setSpinResolving(false);
     const animationKey = `${wheel.id}:${wheel.spun_at ?? "done"}:${wheel.winner_entry_id}:${entriesSignature}`;
     if (animatedWheelRef.current === animationKey) return;
     animatedWheelRef.current = animationKey;
     const winnerIdx = entries.findIndex((e) => e.id === wheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
-    const targetAngle = 360 * 3 - (winnerIdx * segment + segment / 2);
+    const targetAngle = 360 * 2 - (winnerIdx * segment + segment / 2);
 
-    // If spun more than 4s ago (late joiner), snap to final state without animation
+    // If spun more than 3s ago (late joiner), snap to final state without animation
     const spunAgo = wheel.spun_at ? Date.now() - new Date(wheel.spun_at).getTime() : 0;
-    if (spunAgo > 4000) {
+    if (spunAgo > 3000) {
       setSpinning(false);
       // Snap pointer onto winner instantly
       setSpinAngle(-(winnerIdx * segment + segment / 2));
@@ -245,7 +241,7 @@ export const LuckyWheelSection = ({
         setSpinAngle(targetAngle);
       });
     });
-    const remaining = Math.max(200, 3200 - spunAgo);
+    const remaining = Math.max(200, 2600 - spunAgo);
     const t = setTimeout(() => setSpinning(false), remaining);
     return () => {
       cancelAnimationFrame(raf);
@@ -382,7 +378,6 @@ export const LuckyWheelSection = ({
                 entries={entries}
                 angle={spinAngle}
                 spinning={spinning}
-                resolving={spinResolving || wheel.status === "spinning"}
                 winnerEntryId={wheel.status === "finished" ? wheel.winner_entry_id : null}
               />
               {wheel.status === "finished" && wheel.winner_username && !spinning && (
@@ -546,13 +541,11 @@ const WheelGraphic = ({
   entries,
   angle,
   spinning,
-  resolving,
   winnerEntryId,
 }: {
   entries: Entry[];
   angle: number;
   spinning: boolean;
-  resolving: boolean;
   winnerEntryId: string | null;
 }) => {
   const size = 360;
@@ -620,13 +613,12 @@ const WheelGraphic = ({
       </div>
 
       <svg
-        className={resolving && !spinning ? "lucky-wheel-spin-loop" : undefined}
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         style={{
           transform: `rotate(${angle}deg)`,
-          transition: spinning ? "transform 3s cubic-bezier(0.17, 0.67, 0.21, 0.99)" : "none",
+          transition: spinning ? "transform 2.6s cubic-bezier(0.08, 0.72, 0.12, 1)" : "none",
           filter: "drop-shadow(0 10px 30px rgba(0,0,0,0.4))",
         }}
       >
