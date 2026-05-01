@@ -40,20 +40,6 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    if (current.status === "pending") {
-      const { data: locked } = await admin
-        .from("lucky_wheels")
-        .update({ status: "spinning" })
-        .eq("id", w.id)
-        .eq("status", "pending")
-        .select("id")
-        .maybeSingle();
-      if (!locked) {
-        results.push({ id: w.id, outcome: "skipped" });
-        continue;
-      }
-    }
-
     const { data: entries } = await admin
       .from("lucky_wheel_entries")
       .select("id, user_id, discord_id, username")
@@ -64,7 +50,7 @@ Deno.serve(async (req) => {
         .from("lucky_wheels")
         .update({ status: "cancelled", spun_at: new Date().toISOString() })
         .eq("id", w.id)
-        .eq("status", "spinning");
+        .in("status", ["pending", "spinning"]);
       results.push({ id: w.id, outcome: "cancelled_no_entries" });
       continue;
     }
@@ -81,7 +67,7 @@ Deno.serve(async (req) => {
         winner_entry_id: winner.id,
       })
       .eq("id", w.id)
-      .eq("status", "spinning")
+      .in("status", ["pending", "spinning"])
       .is("winner_entry_id", null);
     results.push({ id: w.id, outcome: "finished" });
   }
