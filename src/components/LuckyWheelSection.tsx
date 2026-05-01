@@ -286,7 +286,10 @@ export const LuckyWheelSection = ({
         setSpinAngle(targetAngle);
       });
     });
-    const t = setTimeout(() => setSpinning(false), 2700);
+    const t = setTimeout(() => {
+      setSpinning(false);
+      setWinnerRevealKey(animationKey);
+    }, 2700);
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(t);
@@ -422,13 +425,13 @@ export const LuckyWheelSection = ({
                 entries={entries}
                 angle={spinAngle}
                 spinning={spinning}
-                winnerEntryId={resultReady ? wheel.winner_entry_id : null}
+                winnerEntryId={winnerRevealKey === resultAnimationKey ? animationWheel?.winner_entry_id ?? null : null}
               />
-              {resultReady && wheel.winner_username && !spinning && (
+              {resultReady && animationWheel?.winner_username && !spinning && winnerRevealKey === resultAnimationKey && (
                 <div className="mt-6 text-center animate-fade-in">
                   <Trophy className="h-8 w-8 mx-auto text-primary mb-2" />
                   <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Laimėtojas</p>
-                  <p className="text-2xl font-bold mt-1">{wheel.winner_username}</p>
+                  <p className="text-2xl font-bold mt-1">{animationWheel.winner_username}</p>
                   {isWinner && (
                     <button
                       onClick={() => setClaimOpen(true)}
