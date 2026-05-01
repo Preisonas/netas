@@ -703,11 +703,12 @@ const CreateWheelDialog = ({
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(15);
+  const [seconds, setSeconds] = useState(0);
   const [scheduleLater, setScheduleLater] = useState(false);
   const [startAt, setStartAt] = useState(""); // datetime-local string
   const [submitting, setSubmitting] = useState(false);
 
-  const totalMinutes = days * 1440 + hours * 60 + minutes;
+  const totalSeconds = days * 86400 + hours * 3600 + minutes * 60 + seconds;
 
   const vehiclesQuery = useQuery({
     queryKey: ["wheel-vehicles"],
@@ -726,8 +727,8 @@ const CreateWheelDialog = ({
       toast.error("Pasirink automobilį");
       return;
     }
-    if (totalMinutes < 1 || totalMinutes > 60 * 24 * 30) {
-      toast.error("Trukmė turi būti tarp 1 min ir 30 dienų.");
+    if (totalSeconds < 10 || totalSeconds > 60 * 60 * 24 * 30) {
+      toast.error("Trukmė turi būti tarp 10 sek ir 30 dienų.");
       return;
     }
     let startsAtIso = new Date().toISOString();
@@ -744,7 +745,7 @@ const CreateWheelDialog = ({
       startsAtIso = new Date(startMs).toISOString();
     }
     const startMs = new Date(startsAtIso).getTime();
-    const endsAt = new Date(startMs + totalMinutes * 60 * 1000).toISOString();
+    const endsAt = new Date(startMs + totalSeconds * 1000).toISOString();
     setSubmitting(true);
     const { error } = await supabase.from("lucky_wheels").insert({
       vehicle_id: vehicleId,
@@ -765,6 +766,7 @@ const CreateWheelDialog = ({
     setDays(0);
     setHours(0);
     setMinutes(15);
+    setSeconds(0);
     setScheduleLater(false);
     setStartAt("");
   };
@@ -796,7 +798,7 @@ const CreateWheelDialog = ({
           </div>
           <div className="space-y-2">
             <Label>Trukmė</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <div>
                 <Input type="number" min={0} max={30} value={days}
                   onChange={(e) => setDays(Math.max(0, parseInt(e.target.value) || 0))} />
@@ -812,9 +814,14 @@ const CreateWheelDialog = ({
                   onChange={(e) => setMinutes(Math.max(0, parseInt(e.target.value) || 0))} />
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1 text-center">Minutės</p>
               </div>
+              <div>
+                <Input type="number" min={0} max={59} value={seconds}
+                  onChange={(e) => setSeconds(Math.max(0, parseInt(e.target.value) || 0))} />
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1 text-center">Sekundės</p>
+              </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Iš viso: <span className="text-foreground font-medium">{totalMinutes} min</span>. Kai laikas baigsis, ratas automatiškai išrinks laimėtoją.
+              Iš viso: <span className="text-foreground font-medium">{totalSeconds} sek</span>. Kai laikas baigsis, ratas automatiškai išrinks laimėtoją.
             </p>
           </div>
           <div className="space-y-2 rounded-md border border-border/40 bg-secondary/20 p-3">
