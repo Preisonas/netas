@@ -382,6 +382,7 @@ export const LuckyWheelSection = ({
                 entries={entries}
                 angle={spinAngle}
                 spinning={spinning}
+                resolving={spinResolving || wheel.status === "spinning"}
                 winnerEntryId={wheel.status === "finished" ? wheel.winner_entry_id : null}
               />
               {wheel.status === "finished" && wheel.winner_username && !spinning && (
@@ -545,11 +546,13 @@ const WheelGraphic = ({
   entries,
   angle,
   spinning,
+  resolving,
   winnerEntryId,
 }: {
   entries: Entry[];
   angle: number;
   spinning: boolean;
+  resolving: boolean;
   winnerEntryId: string | null;
 }) => {
   const size = 360;
@@ -617,6 +620,7 @@ const WheelGraphic = ({
       </div>
 
       <svg
+        className={resolving && !spinning ? "lucky-wheel-spin-loop" : undefined}
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
