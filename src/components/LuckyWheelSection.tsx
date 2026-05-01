@@ -275,6 +275,7 @@ export const LuckyWheelSection = ({
     if (!forceAnimation && spunAgo > 15000) {
       setSpinning(false);
       setSpinAngle(-(winnerIdx * segment + segment / 2));
+      setWinnerRevealKey(animationKey);
       return;
     }
     console.log("[wheel] starting spin animation", { winnerIdx, targetAngle, spunAgo, forceAnimation });
