@@ -108,6 +108,15 @@ All colors MUST be HSL.
   100% { transform: translateX(0) translateY(0) rotate(0deg); opacity: 1; }
 }
 
+@keyframes luckyWheelSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.lucky-wheel-spin-loop {
+  animation: luckyWheelSpin 0.85s linear infinite;
+}
+
 /* Global themed scrollbar */
 *::-webkit-scrollbar {
   width: 8px;
