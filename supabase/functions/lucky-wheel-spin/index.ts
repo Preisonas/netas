@@ -37,8 +37,9 @@ Deno.serve(async (req) => {
   if (wheel.status === "finished") return json({ success: true, already: true });
   if (wheel.status === "cancelled") return json({ error: "Atšauktas" }, 409);
   if (wheel.status !== "pending" && wheel.status !== "spinning") return json({ error: "Netinkama būsena" }, 409);
-  if (new Date(wheel.ends_at).getTime() > Date.now()) {
-    return json({ error: "Dar nepasibaigė" }, 425);
+  const waitMs = new Date(wheel.ends_at).getTime() - Date.now();
+  if (waitMs > 0) {
+    return json({ success: true, not_ready: true, retry_after_ms: Math.ceil(waitMs + 750) });
   }
 
   const { data: entries } = await admin
