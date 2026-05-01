@@ -202,7 +202,7 @@ export const LuckyWheelSection = ({
     const triggerKey = `${wheel.id}:${wheel.status}`;
     if (spinTriggeredRef.current === triggerKey) return;
     spinTriggeredRef.current = triggerKey;
-    setSpinResolving(true);
+    setSpinResolving(false);
     (async () => {
       const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
         body: { wheel_id: wheel.id },
@@ -213,6 +213,7 @@ export const LuckyWheelSection = ({
       } else {
         console.log("spin result", data);
       }
+      setSpinResolving(false);
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
     })();
   }, [expired, wheel?.id, wheel?.status, now, qc]);
@@ -227,11 +228,11 @@ export const LuckyWheelSection = ({
     const winnerIdx = entries.findIndex((e) => e.id === wheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
-    const targetAngle = 360 * 3 - (winnerIdx * segment + segment / 2);
+    const targetAngle = 360 * 2 - (winnerIdx * segment + segment / 2);
 
-    // If spun more than 4s ago (late joiner), snap to final state without animation
+    // If spun more than 3s ago (late joiner), snap to final state without animation
     const spunAgo = wheel.spun_at ? Date.now() - new Date(wheel.spun_at).getTime() : 0;
-    if (spunAgo > 4000) {
+    if (spunAgo > 3000) {
       setSpinning(false);
       // Snap pointer onto winner instantly
       setSpinAngle(-(winnerIdx * segment + segment / 2));
@@ -245,7 +246,7 @@ export const LuckyWheelSection = ({
         setSpinAngle(targetAngle);
       });
     });
-    const remaining = Math.max(200, 3200 - spunAgo);
+    const remaining = Math.max(200, 2600 - spunAgo);
     const t = setTimeout(() => setSpinning(false), remaining);
     return () => {
       cancelAnimationFrame(raf);
