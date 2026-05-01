@@ -227,7 +227,7 @@ export const LuckyWheelSection = ({
     const winnerIdx = entries.findIndex((e) => e.id === wheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
-    const targetAngle = 360 * 6 - (winnerIdx * segment + segment / 2);
+    const targetAngle = 360 * 3 - (winnerIdx * segment + segment / 2);
 
     // If spun more than 6s ago (late joiner), snap to final state without animation
     const spunAgo = wheel.spun_at ? Date.now() - new Date(wheel.spun_at).getTime() : 0;
