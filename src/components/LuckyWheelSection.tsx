@@ -214,16 +214,13 @@ export const LuckyWheelSection = ({
         body: { wheel_id: wheel.id },
       });
       console.log("[wheel] spin response", { data, error });
-      const result = data as { not_ready?: boolean; retry_after_ms?: number; success?: boolean } | null;
+      const result = data as { success?: boolean; wheel?: Wheel; already?: boolean; no_entries?: boolean; error?: string } | null;
       if (error) {
         console.error("[wheel] spin error", error);
         if (!cancelled) retryTimer = setTimeout(resolveSpin, 1500);
-      } else if (result?.not_ready) {
-        const retryAfter = Math.max(500, Math.min(result.retry_after_ms ?? 1000, 5000));
-        console.log("[wheel] not ready, retry in", retryAfter);
-        if (!cancelled) retryTimer = setTimeout(resolveSpin, retryAfter);
       } else {
-        console.log("[wheel] spin success");
+        console.log("[wheel] spin success", result);
+        if (pollTimer) clearInterval(pollTimer);
       }
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
     };
