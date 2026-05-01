@@ -279,20 +279,24 @@ export const LuckyWheelSection = ({
       return;
     }
     console.log("[wheel] starting spin animation", { winnerIdx, targetAngle, spunAgo, forceAnimation });
+    setWinnerRevealKey(null);
     setSpinning(false);
     setSpinAngle(0);
-    const raf = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setSpinning(true);
-        setSpinAngle(targetAngle);
-      });
-    });
+    const rafs: number[] = [];
+    rafs.push(requestAnimationFrame(() => {
+      setSpinning(true);
+      rafs.push(requestAnimationFrame(() => {
+        rafs.push(requestAnimationFrame(() => {
+          setSpinAngle(targetAngle);
+        }));
+      }));
+    }));
     const t = setTimeout(() => {
       setSpinning(false);
       setWinnerRevealKey(animationKey);
-    }, 2700);
+    }, 3200);
     return () => {
-      cancelAnimationFrame(raf);
+      rafs.forEach(cancelAnimationFrame);
       clearTimeout(t);
     };
   }, [animationWheel?.id, animationWheel?.status, animationWheel?.winner_entry_id, animationWheel?.spun_at, entriesSignature]);
