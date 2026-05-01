@@ -41,26 +41,6 @@ Deno.serve(async (req) => {
     return json({ error: "Dar nepasibaigė" }, 425);
   }
 
-  // Atomic transition pending -> spinning. If it is already spinning, recover/finalize it.
-  if (wheel.status === "pending") {
-    const { data: locked, error: lockErr } = await admin
-      .from("lucky_wheels")
-      .update({ status: "spinning" })
-      .eq("id", wheel.id)
-      .eq("status", "pending")
-      .select("id")
-      .maybeSingle();
-    if (lockErr) return json({ error: lockErr.message }, 500);
-    if (!locked) {
-      const { data: latest } = await admin
-        .from("lucky_wheels")
-        .select("*")
-        .eq("id", wheel.id)
-        .maybeSingle();
-      if (latest?.status !== "spinning") return json({ success: true, wheel: latest, already: true });
-    }
-  }
-
   const { data: entries } = await admin
     .from("lucky_wheel_entries")
     .select("id, user_id, discord_id, username")
@@ -72,7 +52,7 @@ Deno.serve(async (req) => {
       .from("lucky_wheels")
       .update({ status: "cancelled", spun_at: new Date().toISOString() })
       .eq("id", wheel.id)
-      .eq("status", "spinning")
+      .in("status", ["pending", "spinning"])
       .select()
       .single();
     return json({ success: true, wheel: updated, no_entries: true });
@@ -91,7 +71,7 @@ Deno.serve(async (req) => {
       winner_entry_id: winner.id,
     })
     .eq("id", wheel.id)
-    .eq("status", "spinning")
+    .in("status", ["pending", "spinning"])
     .is("winner_entry_id", null)
     .select()
     .maybeSingle();
