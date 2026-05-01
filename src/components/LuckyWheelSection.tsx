@@ -227,11 +227,11 @@ export const LuckyWheelSection = ({
     const winnerIdx = entries.findIndex((e) => e.id === wheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
-    const targetAngle = 360 * 6 - (winnerIdx * segment + segment / 2);
+    const targetAngle = 360 * 3 - (winnerIdx * segment + segment / 2);
 
-    // If spun more than 6s ago (late joiner), snap to final state without animation
+    // If spun more than 4s ago (late joiner), snap to final state without animation
     const spunAgo = wheel.spun_at ? Date.now() - new Date(wheel.spun_at).getTime() : 0;
-    if (spunAgo > 6000) {
+    if (spunAgo > 4000) {
       setSpinning(false);
       // Snap pointer onto winner instantly
       setSpinAngle(-(winnerIdx * segment + segment / 2));
@@ -245,7 +245,7 @@ export const LuckyWheelSection = ({
         setSpinAngle(targetAngle);
       });
     });
-    const remaining = Math.max(200, 5200 - spunAgo);
+    const remaining = Math.max(200, 3200 - spunAgo);
     const t = setTimeout(() => setSpinning(false), remaining);
     return () => {
       cancelAnimationFrame(raf);
@@ -626,7 +626,7 @@ const WheelGraphic = ({
         viewBox={`0 0 ${size} ${size}`}
         style={{
           transform: `rotate(${angle}deg)`,
-          transition: spinning ? "transform 5s cubic-bezier(0.17, 0.67, 0.21, 0.99)" : "none",
+          transition: spinning ? "transform 3s cubic-bezier(0.17, 0.67, 0.21, 0.99)" : "none",
           filter: "drop-shadow(0 10px 30px rgba(0,0,0,0.4))",
         }}
       >
