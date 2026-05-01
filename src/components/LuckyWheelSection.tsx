@@ -390,9 +390,9 @@ export const LuckyWheelSection = ({
                 entries={entries}
                 angle={spinAngle}
                 spinning={spinning}
-                winnerEntryId={wheel.status === "finished" ? wheel.winner_entry_id : null}
+                winnerEntryId={resultReady ? wheel.winner_entry_id : null}
               />
-              {wheel.status === "finished" && wheel.winner_username && !spinning && (
+              {resultReady && wheel.winner_username && !spinning && (
                 <div className="mt-6 text-center animate-fade-in">
                   <Trophy className="h-8 w-8 mx-auto text-primary mb-2" />
                   <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Laimėtojas</p>
@@ -463,7 +463,7 @@ export const LuckyWheelSection = ({
                 <p className="text-xs text-muted-foreground text-center py-6">Dar nėra dalyvių.</p>
               ) : (
                 entries.map((e, i) => {
-                  const isWin = wheel.winner_entry_id === e.id && wheel.status === "finished";
+                  const isWin = wheel.winner_entry_id === e.id && resultReady;
                   return (
                     <div
                       key={e.id}
