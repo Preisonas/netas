@@ -703,11 +703,12 @@ const CreateWheelDialog = ({
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(15);
+  const [seconds, setSeconds] = useState(0);
   const [scheduleLater, setScheduleLater] = useState(false);
   const [startAt, setStartAt] = useState(""); // datetime-local string
   const [submitting, setSubmitting] = useState(false);
 
-  const totalMinutes = days * 1440 + hours * 60 + minutes;
+  const totalSeconds = days * 86400 + hours * 3600 + minutes * 60 + seconds;
 
   const vehiclesQuery = useQuery({
     queryKey: ["wheel-vehicles"],
