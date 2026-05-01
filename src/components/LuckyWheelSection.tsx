@@ -279,7 +279,7 @@ export const LuckyWheelSection = ({
     const winnerIdx = entries.findIndex((e) => e.id === animationWheel.winner_entry_id);
     if (winnerIdx < 0) return;
     const segment = 360 / entries.length;
-    const targetAngle = 360 * 5 - (winnerIdx * segment + segment / 2);
+    const targetAngle = 360 * 8 - (winnerIdx * segment + segment / 2);
 
     // Only snap (no animation) for very late joiners (>15s after spin).
     // Otherwise, ALWAYS run the full spin animation when this client first sees the winner.
@@ -308,7 +308,7 @@ export const LuckyWheelSection = ({
     const t = setTimeout(() => {
       setSpinning(false);
       setWinnerRevealKey(animationKey);
-    }, 3200);
+    }, SPIN_REVEAL_DELAY_MS + 200);
     return () => {
       rafs.forEach(cancelAnimationFrame);
       clearTimeout(t);
@@ -684,7 +684,7 @@ const WheelGraphic = ({
         viewBox={`0 0 ${size} ${size}`}
         style={{
           transform: `rotate(${angle}deg)`,
-          transition: spinning ? "transform 2.6s cubic-bezier(0.08, 0.72, 0.12, 1)" : "none",
+          transition: spinning ? `transform ${SPIN_REVEAL_DELAY_MS}ms cubic-bezier(0.08, 0.72, 0.12, 1)` : "none",
           filter: "drop-shadow(0 10px 30px rgba(0,0,0,0.4))",
         }}
       >
