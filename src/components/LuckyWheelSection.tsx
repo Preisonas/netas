@@ -71,7 +71,6 @@ export const LuckyWheelSection = ({
   const [claimOpen, setClaimOpen] = useState(false);
   const [spinAngle, setSpinAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
-  const [spinResolving, setSpinResolving] = useState(false);
   const spinTriggeredRef = useRef<string | null>(null);
   const animatedWheelRef = useRef<string | null>(null);
 
@@ -131,7 +130,6 @@ export const LuckyWheelSection = ({
 
   useEffect(() => {
     setSpinning(false);
-    setSpinResolving(false);
     setSpinAngle(0);
     animatedWheelRef.current = null;
     spinTriggeredRef.current = null;
@@ -202,7 +200,6 @@ export const LuckyWheelSection = ({
     const triggerKey = `${wheel.id}:${wheel.status}`;
     if (spinTriggeredRef.current === triggerKey) return;
     spinTriggeredRef.current = triggerKey;
-    setSpinResolving(false);
     (async () => {
       const { data, error } = await supabase.functions.invoke("lucky-wheel-spin", {
         body: { wheel_id: wheel.id },
@@ -213,7 +210,6 @@ export const LuckyWheelSection = ({
       } else {
         console.log("spin result", data);
       }
-      setSpinResolving(false);
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
     })();
   }, [expired, wheel?.id, wheel?.status, now, qc]);
@@ -221,7 +217,6 @@ export const LuckyWheelSection = ({
   // When wheel becomes finished, animate the spin (synced for everyone via spun_at)
   useEffect(() => {
     if (wheel?.status !== "finished" || !wheel.winner_entry_id || entries.length === 0) return;
-    setSpinResolving(false);
     const animationKey = `${wheel.id}:${wheel.spun_at ?? "done"}:${wheel.winner_entry_id}:${entriesSignature}`;
     if (animatedWheelRef.current === animationKey) return;
     animatedWheelRef.current = animationKey;
