@@ -71,8 +71,10 @@ export const LuckyWheelSection = ({
   const [claimOpen, setClaimOpen] = useState(false);
   const [spinAngle, setSpinAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
+  const [localResolvedWheel, setLocalResolvedWheel] = useState<Wheel | null>(null);
   const spinTriggeredRef = useRef<string | null>(null);
   const animatedWheelRef = useRef<string | null>(null);
+  const forceSpinAnimationRef = useRef<string | null>(null);
 
   // Tick every second for countdown
   useEffect(() => {
@@ -127,13 +129,17 @@ export const LuckyWheelSection = ({
 
   const entries = entriesQuery.data ?? [];
   const entriesSignature = useMemo(() => entries.map((entry) => entry.id).join("|"), [entries]);
-  const resultReady = !!wheel?.winner_entry_id && (wheel.status === "finished" || wheel.status === "spinning");
+  const resolvedWheel = localResolvedWheel?.id === wheel?.id ? localResolvedWheel : null;
+  const animationWheel = resolvedWheel ?? wheel;
+  const resultReady = !!animationWheel?.winner_entry_id && (animationWheel.status === "finished" || animationWheel.status === "spinning");
 
   useEffect(() => {
     setSpinning(false);
     setSpinAngle(0);
+    setLocalResolvedWheel(null);
     animatedWheelRef.current = null;
     spinTriggeredRef.current = null;
+    forceSpinAnimationRef.current = null;
   }, [wheel?.id]);
 
   // Prize vehicle
