@@ -941,6 +941,8 @@ const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
   );
 };
 
+type ShopCategory = "car" | "helicopter";
+
 interface ShopVehicle {
   id: string;
   brand: string;
@@ -952,6 +954,7 @@ interface ShopVehicle {
   images: string[];
   videoUrl?: string;
   features: string[];
+  category: ShopCategory;
 }
 
 function getYoutubeId(url?: string): string | null {
