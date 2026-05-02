@@ -119,6 +119,13 @@ async function fetchCharacters(discordId: string): Promise<PlayerCharacter[]> {
       vehicles: md?.vehicles ?? [],
       online: md?.online ?? null,
       credits: md?.credits ?? null,
+      vip: (() => {
+        const v = md?.vip;
+        if (!v) return null;
+        const tierRaw = typeof v.tier === "string" ? v.tier.toLowerCase() : null;
+        const tier = tierRaw === "silver" || tierRaw === "gold" || tierRaw === "platinum" ? tierRaw : null;
+        return { active: !!v.active || !!tier, tier, expires_at: v.expires_at ?? null };
+      })(),
     };
   });
 }
