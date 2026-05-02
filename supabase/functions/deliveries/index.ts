@@ -98,6 +98,7 @@ Deno.serve(async (req) => {
 });
 
 function enrichDelivery(delivery: DeliveryRow) {
+  if (delivery.type === "vip") return enrichVipDelivery(delivery);
   if (delivery.type !== "vehicle") return delivery;
 
   const metadata = isRecord(delivery.metadata) ? delivery.metadata : {};
