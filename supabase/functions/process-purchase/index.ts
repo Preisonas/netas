@@ -345,6 +345,7 @@ function buildVehicleDeliveryMetadata({
   plate,
   customPlate,
   fullTune,
+  category,
 }: {
   characterIdentifier: string;
   characterName: string | null;
@@ -354,6 +355,7 @@ function buildVehicleDeliveryMetadata({
   plate: string;
   customPlate: boolean;
   fullTune: boolean;
+  category: "car" | "helicopter";
 }) {
   const modelHash = joaat(model);
   // ESX owned_vehicles stores `vehicle` as JSON with the STRING model name.
@@ -364,6 +366,9 @@ function buildVehicleDeliveryMetadata({
     plate,
     ...tuneProps,
   };
+  // ESX owned_vehicles.type — "car" for ground vehicles, "helicopter" for air.
+  // FiveM uses this column to route the vehicle into the correct (ground / air) garage.
+  const ownedType = category === "helicopter" ? "helicopter" : "car";
 
   return {
     schema: "garage_vehicle_v1",
@@ -374,6 +379,7 @@ function buildVehicleDeliveryMetadata({
     model,
     model_name: modelName,
     model_hash: modelHash,
+    category,
     custom_plate: customPlate,
     full_tune: fullTune,
     vehicle_props: vehicleProps,
@@ -381,7 +387,7 @@ function buildVehicleDeliveryMetadata({
       owner: characterIdentifier,
       plate,
       vehicle: vehicleProps,
-      type: "car",
+      type: ownedType,
       stored: 1,
       state: 1,
       garage: null,
