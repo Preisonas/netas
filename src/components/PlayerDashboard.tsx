@@ -978,6 +978,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
   const { characters: ownedCharacters } = usePlayerCharacters(discordId);
   const [query, setQuery] = useState("");
   const [sortByPrice, setSortByPrice] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<"all" | ShopCategory>("all");
   const [vehicles, setVehicles] = useState<ShopVehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
