@@ -30,6 +30,10 @@ import {
   Gift,
   Shield,
   AlertTriangle,
+  Phone,
+  Landmark,
+  Calendar,
+  Heart,
 } from "lucide-react";
 
 const OWNER_DISCORD_IDS = ["1276583745490649214", "528409152024870922", "811365896824029184"];
