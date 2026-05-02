@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Save, Car, Coins, X, Edit3, Gauge, Briefcase } from "lucide-react";
+import { Plus, Trash2, Save, Car, Coins, X, Edit3, Gauge, Briefcase, Plane } from "lucide-react";
 import { toast } from "sonner";
 import ImageUploader from "./ImageUploader";
+
+type VehicleCategory = "car" | "helicopter";
 
 interface Vehicle {
   id: string;
@@ -17,10 +19,11 @@ interface Vehicle {
   trunk: number | null;
   features: string[];
   video_url: string | null;
+  category: VehicleCategory;
 }
 
 const empty: Vehicle = {
-  id: "", brand: "", model: "", model_name: "", image_url: null, images: [], price: 0, top_speed: 0, trunk: null, features: [], video_url: null,
+  id: "", brand: "", model: "", model_name: "", image_url: null, images: [], price: 0, top_speed: 0, trunk: null, features: [], video_url: null, category: "car",
 };
 
 const MAX_FEATURES = 10;
