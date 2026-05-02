@@ -729,7 +729,7 @@ const ProfileSection = ({
 
 const formatMoney = (n: number) => new Intl.NumberFormat("lt-LT").format(n) + " $";
 
-const _unused = 0;
+
 
 const formatDateTime = (iso?: string | null) => {
   if (!iso) return "—";
