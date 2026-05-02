@@ -729,15 +729,7 @@ const ProfileSection = ({
 
 const formatMoney = (n: number) => new Intl.NumberFormat("lt-LT").format(n) + " $";
 
-const formatPlaytime = (minutes: number) => {
-  const totalMin = Math.max(0, Math.floor(minutes));
-  const d = Math.floor(totalMin / (60 * 24));
-  const h = Math.floor((totalMin % (60 * 24)) / 60);
-  const m = totalMin % 60;
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-};
+const _unused = 0;
 
 const formatDateTime = (iso?: string | null) => {
   if (!iso) return "—";
