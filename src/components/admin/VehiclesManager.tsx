@@ -69,6 +69,7 @@ const VehiclesManager = () => {
       trunk: editing.trunk,
       features: editing.features,
       video_url: editing.video_url,
+      category: editing.category,
     };
     const { error } = editing.id
       ? await supabase.from("vehicles").update(payload).eq("id", editing.id)
