@@ -572,6 +572,130 @@ export const LuckyWheelSection = ({
   );
 };
 
+interface HistoryWheel {
+  id: string;
+  status: "pending" | "spinning" | "finished" | "cancelled";
+  ends_at: string;
+  spun_at: string | null;
+  winner_username: string | null;
+  winner_user_id: string | null;
+  delivery_id: string | null;
+  vehicle_id: string;
+  vehicles: { brand: string; model: string; image_url: string | null } | null;
+  entries_count?: number;
+}
+
+const WheelHistory = ({ currentWheelId }: { currentWheelId: string | null }) => {
+  const qc = useQueryClient();
+  const historyQuery = useQuery({
+    queryKey: ["lucky-wheel-history"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lucky_wheels")
+        .select("id, status, ends_at, spun_at, winner_username, winner_user_id, delivery_id, vehicle_id, vehicles(brand, model, image_url)")
+        .order("created_at", { ascending: false })
+        .limit(25);
+      if (error) throw error;
+      const wheels = (data ?? []) as unknown as HistoryWheel[];
+      const counts = await Promise.all(
+        wheels.map((w) =>
+          supabase
+            .from("lucky_wheel_entries")
+            .select("id", { count: "exact", head: true })
+            .eq("wheel_id", w.id)
+            .then((r) => r.count ?? 0),
+        ),
+      );
+      return wheels.map((w, i) => ({ ...w, entries_count: counts[i] }));
+    },
+    refetchInterval: 60000,
+  });
+
+  useEffect(() => {
+    const ch = supabase
+      .channel("lucky-wheel-history-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "lucky_wheels" }, () => {
+        qc.invalidateQueries({ queryKey: ["lucky-wheel-history"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+
+  const wheels = historyQuery.data ?? [];
+  const past = wheels.filter((w) => w.id !== currentWheelId);
+
+  if (historyQuery.isLoading || past.length === 0) return null;
+
+  return (
+    <section className="mt-10">
+      <div className="flex items-center gap-2 mb-4">
+        <History className="h-5 w-5 text-primary" />
+        <h3 className="text-lg font-bold tracking-tight">Ratų istorija</h3>
+        <span className="text-xs text-muted-foreground">({past.length})</span>
+      </div>
+      <div className="rounded-lg border border-border/40 bg-card/50 overflow-hidden">
+        <div className="divide-y divide-border/40">
+          {past.map((w) => {
+            const veh = w.vehicles;
+            const finished = w.status === "finished";
+            const cancelled = w.status === "cancelled";
+            return (
+              <div
+                key={w.id}
+                className="flex flex-col sm:flex-row gap-3 sm:items-center p-3 sm:p-4 hover:bg-secondary/20 transition"
+              >
+                <div className="w-full sm:w-24 h-16 rounded-md bg-secondary/40 overflow-hidden flex items-center justify-center shrink-0">
+                  {veh?.image_url ? (
+                    <img src={veh.image_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Car className="h-5 w-5 text-muted-foreground/40" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold truncate">
+                      {veh ? `${veh.brand} ${veh.model}` : "Automobilis"}
+                    </p>
+                    <StatusBadge status={w.status} />
+                    {finished && w.delivery_id && (
+                      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">
+                        <CheckCircle2 className="h-3 w-3" /> Atsiimta
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {w.spun_at
+                      ? new Date(w.spun_at).toLocaleString("lt-LT")
+                      : new Date(w.ends_at).toLocaleString("lt-LT")}
+                    {" · "}
+                    <Users className="inline h-3 w-3 -mt-0.5" /> {w.entries_count ?? 0} dalyvių
+                  </p>
+                </div>
+                <div className="text-left sm:text-right shrink-0 sm:min-w-[180px]">
+                  {finished && w.winner_username ? (
+                    <>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground inline-flex items-center gap-1">
+                        <Trophy className="h-3 w-3 text-primary" /> Laimėtojas
+                      </p>
+                      <p className="text-sm font-bold text-primary truncate">{w.winner_username}</p>
+                    </>
+                  ) : cancelled ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-destructive">
+                      <XCircle className="h-3 w-3" /> Atšauktas
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const StatusBadge = ({ status }: { status: Wheel["status"] }) => {
   const map = {
     pending: { label: "Aktyvus", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
