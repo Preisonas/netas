@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,6 +49,10 @@ interface Vehicle {
   model: string;
   price: number;
   image_url: string | null;
+}
+
+interface VipTierLookup {
+  vip_tiers?: { tier?: string | null } | null;
 }
 
 const ENTRY_COLORS = [
@@ -189,8 +193,7 @@ export const LuckyWheelSection = ({
         .order("expires_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      // deno-lint-ignore no-explicit-any
-      const tier = (data as any)?.vip_tiers?.tier as string | undefined;
+      const tier = (data as VipTierLookup | null)?.vip_tiers?.tier;
       return tier ?? null;
     },
   });
@@ -199,19 +202,28 @@ export const LuckyWheelSection = ({
   const eligible = myTier === "gold" || myTier === "platinum";
   const alreadyJoined = entries.some((e) => e.user_id === userId);
 
+  const refreshWheelNow = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
+    qc.refetchQueries({ queryKey: ["lucky-wheel-active"], type: "active" });
+  }, [qc]);
+
   // Realtime subscriptions
   useEffect(() => {
     const channel = supabase
       .channel("lucky-wheels-rt")
+      .on("broadcast", { event: "wheel-changed" }, () => {
+        refreshWheelNow();
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "lucky_wheels" }, () => {
-        qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
+        refreshWheelNow();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "lucky_wheel_entries" }, () => {
         qc.invalidateQueries({ queryKey: ["lucky-wheel-entries"] });
+        qc.refetchQueries({ queryKey: ["lucky-wheel-entries"], type: "active" });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  }, [qc, refreshWheelNow]);
 
   // Auto-spin: when timer expires, trigger exactly one backend resolve attempt at a time.
   const startsAtMs = wheel ? new Date(wheel.starts_at).getTime() : 0;
@@ -315,14 +327,15 @@ export const LuckyWheelSection = ({
     };
   }, [animationWheel?.id, animationWheel?.status, animationWheel?.winner_entry_id, animationWheel?.spun_at, entriesSignature]);
 
-  // Heartbeat: poll every 5s as a safety net in case realtime drops, so even
-  // late or backgrounded clients converge to the server-side finished state.
+  // Heartbeat: poll as a safety net in case realtime drops, including the empty
+  // state so users don't have to refresh after an owner creates a new wheel.
   useEffect(() => {
-    if (!wheel || wheel.status === "finished" || wheel.status === "cancelled") return;
     const i = setInterval(() => {
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
-      qc.invalidateQueries({ queryKey: ["lucky-wheel-entries"] });
-    }, 5000);
+      if (wheel && wheel.status !== "finished" && wheel.status !== "cancelled") {
+        qc.invalidateQueries({ queryKey: ["lucky-wheel-entries"] });
+      }
+    }, wheel ? 5000 : 2000);
     return () => clearInterval(i);
   }, [wheel?.id, wheel?.status, qc]);
 
@@ -557,7 +570,7 @@ export const LuckyWheelSection = ({
           open={createOpen}
           onOpenChange={setCreateOpen}
           userId={userId}
-          onCreated={() => qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] })}
+          onCreated={() => refreshWheelNow()}
         />
       )}
 
@@ -944,6 +957,11 @@ const CreateWheelDialog = ({
       return;
     }
     toast.success("Sėkmės ratas sukurtas! 🎰");
+    supabase.channel("lucky-wheels-create-broadcast").send({
+      type: "broadcast",
+      event: "wheel-changed",
+      payload: { action: "created" },
+    });
     onCreated();
     onOpenChange(false);
     setVehicleId("");
