@@ -1058,6 +1058,27 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
         </button>
       </div>
 
+      <div className="mb-5 inline-flex rounded-md bg-secondary/40 border border-border/60 p-1 gap-1">
+        {([
+          { v: "all" as const, label: "Visi", Icon: ShoppingBag, count: counts.all },
+          { v: "car" as const, label: "Automobiliai", Icon: Car, count: counts.car },
+          { v: "helicopter" as const, label: "Helikopteriai", Icon: Plane, count: counts.helicopter },
+        ]).map(({ v, label, Icon, count }) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setCategoryFilter(v)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              categoryFilter === v ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+            <span className="text-[10px] text-muted-foreground/80">({count})</span>
+          </button>
+        ))}
+      </div>
+
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
         {loading ? (
           <p className="col-span-full text-center text-muted-foreground py-12">Kraunama…</p>
