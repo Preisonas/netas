@@ -32,7 +32,7 @@ import {
   AlertTriangle,
   Landmark,
   Heart,
-} from "lucide-react";
+  Plane,
 
 const OWNER_DISCORD_IDS = ["1276583745490649214", "528409152024870922", "811365896824029184"];
 import { toast } from "sonner";
