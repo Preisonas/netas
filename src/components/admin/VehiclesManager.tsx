@@ -41,7 +41,7 @@ const VehiclesManager = () => {
     const { data, error } = await supabase.from("vehicles").select("*").order("created_at", { ascending: false });
     setLoading(false);
     if (error) { toast.error("Nepavyko įkelti"); return; }
-    setList(data ?? []);
+    setList((data ?? []).map((v) => ({ ...v, category: (v.category === "helicopter" ? "helicopter" : "car") as VehicleCategory })) as Vehicle[]);
   };
 
   useEffect(() => { load(); }, []);
