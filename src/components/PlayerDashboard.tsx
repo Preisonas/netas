@@ -909,7 +909,7 @@ const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
           <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {c.vehicles.map((v) => {
               const stateLabel =
-                v.state === 0 ? "Lauke" : v.state === 2 ? "Konfiskuotas" : v.stored || v.garage || "Garaže";
+                v.state === 0 ? "Lauke" : v.state === 2 ? "Konfiskuotas" : "Garaže";
               const stateColor =
                 v.state === 0 ? "text-amber-400" : v.state === 2 ? "text-red-400" : "text-emerald-400";
               return (
