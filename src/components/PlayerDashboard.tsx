@@ -850,6 +850,12 @@ const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
         
         <InfoTile icon={<Heart className="h-4 w-4" />} label="Gyvybės" value={c.health ?? 100} accent="#ef4444" />
         <InfoTile icon={<Shield className="h-4 w-4" />} label="Šarvai" value={c.armor ?? 0} />
+        {(() => {
+          const tier = c.vip?.tier ?? null;
+          const label = tier === "silver" ? "Silver" : tier === "gold" ? "Gold" : tier === "platinum" ? "Platinum" : "Neturi";
+          const accent = tier === "gold" ? "#facc15" : tier === "platinum" ? "#e5e7eb" : tier === "silver" ? "#9ca3af" : undefined;
+          return <InfoTile icon={<Crown className="h-4 w-4" />} label="VIP statusas" value={label} accent={accent} />;
+        })()}
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
