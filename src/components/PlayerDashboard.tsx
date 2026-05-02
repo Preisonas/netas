@@ -985,7 +985,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
     (async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, brand, model, price, top_speed, trunk, image_url, images, features, video_url")
+        .select("id, brand, model, price, top_speed, trunk, image_url, images, features, video_url, category")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         if (!error && data) {
@@ -1001,6 +1001,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
               images: (v as { images?: string[] }).images ?? [],
               videoUrl: v.video_url ?? undefined,
               features: v.features ?? [],
+              category: ((v as { category?: string }).category === "helicopter" ? "helicopter" : "car") as ShopCategory,
             })),
           );
         }
