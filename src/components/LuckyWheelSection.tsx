@@ -550,6 +550,8 @@ export const LuckyWheelSection = ({
         </div>
       )}
 
+      <WheelHistory currentWheelId={wheel?.id ?? null} />
+
       {isOwner && (
         <CreateWheelDialog
           open={createOpen}
