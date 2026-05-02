@@ -55,6 +55,19 @@ function normalize(c: AnyObj) {
       jobs: pick(c, ["jobs", "all_jobs", "allJobs"]) ?? null,
       vehicles: pick(c, ["vehicles"]) ?? null,
       credits: pick(c, ["credits"]) ?? null,
+      // VIP info from FiveM (e.g. esx_vip / custom): accepts has_vip + vip_tier ("silver" | "gold" | "platinum")
+      vip: (() => {
+        const tierRaw = pick<string>(c, ["vip_tier", "vipTier", "vip_type", "vipType", "vip"]);
+        const has = pick<boolean | number | string>(c, ["has_vip", "hasVip", "vip_active", "vipActive", "is_vip", "isVip"]);
+        const expires = pick<string>(c, ["vip_expires_at", "vipExpiresAt", "vip_expires", "vipExpires"]) ?? null;
+        const tier = typeof tierRaw === "string" ? tierRaw.trim().toLowerCase() : null;
+        const validTiers = ["silver", "gold", "platinum"];
+        const normalizedTier = tier && validTiers.includes(tier) ? tier : null;
+        const active =
+          has === true || has === 1 || has === "1" || has === "true" || !!normalizedTier;
+        if (!active && !normalizedTier) return null;
+        return { active, tier: normalizedTier, expires_at: expires };
+      })(),
       ...(c.metadata && typeof c.metadata === "object" ? c.metadata : {}),
     },
     last_synced_at: new Date().toISOString(),
