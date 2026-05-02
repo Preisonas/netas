@@ -121,6 +121,7 @@ Deno.serve(async (req) => {
       plate,
       customPlate: customPlate !== null,
       fullTune,
+      category: vehicleCategory,
     });
   } else if (body.type === "case_item") {
     if (!body.case_id) return json({ error: "case_id required" }, 400);
