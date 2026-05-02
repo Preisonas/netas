@@ -299,7 +299,14 @@ const VehiclesManager = () => {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground/70">{v.brand}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground/70">{v.brand}</p>
+                  {v.category === "helicopter" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                      <Plane className="h-2.5 w-2.5" /> Helikopteris
+                    </span>
+                  )}
+                </div>
                 <p className="font-semibold truncate">{v.model}</p>
                 <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
                   <span className="inline-flex items-center gap-1 text-primary"><Coins className="h-3 w-3" />{v.price} €</span>
