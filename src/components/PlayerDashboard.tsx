@@ -847,7 +847,7 @@ const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
         <InfoTile icon={<Wallet className="h-4 w-4" />} label="Grynieji pinigai" value={formatMoney(c.cash)} accent="hsl(var(--primary))" />
         <InfoTile icon={<Landmark className="h-4 w-4" />} label="Banko balansas" value={formatMoney(c.bank)} />
         <InfoTile icon={<Clock className="h-4 w-4" />} label="Paskutinis prisijungimas" value={c.online ? "Šiuo metu prisijungęs" : formatDateTime(c.lastSeen)} />
-        <InfoTile icon={<Coins className="h-4 w-4" />} label="Kreditai" value={`${c.credits ?? 0}`} accent="#facc15" />
+        
         <InfoTile icon={<Heart className="h-4 w-4" />} label="Gyvybės" value={c.health ?? 100} accent="#ef4444" />
         <InfoTile icon={<Shield className="h-4 w-4" />} label="Šarvai" value={c.armor ?? 0} />
       </div>
