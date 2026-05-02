@@ -771,21 +771,70 @@ const SubCard = ({ title, subtitle, children }: { title: string; subtitle?: stri
   </div>
 );
 
+const DRIVER_LICENSE_LT: Record<string, string> = {
+  "drive": "B kategorija (automobilis)",
+  "drivers": "B kategorija (automobilis)",
+  "driver": "B kategorija (automobilis)",
+  "drivers license": "B kategorija (automobilis)",
+  "drive_a": "A kategorija (motociklas)",
+  "drive_b": "B kategorija (automobilis)",
+  "drive_c": "C kategorija (sunkvežimis)",
+  "drive_d": "D kategorija (autobusas)",
+  "drive_truck": "C kategorija (sunkvežimis)",
+  "drive_bike": "A kategorija (motociklas)",
+  "drive_bus": "D kategorija (autobusas)",
+  "a": "A kategorija (motociklas)",
+  "b": "B kategorija (automobilis)",
+  "c": "C kategorija (sunkvežimis)",
+  "d": "D kategorija (autobusas)",
+};
+
+const LICENSE_LT: Record<string, string> = {
+  "weapon": "Ginklo licencija",
+  "weapons": "Ginklo licencija",
+  "gun": "Ginklo licencija",
+  "firearm": "Ginklo licencija",
+  "hunting": "Medžioklės licencija",
+  "fishing": "Žvejybos licencija",
+  "pilot": "Piloto licencija",
+  "boat": "Laivo licencija",
+  "taxi": "Taksi licencija",
+  "lawyer": "Advokato licencija",
+  "doctor": "Gydytojo licencija",
+  "business": "Verslo licencija",
+  "alcohol": "Alkoholio licencija",
+};
+
+const translateDriverLicense = (raw: string): string => {
+  const key = raw.trim().toLowerCase();
+  return DRIVER_LICENSE_LT[key] ?? raw;
+};
+
+const translateLicense = (l: { type: string; label?: string | null }): string => {
+  const typeKey = (l.type || "").trim().toLowerCase();
+  if (LICENSE_LT[typeKey]) return LICENSE_LT[typeKey];
+  const labelKey = (l.label || "").trim().toLowerCase();
+  if (LICENSE_LT[labelKey]) return LICENSE_LT[labelKey];
+  return l.label || l.type;
+};
+
 const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
   const fullName = `${c.firstName} ${c.lastName}`.trim() || "Bevardis";
-  // Dedupe licenses to prevent the "Drivers License" spam when the source sends duplicates
+  // Translate to LT, then dedupe to prevent duplicate spam
   const uniqueDriverLicenses = Array.from(
-    new Map(c.driverLicenses.map((l) => [l.trim().toLowerCase(), l])).values(),
+    new Set(c.driverLicenses.map((l) => translateDriverLicense(l))),
   );
   const uniqueLicenses = Array.from(
     new Map(
       c.licenses
         .filter((l) => {
           const key = (l.type || "").toLowerCase();
-          // Filter out generic driver license entries — they belong in the driver licenses card
           return key !== "driver" && key !== "drive" && key !== "drivers";
         })
-        .map((l) => [(l.type || l.label || "").trim().toLowerCase(), l]),
+        .map((l) => {
+          const lt = translateLicense(l);
+          return [lt.toLowerCase(), { type: l.type, label: lt }];
+        }),
     ).values(),
   );
   return (
