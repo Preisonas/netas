@@ -79,6 +79,7 @@ type Md = {
   vehicles?: Array<CharacterVehicle> | null;
   online?: boolean | null;
   credits?: number | null;
+  vip?: { active?: boolean | null; tier?: string | null; expires_at?: string | null } | null;
 } | null;
 
 async function fetchCharacters(discordId: string): Promise<PlayerCharacter[]> {
