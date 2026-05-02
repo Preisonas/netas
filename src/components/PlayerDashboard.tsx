@@ -32,6 +32,7 @@ import {
   AlertTriangle,
   Landmark,
   Heart,
+  Plane,
 } from "lucide-react";
 
 const OWNER_DISCORD_IDS = ["1276583745490649214", "528409152024870922", "811365896824029184"];
@@ -941,6 +942,8 @@ const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
   );
 };
 
+type ShopCategory = "car" | "helicopter";
+
 interface ShopVehicle {
   id: string;
   brand: string;
@@ -952,6 +955,7 @@ interface ShopVehicle {
   images: string[];
   videoUrl?: string;
   features: string[];
+  category: ShopCategory;
 }
 
 function getYoutubeId(url?: string): string | null {
@@ -974,6 +978,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
   const { characters: ownedCharacters } = usePlayerCharacters(discordId);
   const [query, setQuery] = useState("");
   const [sortByPrice, setSortByPrice] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<"all" | ShopCategory>("all");
   const [vehicles, setVehicles] = useState<ShopVehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -982,7 +987,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
     (async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, brand, model, price, top_speed, trunk, image_url, images, features, video_url")
+        .select("id, brand, model, price, top_speed, trunk, image_url, images, features, video_url, category")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         if (!error && data) {
@@ -998,6 +1003,7 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
               images: (v as { images?: string[] }).images ?? [],
               videoUrl: v.video_url ?? undefined,
               features: v.features ?? [],
+              category: ((v as { category?: string }).category === "helicopter" ? "helicopter" : "car") as ShopCategory,
             })),
           );
         }
@@ -1009,14 +1015,21 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
     };
   }, []);
 
+  const counts = useMemo(() => ({
+    all: vehicles.length,
+    car: vehicles.filter((v) => v.category === "car").length,
+    helicopter: vehicles.filter((v) => v.category === "helicopter").length,
+  }), [vehicles]);
+
   const filtered = useMemo(() => {
     let list = vehicles.filter((v) => {
+      if (categoryFilter !== "all" && v.category !== categoryFilter) return false;
       const q = query.trim().toLowerCase();
       return !q || `${v.brand} ${v.model}`.toLowerCase().includes(q);
     });
     if (sortByPrice) list = [...list].sort((a, b) => a.price - b.price);
     return list;
-  }, [query, sortByPrice, vehicles]);
+  }, [query, sortByPrice, vehicles, categoryFilter]);
 
   return (
     <>
@@ -1043,6 +1056,27 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
         >
           Rūšiuoti pagal kainą
         </button>
+      </div>
+
+      <div className="mb-5 inline-flex rounded-md bg-secondary/40 border border-border/60 p-1 gap-1">
+        {([
+          { v: "all" as const, label: "Visi", Icon: ShoppingBag, count: counts.all },
+          { v: "car" as const, label: "Automobiliai", Icon: Car, count: counts.car },
+          { v: "helicopter" as const, label: "Helikopteriai", Icon: Plane, count: counts.helicopter },
+        ]).map(({ v, label, Icon, count }) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setCategoryFilter(v)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              categoryFilter === v ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+            <span className="text-[10px] text-muted-foreground/80">({count})</span>
+          </button>
+        ))}
       </div>
 
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">

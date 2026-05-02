@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Save, Car, Coins, X, Edit3, Gauge, Briefcase } from "lucide-react";
+import { Plus, Trash2, Save, Car, Coins, X, Edit3, Gauge, Briefcase, Plane } from "lucide-react";
 import { toast } from "sonner";
 import ImageUploader from "./ImageUploader";
+
+type VehicleCategory = "car" | "helicopter";
 
 interface Vehicle {
   id: string;
@@ -17,10 +19,11 @@ interface Vehicle {
   trunk: number | null;
   features: string[];
   video_url: string | null;
+  category: VehicleCategory;
 }
 
 const empty: Vehicle = {
-  id: "", brand: "", model: "", model_name: "", image_url: null, images: [], price: 0, top_speed: 0, trunk: null, features: [], video_url: null,
+  id: "", brand: "", model: "", model_name: "", image_url: null, images: [], price: 0, top_speed: 0, trunk: null, features: [], video_url: null, category: "car",
 };
 
 const MAX_FEATURES = 10;
@@ -38,7 +41,7 @@ const VehiclesManager = () => {
     const { data, error } = await supabase.from("vehicles").select("*").order("created_at", { ascending: false });
     setLoading(false);
     if (error) { toast.error("Nepavyko įkelti"); return; }
-    setList(data ?? []);
+    setList((data ?? []).map((v) => ({ ...v, category: (v.category === "helicopter" ? "helicopter" : "car") as VehicleCategory })) as Vehicle[]);
   };
 
   useEffect(() => { load(); }, []);
@@ -66,6 +69,7 @@ const VehiclesManager = () => {
       trunk: editing.trunk,
       features: editing.features,
       video_url: editing.video_url,
+      category: editing.category,
     };
     const { error } = editing.id
       ? await supabase.from("vehicles").update(payload).eq("id", editing.id)
@@ -85,6 +89,28 @@ const VehiclesManager = () => {
           <Button variant="outline" onClick={() => setEditing(null)} className="rounded-md gap-2">
             <X className="h-4 w-4" /> Atšaukti
           </Button>
+        </div>
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">Kategorija</label>
+          <div className="inline-flex rounded-md bg-secondary/60 border border-border/60 p-1 gap-1">
+            {([
+              { v: "car", label: "Automobilis", Icon: Car },
+              { v: "helicopter", label: "Helikopteris", Icon: Plane },
+            ] as const).map(({ v, label, Icon }) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setEditing({ ...editing, category: v })}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  editing.category === v ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">Helikopteriai bus pristatomi į oro garažus FiveM serveryje.</p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -273,7 +299,14 @@ const VehiclesManager = () => {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground/70">{v.brand}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground/70">{v.brand}</p>
+                  {v.category === "helicopter" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                      <Plane className="h-2.5 w-2.5" /> Helikopteris
+                    </span>
+                  )}
+                </div>
                 <p className="font-semibold truncate">{v.model}</p>
                 <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
                   <span className="inline-flex items-center gap-1 text-primary"><Coins className="h-3 w-3" />{v.price} €</span>

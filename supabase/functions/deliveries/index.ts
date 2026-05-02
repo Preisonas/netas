@@ -107,6 +107,8 @@ function enrichDelivery(delivery: DeliveryRow) {
   const plate = delivery.plate ?? stringify(metadata.plate) ?? stringify(ownedVehicle.plate) ?? null;
   const model = stringify(metadata.model) ?? delivery.item_name;
   const modelHash = toInt(metadata.model_hash) ?? joaat(model);
+  const category = stringify(metadata.category) === "helicopter" ? "helicopter" : "car";
+  const ownedType = stringify(ownedVehicle.type) ?? (category === "helicopter" ? "helicopter" : "car");
 
   // Keep the full vehicle props payload so FiveM can insert it directly into owned_vehicles
   // and/or apply upgrades from the same object. Only normalize model/plate fields.
@@ -121,7 +123,7 @@ function enrichDelivery(delivery: DeliveryRow) {
     owner: stringify(ownedVehicle.owner) ?? delivery.character_identifier,
     plate,
     vehicle: normalizedVehicleProps,
-    type: stringify(ownedVehicle.type) ?? "car",
+    type: ownedType,
     stored: toInt(ownedVehicle.stored) ?? 1,
     state: toInt(ownedVehicle.state) ?? 1,
     garage: stringify(ownedVehicle.garage),
@@ -138,6 +140,7 @@ function enrichDelivery(delivery: DeliveryRow) {
       plate,
       model,
       model_hash: modelHash,
+      category, // "car" | "helicopter" — FiveM uses this to route into ground or air garage
       vehicle: normalizedVehicleProps,
       owned_vehicle: normalizedOwnedVehicle,
       type: normalizedOwnedVehicle.type,

@@ -83,13 +83,14 @@ Deno.serve(async (req) => {
   if (body.type === "vehicle") {
     if (!body.vehicle_id) return json({ error: "vehicle_id required" }, 400);
     const { data: v, error } = await admin
-      .from("vehicles").select("price, model, model_name, brand").eq("id", body.vehicle_id).maybeSingle();
+      .from("vehicles").select("price, model, model_name, brand, category").eq("id", body.vehicle_id).maybeSingle();
     if (error || !v) return json({ error: "Vehicle not found" }, 404);
     price = v.price;
     // SPAWN NAME = vehicles.model_name column (e.g. "sultanrs", "t20")
     // DISPLAY NAME = vehicles.model column (e.g. "Kentas")
     const spawnName = v.model_name || v.model;
     const displayName = v.model;
+    const vehicleCategory: "car" | "helicopter" = v.category === "helicopter" ? "helicopter" : "car";
     itemName = spawnName;
     label = `${v.brand} ${displayName}`;
 
@@ -120,6 +121,7 @@ Deno.serve(async (req) => {
       plate,
       customPlate: customPlate !== null,
       fullTune,
+      category: vehicleCategory,
     });
   } else if (body.type === "case_item") {
     if (!body.case_id) return json({ error: "case_id required" }, 400);
@@ -343,6 +345,7 @@ function buildVehicleDeliveryMetadata({
   plate,
   customPlate,
   fullTune,
+  category,
 }: {
   characterIdentifier: string;
   characterName: string | null;
@@ -352,6 +355,7 @@ function buildVehicleDeliveryMetadata({
   plate: string;
   customPlate: boolean;
   fullTune: boolean;
+  category: "car" | "helicopter";
 }) {
   const modelHash = joaat(model);
   // ESX owned_vehicles stores `vehicle` as JSON with the STRING model name.
@@ -362,6 +366,9 @@ function buildVehicleDeliveryMetadata({
     plate,
     ...tuneProps,
   };
+  // ESX owned_vehicles.type — "car" for ground vehicles, "helicopter" for air.
+  // FiveM uses this column to route the vehicle into the correct (ground / air) garage.
+  const ownedType = category === "helicopter" ? "helicopter" : "car";
 
   return {
     schema: "garage_vehicle_v1",
@@ -372,6 +379,7 @@ function buildVehicleDeliveryMetadata({
     model,
     model_name: modelName,
     model_hash: modelHash,
+    category,
     custom_plate: customPlate,
     full_tune: fullTune,
     vehicle_props: vehicleProps,
@@ -379,7 +387,7 @@ function buildVehicleDeliveryMetadata({
       owner: characterIdentifier,
       plate,
       vehicle: vehicleProps,
-      type: "car",
+      type: ownedType,
       stored: 1,
       state: 1,
       garage: null,

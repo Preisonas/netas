@@ -6,28 +6,18 @@
 // {
 //   "identifier": "char1:xxxx",        // optional if discord_id provided
 //   "discord_id": "123456789",         // optional if identifier provided
-//   "credits": 5,                      // base credits to add (required, 1..10000)
+//   "credits": 5,                      // credits to add (required, 1..10000)
 //   "reason": "playtime_claim",        // optional, for logging
-//   "apply_vip_bonus": true,           // optional, default false
 //   "claim_key": "playtime:2026-05-02" // optional idempotency key (per user)
 // }
-//
-// VIP bonus multipliers (when apply_vip_bonus=true):
-//   silver   = 1.10x
-//   gold     = 1.25x
-//   platinum = 1.50x
-//   none     = 1.00x
 //
 // Response:
 // {
 //   success: true,
 //   user_id: "...",
 //   discord_id: "...",
-//   base_credits: 5,
-//   bonus_credits: 1,
-//   total_added: 6,
+//   credits_added: 5,
 //   new_balance: 42,
-//   vip_tier: "gold" | null,
 //   reason: "playtime_claim"
 // }
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
@@ -36,12 +26,6 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-mkk-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const VIP_MULTIPLIERS: Record<string, number> = {
-  silver: 1.10,
-  gold: 1.25,
-  platinum: 1.50,
 };
 
 Deno.serve(async (req) => {
@@ -58,7 +42,6 @@ Deno.serve(async (req) => {
     discord_id?: string;
     credits?: number;
     reason?: string;
-    apply_vip_bonus?: boolean;
     claim_key?: string;
   };
   try {
@@ -71,14 +54,13 @@ Deno.serve(async (req) => {
   if (!Number.isFinite(baseCredits) || baseCredits < 1 || baseCredits > 10000) {
     return json({ error: "credits must be 1..10000" }, 400);
   }
-  const baseInt = Math.floor(baseCredits);
+  const creditsToAdd = Math.floor(baseCredits);
 
   if (!body.identifier && !body.discord_id) {
     return json({ error: "identifier or discord_id required" }, 400);
   }
 
   const reason = (body.reason ?? "fivem_grant").toString().slice(0, 64);
-  const applyVip = body.apply_vip_bonus === true;
   const claimKey = typeof body.claim_key === "string" && body.claim_key.length > 0
     ? body.claim_key.slice(0, 128)
     : null;
@@ -130,24 +112,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Resolve current VIP tier (if any) for bonus calculation
-  let vipTier: string | null = null;
-  if (applyVip) {
-    const { data: vips } = await supabase
-      .from("user_vips")
-      .select("vip_tiers!inner(tier)")
-      .eq("discord_id", discordId!)
-      .gt("expires_at", new Date().toISOString())
-      .order("expires_at", { ascending: false })
-      .limit(1);
-    const raw = (vips?.[0] as any)?.vip_tiers?.tier?.toLowerCase?.() ?? null;
-    if (raw === "silver" || raw === "gold" || raw === "platinum") vipTier = raw;
-  }
-
-  const multiplier = vipTier ? VIP_MULTIPLIERS[vipTier] ?? 1 : 1;
-  const totalAdded = Math.floor(baseInt * multiplier);
-  const bonus = totalAdded - baseInt;
-  const newBalance = (profile.credits ?? 0) + totalAdded;
+  const newBalance = (profile.credits ?? 0) + creditsToAdd;
 
   // Update credits
   const { error: updErr } = await supabase
@@ -164,8 +129,8 @@ Deno.serve(async (req) => {
     user_id: profile.user_id,
     stripe_session_id: dedupeId,
     amount_eur: 0,
-    credits: totalAdded,
-    discount_code: vipTier ? `vip_${vipTier}` : null,
+    credits: creditsToAdd,
+    discount_code: null,
     status: "fulfilled",
     environment: "fivem",
     fulfilled_at: new Date().toISOString(),
@@ -175,12 +140,8 @@ Deno.serve(async (req) => {
     success: true,
     user_id: profile.user_id,
     discord_id: profile.discord_id,
-    base_credits: baseInt,
-    bonus_credits: bonus,
-    total_added: totalAdded,
+    credits_added: creditsToAdd,
     new_balance: newBalance,
-    vip_tier: vipTier,
-    multiplier,
     reason,
   });
 });

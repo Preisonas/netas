@@ -453,6 +453,7 @@ export type Database = {
       vehicles: {
         Row: {
           brand: string
+          category: string
           created_at: string
           features: string[]
           id: string
@@ -469,6 +470,7 @@ export type Database = {
         }
         Insert: {
           brand: string
+          category?: string
           created_at?: string
           features?: string[]
           id?: string
@@ -485,6 +487,7 @@ export type Database = {
         }
         Update: {
           brand?: string
+          category?: string
           created_at?: string
           features?: string[]
           id?: string
