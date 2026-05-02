@@ -664,47 +664,62 @@ const ProfileSection = ({
   email: string;
 }) => {
   const { characters, loading } = usePlayerCharacters(discordId);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const active = characters.find((c) => c.id === activeId) ?? characters[0] ?? null;
 
   return (
     <>
-      <SectionHeader title="Profilis" subtitle="Tavo paskyra ir veikėjai." />
+      <SectionHeader title="Profilis" subtitle="Tavo paskyra ir veikėjų informacija." />
 
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-6">
         {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="h-20 w-20 rounded-full object-cover" />
+          <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
         ) : (
-          <div className="h-20 w-20 rounded-full bg-secondary grid place-items-center">
-            <User className="h-8 w-8 text-muted-foreground" />
+          <div className="h-16 w-16 rounded-full bg-secondary grid place-items-center">
+            <User className="h-7 w-7 text-muted-foreground" />
           </div>
         )}
-        <div>
-          <p className="text-xl font-bold">{username}</p>
-          <p className="text-sm text-muted-foreground">{email}</p>
-          <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">Discord ID: {discordId ?? "—"}</p>
+        <div className="min-w-0">
+          <p className="text-lg font-bold truncate">{username}</p>
+          <p className="text-xs text-muted-foreground truncate">{email}</p>
+          <p className="text-[11px] text-muted-foreground/70 font-mono mt-0.5">Discord: {discordId ?? "—"}</p>
         </div>
       </div>
 
-      <div className="mb-3 flex items-baseline justify-between">
-        <h3 className="text-lg font-semibold">Veikėjai</h3>
-        <span className="text-xs text-muted-foreground">{characters.length} / 3</span>
-      </div>
+      {characters.length > 1 && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {characters.map((c) => {
+            const isActive = (active?.id ?? characters[0]?.id) === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setActiveId(c.id)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                  isActive
+                    ? "bg-primary/15 border-primary/40 text-foreground"
+                    : "bg-secondary/40 border-border/50 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {c.firstName} {c.lastName}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {loading ? (
         <div className="rounded-xl bg-secondary/30 p-10 text-center">
           <p className="text-sm text-muted-foreground">Kraunama...</p>
         </div>
-      ) : characters.length === 0 ? (
+      ) : !active ? (
         <div className="rounded-xl bg-secondary/30 p-10 text-center">
           <p className="text-sm text-muted-foreground">
             Veikėjų dar nėra. Kai prisijungsi prie serverio, jie atsiras čia automatiškai.
           </p>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 gap-4">
-          {characters.map((c) => (
-            <CharacterCard key={c.id} character={c} />
-          ))}
-        </div>
+        <CharacterDetails character={active} />
       )}
     </>
   );
@@ -713,33 +728,159 @@ const ProfileSection = ({
 const formatMoney = (n: number) => new Intl.NumberFormat("lt-LT").format(n) + " $";
 
 const formatPlaytime = (minutes: number) => {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  const totalMin = Math.max(0, Math.floor(minutes));
+  const d = Math.floor(totalMin / (60 * 24));
+  const h = Math.floor((totalMin % (60 * 24)) / 60);
+  const m = totalMin % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 };
 
-const CharacterCard = ({ character: c }: { character: PlayerCharacter }) => (
-  <article className="group relative rounded-xl overflow-hidden bg-secondary/30 hover:bg-secondary/50 transition-colors p-5">
+const formatDateTime = (iso?: string | null) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString("lt-LT", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+};
+
+const InfoTile = ({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  accent?: string;
+}) => (
+  <div className="flex items-center gap-3 rounded-lg bg-secondary/40 border border-border/40 px-3 py-2.5">
     <div
-      aria-hidden
-      className="absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-15 blur-3xl"
-      style={{ background: "var(--gradient-brand)" }}
-    />
-    <div className="relative">
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="text-lg font-bold leading-tight">
-            {c.firstName} {c.lastName}
-          </h4>
-          <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1.5">
-            <Briefcase className="h-3.5 w-3.5" />
-            {c.job}
-          </p>
-        </div>
-      </div>
+      className="grid place-items-center h-9 w-9 rounded-md shrink-0"
+      style={{ backgroundColor: accent ? `${accent}22` : undefined, color: accent }}
+    >
+      {icon}
     </div>
-  </article>
+    <div className="min-w-0">
+      <p className="text-sm font-semibold truncate">{value}</p>
+      <p className="text-[11px] text-muted-foreground truncate">{label}</p>
+    </div>
+  </div>
 );
+
+const SubCard = ({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) => (
+  <div className="rounded-xl bg-secondary/30 border border-border/40 p-5">
+    <h4 className="font-semibold">{title}</h4>
+    {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+    <div className="mt-4">{children}</div>
+  </div>
+);
+
+const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
+  const fullName = `${c.firstName} ${c.lastName}`.trim() || "Bevardis";
+  const jail = c.jailMinutes && c.jailMinutes > 0 ? `${c.jailMinutes} min` : null;
+  return (
+    <div className="space-y-5">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <InfoTile icon={<User className="h-4 w-4" />} label="Tapatybė" value={fullName} />
+        <InfoTile icon={<span className="text-base font-bold">#</span>} label="Asmens kodas" value={c.personalCode ?? c.identifier.slice(-10)} />
+        <InfoTile icon={<Phone className="h-4 w-4" />} label="Telefono numeris" value={c.phoneNumber ?? "—"} />
+        <InfoTile icon={<Briefcase className="h-4 w-4" />} label="Darbas" value={c.job} />
+        <InfoTile icon={<Crown className="h-4 w-4" />} label="Rangas" value={c.jobGradeLabel ?? "—"} />
+        <InfoTile icon={<Wallet className="h-4 w-4" />} label="Grynieji pinigai" value={formatMoney(c.cash)} accent="hsl(var(--primary))" />
+        <InfoTile icon={<Landmark className="h-4 w-4" />} label="Banko balansas" value={formatMoney(c.bank)} />
+        <InfoTile icon={<Calendar className="h-4 w-4" />} label="Registracijos data" value={formatDateTime(c.registeredAt)} />
+        <InfoTile icon={<Clock className="h-4 w-4" />} label="Paskutinis prisijungimas" value={c.online ? "Šiuo metu prisijungęs" : formatDateTime(c.lastSeen)} />
+        <InfoTile icon={<Clock className="h-4 w-4" />} label="Pražaistas laikas" value={formatPlaytime(c.playtimeMinutes)} />
+        <InfoTile icon={<Coins className="h-4 w-4" />} label="Kreditų balansas" value={`${c.credits ?? 0} €`} accent="#facc15" />
+        <InfoTile icon={<Heart className="h-4 w-4" />} label="Gyvybės" value={c.health ?? 100} accent="#ef4444" />
+        <InfoTile icon={<Shield className="h-4 w-4" />} label="Šarvai" value={c.armor ?? 0} />
+        <InfoTile icon={<AlertTriangle className="h-4 w-4" />} label="Kalėjimas (likęs laikas)" value={jail ?? "Nekalintas"} accent={jail ? "#ef4444" : undefined} />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <SubCard title="Vairuotojo pažymėjimas" subtitle="Tavo veikėjo išlaikytos vairuotojo pažymėjimo kategorijos.">
+          {c.driverLicenses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Neturi jokių kategorijų.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {c.driverLicenses.map((l) => (
+                <span key={l} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-semibold border border-emerald-500/30">
+                  <Car className="h-3.5 w-3.5" />
+                  {l}
+                </span>
+              ))}
+            </div>
+          )}
+        </SubCard>
+
+        <SubCard title="Licencijos" subtitle="Kitos veikėjo turimos licencijos.">
+          {c.licenses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Licencijų nėra.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {c.licenses.map((l) => (
+                <span key={l.type} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold border border-primary/30">
+                  <Check className="h-3.5 w-3.5" />
+                  {l.label || l.type}
+                </span>
+              ))}
+            </div>
+          )}
+        </SubCard>
+      </div>
+
+      <SubCard title="Visi darbai" subtitle="Visi tavo veikėjo turimi darbai ir jų rangai.">
+        {c.jobs.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-2">Nėra darbų</p>
+        ) : (
+          <ul className="grid sm:grid-cols-2 gap-2">
+            {c.jobs.map((j) => (
+              <li key={j.name} className="flex items-center justify-between rounded-md bg-background/40 border border-border/40 px-3 py-2 text-sm">
+                <span className="inline-flex items-center gap-2">
+                  <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                  {j.label || j.name}
+                </span>
+                <span className="text-xs text-muted-foreground">{j.grade_label || `Rang. ${j.grade ?? 0}`}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SubCard>
+
+      <SubCard title="Transporto priemonės" subtitle="Visos tavo veikėjo turimos transporto priemonės.">
+        {c.vehicles.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-2">Transporto priemonių nėra</p>
+        ) : (
+          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {c.vehicles.map((v) => {
+              const stateLabel =
+                v.state === 0 ? "Lauke" : v.state === 2 ? "Konfiskuotas" : v.stored || v.garage || "Garaže";
+              const stateColor =
+                v.state === 0 ? "text-amber-400" : v.state === 2 ? "text-red-400" : "text-emerald-400";
+              return (
+                <li key={v.plate} className="rounded-md bg-background/40 border border-border/40 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium truncate">{v.label || v.model || "—"}</span>
+                    <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-secondary/60">{v.plate}</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span className={`inline-flex items-center gap-1 ${stateColor}`}>
+                      <Car className="h-3 w-3" />
+                      {stateLabel}
+                    </span>
+                    {v.owner && <span className="truncate ml-2">{v.owner}</span>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </SubCard>
+    </div>
+  );
+};
 
 interface ShopVehicle {
   id: string;
