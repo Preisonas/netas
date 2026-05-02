@@ -90,6 +90,28 @@ const VehiclesManager = () => {
             <X className="h-4 w-4" /> Atšaukti
           </Button>
         </div>
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground/70 mb-1.5">Kategorija</label>
+          <div className="inline-flex rounded-md bg-secondary/60 border border-border/60 p-1 gap-1">
+            {([
+              { v: "car", label: "Automobilis", Icon: Car },
+              { v: "helicopter", label: "Helikopteris", Icon: Plane },
+            ] as const).map(({ v, label, Icon }) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setEditing({ ...editing, category: v })}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  editing.category === v ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">Helikopteriai bus pristatomi į oro garažus FiveM serveryje.</p>
+        </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
