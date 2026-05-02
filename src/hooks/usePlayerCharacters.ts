@@ -54,6 +54,7 @@ export interface PlayerCharacter {
   vehicles: CharacterVehicle[];
   online?: boolean | null;
   credits?: number | null;
+  vip?: { active: boolean; tier: "silver" | "gold" | "platinum" | null; expires_at?: string | null } | null;
 }
 
 const charactersKey = (discordId?: string | null) => ["characters", discordId ?? "none"] as const;
@@ -78,6 +79,7 @@ type Md = {
   vehicles?: Array<CharacterVehicle> | null;
   online?: boolean | null;
   credits?: number | null;
+  vip?: { active?: boolean | null; tier?: string | null; expires_at?: string | null } | null;
 } | null;
 
 async function fetchCharacters(discordId: string): Promise<PlayerCharacter[]> {
@@ -117,6 +119,13 @@ async function fetchCharacters(discordId: string): Promise<PlayerCharacter[]> {
       vehicles: md?.vehicles ?? [],
       online: md?.online ?? null,
       credits: md?.credits ?? null,
+      vip: (() => {
+        const v = md?.vip;
+        if (!v) return null;
+        const tierRaw = typeof v.tier === "string" ? v.tier.toLowerCase() : null;
+        const tier = tierRaw === "silver" || tierRaw === "gold" || tierRaw === "platinum" ? tierRaw : null;
+        return { active: !!v.active || !!tier, tier, expires_at: v.expires_at ?? null };
+      })(),
     };
   });
 }
