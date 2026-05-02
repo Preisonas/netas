@@ -150,6 +150,31 @@ function enrichDelivery(delivery: DeliveryRow) {
   };
 }
 
+function enrichVipDelivery(delivery: DeliveryRow) {
+  const metadata = isRecord(delivery.metadata) ? delivery.metadata : {};
+  const tier = (stringify(metadata.tier) ?? stringify(metadata.vip_tier) ?? delivery.item_name ?? "").toLowerCase();
+  const durationDays = toInt(metadata.duration_days) ?? 30;
+  const now = Date.now();
+  const expiresAtMs = toInt(metadata.expires_at_ms) ?? (now + durationDays * 24 * 60 * 60 * 1000);
+  const expiresAtIso = stringify(metadata.expires_at) ?? new Date(expiresAtMs).toISOString();
+
+  return {
+    ...delivery,
+    metadata,
+    vip_payload: {
+      schema: "vip_grant_v1",
+      discord_id: delivery.discord_id,
+      identifier: delivery.character_identifier,
+      tier, // "silver" | "gold" | "platinum"
+      duration_days: durationDays,
+      duration_seconds: durationDays * 24 * 60 * 60,
+      granted_at: new Date(now).toISOString(),
+      expires_at: expiresAtIso,
+      expires_at_unix: Math.floor(expiresAtMs / 1000),
+    },
+  };
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
