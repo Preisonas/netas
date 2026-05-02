@@ -30,9 +30,7 @@ import {
   Gift,
   Shield,
   AlertTriangle,
-  Phone,
   Landmark,
-  Calendar,
   Heart,
 } from "lucide-react";
 
