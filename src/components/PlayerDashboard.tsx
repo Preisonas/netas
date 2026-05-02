@@ -783,33 +783,43 @@ const SubCard = ({ title, subtitle, children }: { title: string; subtitle?: stri
 
 const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
   const fullName = `${c.firstName} ${c.lastName}`.trim() || "Bevardis";
-  const jail = c.jailMinutes && c.jailMinutes > 0 ? `${c.jailMinutes} min` : null;
+  // Dedupe licenses to prevent the "Drivers License" spam when the source sends duplicates
+  const uniqueDriverLicenses = Array.from(
+    new Map(c.driverLicenses.map((l) => [l.trim().toLowerCase(), l])).values(),
+  );
+  const uniqueLicenses = Array.from(
+    new Map(
+      c.licenses
+        .filter((l) => {
+          const key = (l.type || "").toLowerCase();
+          // Filter out generic driver license entries — they belong in the driver licenses card
+          return key !== "driver" && key !== "drive" && key !== "drivers";
+        })
+        .map((l) => [(l.type || l.label || "").trim().toLowerCase(), l]),
+    ).values(),
+  );
   return (
     <div className="space-y-5">
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <InfoTile icon={<User className="h-4 w-4" />} label="Tapatybė" value={fullName} />
         <InfoTile icon={<span className="text-base font-bold">#</span>} label="Asmens kodas" value={c.personalCode ?? c.identifier.slice(-10)} />
-        <InfoTile icon={<Phone className="h-4 w-4" />} label="Telefono numeris" value={c.phoneNumber ?? "—"} />
         <InfoTile icon={<Briefcase className="h-4 w-4" />} label="Darbas" value={c.job} />
         <InfoTile icon={<Crown className="h-4 w-4" />} label="Rangas" value={c.jobGradeLabel ?? "—"} />
         <InfoTile icon={<Wallet className="h-4 w-4" />} label="Grynieji pinigai" value={formatMoney(c.cash)} accent="hsl(var(--primary))" />
         <InfoTile icon={<Landmark className="h-4 w-4" />} label="Banko balansas" value={formatMoney(c.bank)} />
-        <InfoTile icon={<Calendar className="h-4 w-4" />} label="Registracijos data" value={formatDateTime(c.registeredAt)} />
         <InfoTile icon={<Clock className="h-4 w-4" />} label="Paskutinis prisijungimas" value={c.online ? "Šiuo metu prisijungęs" : formatDateTime(c.lastSeen)} />
-        <InfoTile icon={<Clock className="h-4 w-4" />} label="Pražaistas laikas" value={formatPlaytime(c.playtimeMinutes)} />
-        <InfoTile icon={<Coins className="h-4 w-4" />} label="Kreditų balansas" value={`${c.credits ?? 0} €`} accent="#facc15" />
+        <InfoTile icon={<Coins className="h-4 w-4" />} label="Kreditai" value={`${c.credits ?? 0}`} accent="#facc15" />
         <InfoTile icon={<Heart className="h-4 w-4" />} label="Gyvybės" value={c.health ?? 100} accent="#ef4444" />
         <InfoTile icon={<Shield className="h-4 w-4" />} label="Šarvai" value={c.armor ?? 0} />
-        <InfoTile icon={<AlertTriangle className="h-4 w-4" />} label="Kalėjimas (likęs laikas)" value={jail ?? "Nekalintas"} accent={jail ? "#ef4444" : undefined} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
         <SubCard title="Vairuotojo pažymėjimas" subtitle="Tavo veikėjo išlaikytos vairuotojo pažymėjimo kategorijos.">
-          {c.driverLicenses.length === 0 ? (
+          {uniqueDriverLicenses.length === 0 ? (
             <p className="text-sm text-muted-foreground">Neturi jokių kategorijų.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {c.driverLicenses.map((l) => (
+              {uniqueDriverLicenses.map((l) => (
                 <span key={l} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-semibold border border-emerald-500/30">
                   <Car className="h-3.5 w-3.5" />
                   {l}
@@ -820,11 +830,11 @@ const CharacterDetails = ({ character: c }: { character: PlayerCharacter }) => {
         </SubCard>
 
         <SubCard title="Licencijos" subtitle="Kitos veikėjo turimos licencijos.">
-          {c.licenses.length === 0 ? (
+          {uniqueLicenses.length === 0 ? (
             <p className="text-sm text-muted-foreground">Licencijų nėra.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {c.licenses.map((l) => (
+              {uniqueLicenses.map((l) => (
                 <span key={l.type} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold border border-primary/30">
                   <Check className="h-3.5 w-3.5" />
                   {l.label || l.type}
