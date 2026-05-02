@@ -1015,14 +1015,21 @@ const ShopSection = ({ discordId, userId }: { discordId?: string | null; userId:
     };
   }, []);
 
+  const counts = useMemo(() => ({
+    all: vehicles.length,
+    car: vehicles.filter((v) => v.category === "car").length,
+    helicopter: vehicles.filter((v) => v.category === "helicopter").length,
+  }), [vehicles]);
+
   const filtered = useMemo(() => {
     let list = vehicles.filter((v) => {
+      if (categoryFilter !== "all" && v.category !== categoryFilter) return false;
       const q = query.trim().toLowerCase();
       return !q || `${v.brand} ${v.model}`.toLowerCase().includes(q);
     });
     if (sortByPrice) list = [...list].sort((a, b) => a.price - b.price);
     return list;
-  }, [query, sortByPrice, vehicles]);
+  }, [query, sortByPrice, vehicles, categoryFilter]);
 
   return (
     <>
