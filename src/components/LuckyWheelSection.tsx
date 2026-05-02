@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,6 +49,10 @@ interface Vehicle {
   model: string;
   price: number;
   image_url: string | null;
+}
+
+interface VipTierLookup {
+  vip_tiers?: { tier?: string | null } | null;
 }
 
 const ENTRY_COLORS = [
@@ -189,8 +193,7 @@ export const LuckyWheelSection = ({
         .order("expires_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      // deno-lint-ignore no-explicit-any
-      const tier = (data as any)?.vip_tiers?.tier as string | undefined;
+      const tier = (data as VipTierLookup | null)?.vip_tiers?.tier;
       return tier ?? null;
     },
   });
@@ -199,10 +202,10 @@ export const LuckyWheelSection = ({
   const eligible = myTier === "gold" || myTier === "platinum";
   const alreadyJoined = entries.some((e) => e.user_id === userId);
 
-  const refreshWheelNow = () => {
+  const refreshWheelNow = useCallback(() => {
     qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
     qc.refetchQueries({ queryKey: ["lucky-wheel-active"], type: "active" });
-  };
+  }, [qc]);
 
   // Realtime subscriptions
   useEffect(() => {
@@ -220,7 +223,7 @@ export const LuckyWheelSection = ({
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  }, [qc, refreshWheelNow]);
 
   // Auto-spin: when timer expires, trigger exactly one backend resolve attempt at a time.
   const startsAtMs = wheel ? new Date(wheel.starts_at).getTime() : 0;
