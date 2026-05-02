@@ -567,7 +567,7 @@ export const LuckyWheelSection = ({
           open={createOpen}
           onOpenChange={setCreateOpen}
           userId={userId}
-          onCreated={() => qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] })}
+          onCreated={() => refreshWheelNow()}
         />
       )}
 
@@ -954,6 +954,11 @@ const CreateWheelDialog = ({
       return;
     }
     toast.success("Sėkmės ratas sukurtas! 🎰");
+    supabase.channel("lucky-wheels-create-broadcast").send({
+      type: "broadcast",
+      event: "wheel-changed",
+      payload: { action: "created" },
+    });
     onCreated();
     onOpenChange(false);
     setVehicleId("");
