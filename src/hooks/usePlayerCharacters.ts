@@ -54,6 +54,7 @@ export interface PlayerCharacter {
   vehicles: CharacterVehicle[];
   online?: boolean | null;
   credits?: number | null;
+  vip?: { active: boolean; tier: "silver" | "gold" | "platinum" | null; expires_at?: string | null } | null;
 }
 
 const charactersKey = (discordId?: string | null) => ["characters", discordId ?? "none"] as const;
