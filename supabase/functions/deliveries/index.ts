@@ -140,6 +140,7 @@ function enrichDelivery(delivery: DeliveryRow) {
       plate,
       model,
       model_hash: modelHash,
+      category, // "car" | "helicopter" — FiveM uses this to route into ground or air garage
       vehicle: normalizedVehicleProps,
       owned_vehicle: normalizedOwnedVehicle,
       type: normalizedOwnedVehicle.type,
