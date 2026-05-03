@@ -51,19 +51,40 @@ Deno.serve(async (req) => {
   let body: Body;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
   if (!body.type) return json({ error: "Missing fields" }, 400);
-  if (body.type !== "vip" && !body.character_id) return json({ error: "Missing character_id" }, 400);
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
-  // Profile (always required)
   const { data: profile, error: profErr } = await admin
     .from("profiles").select("credits, discord_id").eq("user_id", user.id).maybeSingle();
   if (profErr || !profile) return json({ error: "Profile not found" }, 404);
+  if (!profile.discord_id) return json({ error: "Discord not linked" }, 400);
 
-  // Character ownership check (skip for VIP purchases)
+  // Vehicle gifting: recipient picks character later
+  const giftDiscordRaw = (body.gift_to_discord_id ?? "").trim();
+  const isGift = giftDiscordRaw.length > 0 && giftDiscordRaw !== profile.discord_id;
+  if (isGift && !/^\d{5,32}$/.test(giftDiscordRaw)) {
+    return json({ error: "Netinkamas Discord ID" }, 400);
+  }
+  if (body.type !== "vehicle" && isGift) {
+    return json({ error: "Šio tipo dovanos nepalaikomos" }, 400);
+  }
+  if (!isGift && !body.character_id) return json({ error: "Missing character_id" }, 400);
+
+  let recipientUserId: string | null = null;
+  let recipientDiscordId: string | null = null;
+  let recipientUsername: string | null = null;
+  if (isGift) {
+    const { data: recip } = await admin
+      .from("profiles").select("user_id, discord_id, username")
+      .eq("discord_id", giftDiscordRaw).maybeSingle();
+    if (!recip) return json({ error: "Vartotojas su tokiu Discord ID nerastas" }, 404);
+    recipientUserId = recip.user_id;
+    recipientDiscordId = recip.discord_id;
+    recipientUsername = recip.username;
+  }
+
   let character: { id: string; identifier: string; discord_id: string; first_name: string | null; last_name: string | null } | null = null;
-  if (body.type !== "vip") {
-    if (!profile.discord_id) return json({ error: "Discord not linked" }, 400);
+  if (!isGift) {
     const { data: ch, error: charErr } = await admin
       .from("characters").select("id, identifier, discord_id, first_name, last_name")
       .eq("id", body.character_id!).maybeSingle();
