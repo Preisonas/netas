@@ -507,7 +507,37 @@ const DeliveryPicker = ({
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-6">
-          {/* Character selection */}
+          {/* Gift toggle (vehicles only) */}
+          {isVehicle && (
+            <section>
+              <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3.5">
+                <div className="flex items-center gap-3">
+                  <Gift className={`h-5 w-5 ${giftMode ? "text-primary" : "text-muted-foreground"}`} />
+                  <div>
+                    <p className="text-sm font-semibold">Padovanoti draugui</p>
+                    <p className="text-xs text-muted-foreground">Draugas pats pasirinks veikėją</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setGiftMode((v) => !v)}>
+                  <SwitchPill on={giftMode} />
+                </button>
+              </div>
+              {giftMode && (
+                <div className="mt-2 space-y-1">
+                  <Input
+                    value={giftDiscordId}
+                    onChange={(e) => setGiftDiscordId(e.target.value.replace(/\D/g, "").slice(0, 32))}
+                    placeholder="Draugo Discord ID (pvz. 528409152024870922)"
+                    inputMode="numeric"
+                  />
+                  <GiftRecipientPreview discordId={giftDiscordId} />
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Character selection (hidden in gift mode) */}
+          {!giftMode && (
           <section>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">Veikėjas</p>
             {loading ? (
