@@ -1280,6 +1280,7 @@ interface VipTier {
   name: string;
   description: string | null;
   price: number;
+  eur_price: number;
   duration_days: number;
   color: string;
   perks: string[];
@@ -1290,6 +1291,9 @@ interface UserVipRow {
   id: string;
   tier_id: string;
   expires_at: string;
+  stripe_subscription_id?: string | null;
+  auto_renew?: boolean | null;
+  gifter_user_id?: string | null;
 }
 
 const GiftRecipientPreview = ({ discordId }: { discordId: string }) => {
