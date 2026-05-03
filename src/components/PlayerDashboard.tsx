@@ -1485,14 +1485,9 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
     ? tiersList.find((t) => t.id === currentActiveVip.tier_id)
     : undefined;
 
+  // Stripe monthly subscription — no proration; Stripe handles upgrades.
   const computeDiscountedPrice = (tier: VipTier): number => {
-    if (!currentActiveVip || !currentActiveTier) return tier.price;
-    if (currentActiveVip.tier_id === tier.id) return tier.price; // same tier = extend, full price
-    if (!currentActiveTier.duration_days) return tier.price;
-    const msLeft = new Date(currentActiveVip.expires_at).getTime() - Date.now();
-    const daysLeft = Math.max(0, msLeft / (24 * 60 * 60 * 1000));
-    const remaining = (currentActiveTier.price * daysLeft) / currentActiveTier.duration_days;
-    return Math.max(1, Math.ceil(tier.price - remaining));
+    return Number(tier.eur_price) || tier.price;
   };
 
    const tierIcons: Record<string, typeof Crown> = {
