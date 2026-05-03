@@ -8,17 +8,17 @@ const corsHeaders = {
 };
 
 type Body = {
-  type: "vehicle" | "case_item" | "vip";
+  type: "vehicle" | "case_item";
   vehicle_id?: string;
   case_id?: string;
-  vip_tier_id?: string;
   character_id?: string;
-  // Vehicle-only extras (each +5 credits, server-validated)
+  // Vehicle-only extras (server-validated)
   custom_plate?: string | null;
   full_tune?: boolean;
-  // VIP gifting (optional): Discord ID of recipient
+  // Vehicle gifting (optional): recipient picks character later
   gift_to_discord_id?: string | null;
 };
+// NOTE: VIP purchases moved to dedicated `create-vip-subscription` (Stripe monthly).
 
 const PLATE_EXTRA_COST = 5;
 const TUNE_EXTRA_COST = 10;
