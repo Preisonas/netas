@@ -408,16 +408,27 @@ const DeliveryPicker = ({
   const plateClean = customPlate.trim().toUpperCase();
   const plateValid = !useCustomPlate || /^[A-Z0-9 ]{2,8}$/.test(plateClean);
   const selectedChar = characters.find((c) => c.id === selectedCharId) ?? null;
-  const canConfirm = !!selectedChar && plateValid && !submitting;
+  const giftIdValid = /^\d{5,32}$/.test(giftDiscordId.trim());
+  const canConfirm = (giftMode ? giftIdValid : !!selectedChar) && plateValid && !submitting;
 
   const deliver = async () => {
-    if (!discordId || !selectedChar) return;
+    if (!discordId) return;
+    if (!giftMode && !selectedChar) return;
+    if (giftMode && !giftIdValid) {
+      toast.error("Įvesk teisingą Discord ID");
+      return;
+    }
     if (isVehicle && useCustomPlate && !plateValid) {
       toast.error("Neteisingas numeris", { description: "2-8 simboliai: A-Z, 0-9, tarpai." });
       return;
     }
     setSubmitting(true);
-    const payload: Record<string, unknown> = { type, character_id: selectedChar.id };
+    const payload: Record<string, unknown> = { type };
+    if (giftMode) {
+      payload.gift_to_discord_id = giftDiscordId.trim();
+    } else {
+      payload.character_id = selectedChar!.id;
+    }
     if (isVehicle) {
       payload.vehicle_id = sourceId;
       if (useCustomPlate) payload.custom_plate = plateClean;
@@ -442,19 +453,25 @@ const DeliveryPicker = ({
       return;
     }
 
-    const result = data as { label?: string; plate?: string | null; credits_remaining?: number };
+    const result = data as { label?: string; plate?: string | null; credits_remaining?: number; gifted?: boolean; recipient_username?: string | null };
     if (typeof result.credits_remaining === "number") {
       qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
         old ? { ...old, credits: result.credits_remaining } : old,
       );
     }
     qc.invalidateQueries({ queryKey: ["profile", userId] });
-    toast.success(
-      `${result.label ?? itemLabel} išsiųstas: ${selectedChar.firstName} ${selectedChar.lastName}`,
-      result.plate
-        ? { description: `Numeris: ${result.plate} • Liko ${result.credits_remaining ?? 0} €` }
-        : { description: `Liko ${result.credits_remaining ?? 0} €` },
-    );
+    if (result.gifted) {
+      toast.success(`🎁 Dovana išsiųsta ${result.recipient_username ?? giftDiscordId.trim()}`, {
+        description: `Jam reikės pasirinkti veikėją ir atsiimti. Liko ${result.credits_remaining ?? 0} €`,
+      });
+    } else {
+      toast.success(
+        `${result.label ?? itemLabel} išsiųstas: ${selectedChar!.firstName} ${selectedChar!.lastName}`,
+        result.plate
+          ? { description: `Numeris: ${result.plate} • Liko ${result.credits_remaining ?? 0} €` }
+          : { description: `Liko ${result.credits_remaining ?? 0} €` },
+      );
+    }
     onDelivered?.();
     onClose();
   };
