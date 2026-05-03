@@ -1588,7 +1588,7 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
                             <span className="text-3xl font-black tracking-tight" style={{ color: theme.accent }}>
                               {discounted}
                             </span>
-                            <span className="text-xs text-muted-foreground">€/{tier.duration_days}d</span>
+                            <span className="text-xs text-muted-foreground">€ / mėn.</span>
                           </>
                         );
                       })()}
@@ -1639,10 +1639,10 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
                         : isDowngrade
                         ? "Žemesnis lygis"
                         : active
-                        ? `Pratęsti (+${tier.duration_days} d.)`
+                        ? "Aktyvi prenumerata"
                         : hasAnyActive
-                        ? "Pakeisti į šį"
-                        : "Pirkti"}
+                        ? "Pakeisti į šį (mėn.)"
+                        : "Užsisakyti (mėn.)"}
                     </button>
 
                     <button
