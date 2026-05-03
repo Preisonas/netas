@@ -46,8 +46,6 @@ export default function GiftsSection({
         .select("id, type, item_name, label, plate, status, created_at, character_id, claimed_at, gifter_user_id")
         .eq("recipient_user_id", userId)
         .eq("is_gift", true)
-        .eq("status", "pending")
-        .is("character_id", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as GiftDelivery[];
