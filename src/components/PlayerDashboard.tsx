@@ -66,6 +66,7 @@ type SectionKey =
   | "shop"
   | "vip"
   | "boxes"
+  | "gifts"
   | "credits"
   | "admin-credits"
   | "admin-cases"
@@ -82,6 +83,7 @@ const baseNavGroups: NavGroup[] = [
       { key: "shop", title: "Parduotuvė", icon: ShoppingBag },
       { key: "vip", title: "VIP", icon: Crown },
       { key: "boxes", title: "Dėžės", icon: Package },
+      { key: "gifts", title: "Dovanos", icon: Gift },
     ],
   },
 ];
