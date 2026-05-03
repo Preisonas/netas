@@ -331,6 +331,7 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
             active !== "vip" &&
             active !== "credits" &&
             active !== "boxes" &&
+            active !== "gifts" &&
             active !== "admin-credits" &&
             active !== "admin-cases" &&
             active !== "admin-vehicles" &&
