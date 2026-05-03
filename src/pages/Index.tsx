@@ -31,6 +31,7 @@ import PlayerPanel from "@/components/PlayerPanel";
 import PlayerDashboard from "@/components/PlayerDashboard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFn } from "@/lib/invokeFn";
 import type { Session } from "@supabase/supabase-js";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];

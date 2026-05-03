@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFn } from "@/lib/invokeFn";
 import { toast } from "sonner";
 import { Crown, Sparkles, Clock, Car, Users, Trophy, Plus, X, Gift, History, CheckCircle2, XCircle } from "lucide-react";
 import {
