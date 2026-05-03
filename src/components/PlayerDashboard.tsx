@@ -375,6 +375,8 @@ const DeliveryPicker = ({
   const [useCustomPlate, setUseCustomPlate] = useState(false);
   const [customPlate, setCustomPlate] = useState("");
   const [fullTune, setFullTune] = useState(false);
+  const [giftMode, setGiftMode] = useState(false);
+  const [giftDiscordId, setGiftDiscordId] = useState("");
   const qc = useQueryClient();
 
   // Reset state when closing
@@ -384,6 +386,8 @@ const DeliveryPicker = ({
       setUseCustomPlate(false);
       setCustomPlate("");
       setFullTune(false);
+      setGiftMode(false);
+      setGiftDiscordId("");
     }
   }, [open]);
 
@@ -404,16 +408,27 @@ const DeliveryPicker = ({
   const plateClean = customPlate.trim().toUpperCase();
   const plateValid = !useCustomPlate || /^[A-Z0-9 ]{2,8}$/.test(plateClean);
   const selectedChar = characters.find((c) => c.id === selectedCharId) ?? null;
-  const canConfirm = !!selectedChar && plateValid && !submitting;
+  const giftIdValid = /^\d{5,32}$/.test(giftDiscordId.trim());
+  const canConfirm = (giftMode ? giftIdValid : !!selectedChar) && plateValid && !submitting;
 
   const deliver = async () => {
-    if (!discordId || !selectedChar) return;
+    if (!discordId) return;
+    if (!giftMode && !selectedChar) return;
+    if (giftMode && !giftIdValid) {
+      toast.error("Įvesk teisingą Discord ID");
+      return;
+    }
     if (isVehicle && useCustomPlate && !plateValid) {
       toast.error("Neteisingas numeris", { description: "2-8 simboliai: A-Z, 0-9, tarpai." });
       return;
     }
     setSubmitting(true);
-    const payload: Record<string, unknown> = { type, character_id: selectedChar.id };
+    const payload: Record<string, unknown> = { type };
+    if (giftMode) {
+      payload.gift_to_discord_id = giftDiscordId.trim();
+    } else {
+      payload.character_id = selectedChar!.id;
+    }
     if (isVehicle) {
       payload.vehicle_id = sourceId;
       if (useCustomPlate) payload.custom_plate = plateClean;
@@ -438,19 +453,25 @@ const DeliveryPicker = ({
       return;
     }
 
-    const result = data as { label?: string; plate?: string | null; credits_remaining?: number };
+    const result = data as { label?: string; plate?: string | null; credits_remaining?: number; gifted?: boolean; recipient_username?: string | null };
     if (typeof result.credits_remaining === "number") {
       qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
         old ? { ...old, credits: result.credits_remaining } : old,
       );
     }
     qc.invalidateQueries({ queryKey: ["profile", userId] });
-    toast.success(
-      `${result.label ?? itemLabel} išsiųstas: ${selectedChar.firstName} ${selectedChar.lastName}`,
-      result.plate
-        ? { description: `Numeris: ${result.plate} • Liko ${result.credits_remaining ?? 0} €` }
-        : { description: `Liko ${result.credits_remaining ?? 0} €` },
-    );
+    if (result.gifted) {
+      toast.success(`🎁 Dovana išsiųsta ${result.recipient_username ?? giftDiscordId.trim()}`, {
+        description: `Jam reikės pasirinkti veikėją ir atsiimti. Liko ${result.credits_remaining ?? 0} €`,
+      });
+    } else {
+      toast.success(
+        `${result.label ?? itemLabel} išsiųstas: ${selectedChar!.firstName} ${selectedChar!.lastName}`,
+        result.plate
+          ? { description: `Numeris: ${result.plate} • Liko ${result.credits_remaining ?? 0} €` }
+          : { description: `Liko ${result.credits_remaining ?? 0} €` },
+      );
+    }
     onDelivered?.();
     onClose();
   };
@@ -486,7 +507,37 @@ const DeliveryPicker = ({
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-6">
-          {/* Character selection */}
+          {/* Gift toggle (vehicles only) */}
+          {isVehicle && (
+            <section>
+              <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-3.5">
+                <div className="flex items-center gap-3">
+                  <Gift className={`h-5 w-5 ${giftMode ? "text-primary" : "text-muted-foreground"}`} />
+                  <div>
+                    <p className="text-sm font-semibold">Padovanoti draugui</p>
+                    <p className="text-xs text-muted-foreground">Draugas pats pasirinks veikėją</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setGiftMode((v) => !v)}>
+                  <SwitchPill on={giftMode} />
+                </button>
+              </div>
+              {giftMode && (
+                <div className="mt-2 space-y-1">
+                  <Input
+                    value={giftDiscordId}
+                    onChange={(e) => setGiftDiscordId(e.target.value.replace(/\D/g, "").slice(0, 32))}
+                    placeholder="Draugo Discord ID (pvz. 528409152024870922)"
+                    inputMode="numeric"
+                  />
+                  <GiftRecipientPreview discordId={giftDiscordId} />
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Character selection (hidden in gift mode) */}
+          {!giftMode && (
           <section>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">Veikėjas</p>
             {loading ? (
@@ -1280,6 +1331,7 @@ interface VipTier {
   name: string;
   description: string | null;
   price: number;
+  eur_price: number;
   duration_days: number;
   color: string;
   perks: string[];
@@ -1290,6 +1342,9 @@ interface UserVipRow {
   id: string;
   tier_id: string;
   expires_at: string;
+  stripe_subscription_id?: string | null;
+  auto_renew?: boolean | null;
+  gifter_user_id?: string | null;
 }
 
 const GiftRecipientPreview = ({ discordId }: { discordId: string }) => {
@@ -1408,7 +1463,7 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vip_tiers")
-        .select("id, tier, name, description, price, duration_days, color, perks, sort_order")
+        .select("id, tier, name, description, price, eur_price, duration_days, color, perks, sort_order")
         .eq("active", true)
         .order("sort_order", { ascending: true });
       if (error) throw error;
@@ -1421,7 +1476,7 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_vips")
-        .select("id, tier_id, expires_at")
+        .select("id, tier_id, expires_at, stripe_subscription_id, auto_renew, gifter_user_id")
         .eq("user_id", userId);
       if (error) throw error;
       return (data ?? []) as UserVipRow[];
@@ -1439,37 +1494,21 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
       return;
     }
     setBuyingId(tier.id);
-    const { data, error } = await supabase.functions.invoke("process-purchase", {
+    const { data, error } = await supabase.functions.invoke("create-vip-subscription", {
       body: {
-        type: "vip",
         vip_tier_id: tier.id,
         ...(giftTo ? { gift_to_discord_id: giftTo } : {}),
+        returnUrl: `${window.location.origin}/?vip_checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       },
     });
     setBuyingId(null);
-    if (error || (data && (data as { error?: string }).error)) {
-      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Pirkimas nepavyko";
-      toast.error("Nepavyko nupirkti VIP", { description: msg });
+    if (error || !(data as { url?: string })?.url) {
+      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Nepavyko pradėti mokėjimo";
+      toast.error("Klaida", { description: msg });
       return;
     }
-    const result = data as { credits_remaining?: number; expires_at?: string; gifted?: boolean };
-    if (typeof result.credits_remaining === "number") {
-      qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
-        old ? { ...old, credits: result.credits_remaining } : old,
-      );
-    }
-    qc.invalidateQueries({ queryKey: ["user-vips", userId] });
-    qc.invalidateQueries({ queryKey: ["active-vip", userId] });
-    qc.invalidateQueries({ queryKey: ["profile", userId] });
-    if (result.gifted) {
-      toast.success(`${tier.name} padovanotas draugui!`);
-    } else {
-      toast.success(`${tier.name} aktyvuotas!`, {
-        description: result.expires_at
-          ? `Galioja iki ${new Date(result.expires_at).toLocaleString("lt-LT")}`
-          : undefined,
-      });
-    }
+    // Redirect to Stripe — recurring monthly subscription
+    window.location.assign((data as { url: string }).url);
   };
 
   const submitGift = async () => {
@@ -1497,14 +1536,9 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
     ? tiersList.find((t) => t.id === currentActiveVip.tier_id)
     : undefined;
 
+  // Stripe monthly subscription — no proration; Stripe handles upgrades.
   const computeDiscountedPrice = (tier: VipTier): number => {
-    if (!currentActiveVip || !currentActiveTier) return tier.price;
-    if (currentActiveVip.tier_id === tier.id) return tier.price; // same tier = extend, full price
-    if (!currentActiveTier.duration_days) return tier.price;
-    const msLeft = new Date(currentActiveVip.expires_at).getTime() - Date.now();
-    const daysLeft = Math.max(0, msLeft / (24 * 60 * 60 * 1000));
-    const remaining = (currentActiveTier.price * daysLeft) / currentActiveTier.duration_days;
-    return Math.max(1, Math.ceil(tier.price - remaining));
+    return Number(tier.eur_price) || tier.price;
   };
 
    const tierIcons: Record<string, typeof Crown> = {
@@ -1605,7 +1639,7 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
                             <span className="text-3xl font-black tracking-tight" style={{ color: theme.accent }}>
                               {discounted}
                             </span>
-                            <span className="text-xs text-muted-foreground">€/{tier.duration_days}d</span>
+                            <span className="text-xs text-muted-foreground">€ / mėn.</span>
                           </>
                         );
                       })()}
@@ -1656,10 +1690,10 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
                         : isDowngrade
                         ? "Žemesnis lygis"
                         : active
-                        ? `Pratęsti (+${tier.duration_days} d.)`
+                        ? "Aktyvi prenumerata"
                         : hasAnyActive
-                        ? "Pakeisti į šį"
-                        : "Pirkti"}
+                        ? "Pakeisti į šį (mėn.)"
+                        : "Užsisakyti (mėn.)"}
                     </button>
 
                     <button
@@ -1694,8 +1728,9 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
               Padovanoti {giftDialog?.name}
             </DialogTitle>
             <DialogDescription>
-              Įvesk draugo Discord ID — jam bus iškart aktyvuotas {giftDialog?.name} ({giftDialog?.duration_days} d.).
-              Kreditai ({giftDialog?.price} €) bus nuskaityti iš tavo balanso.
+              Įvesk draugo Discord ID — VIP bus aktyvuotas jam, o mėnesinis mokėjimas
+              ({giftDialog?.eur_price ?? giftDialog?.price} € / mėn.) bus nuskaitomas iš tavo kortelės per Stripe.
+              Atšaukti gali bet kada.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
