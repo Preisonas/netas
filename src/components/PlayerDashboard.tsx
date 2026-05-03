@@ -1493,6 +1493,30 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [giftDialog, setGiftDialog] = useState<VipTier | null>(null);
   const [giftDiscordId, setGiftDiscordId] = useState("");
+  const [extendOpenId, setExtendOpenId] = useState<string | null>(null);
+  const [extendDays, setExtendDays] = useState<number>(7);
+  const [extendingId, setExtendingId] = useState<string | null>(null);
+
+  const extend = async (vipId: string, days: number) => {
+    setExtendingId(vipId);
+    const { data, error } = await invokeFn<{
+      cost_credits: number;
+      credits_remaining: number;
+      new_expires_at: string;
+    }>("extend-vip-with-credits", { body: { vip_id: vipId, days } });
+    setExtendingId(null);
+    if (error || !data) {
+      toast.error("Nepavyko pratęsti", { description: error ?? "Klaida" });
+      return;
+    }
+    toast.success(`✅ Pridėta ${days} d. (-${data.cost_credits} kr.)`, {
+      description: `Galioja iki ${new Date(data.new_expires_at).toLocaleString("lt-LT")}`,
+    });
+    setExtendOpenId(null);
+    qc.invalidateQueries({ queryKey: ["my-vips", userId] });
+    qc.invalidateQueries({ queryKey: ["active-vip", userId] });
+    qc.invalidateQueries({ queryKey: ["profile", userId] });
+  };
 
   const buy = async (tier: VipTier, giftTo?: string) => {
     if (!discordId) {
