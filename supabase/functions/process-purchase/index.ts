@@ -99,7 +99,6 @@ Deno.serve(async (req) => {
   let label = "";
   let plate: string | null = null;
   let deliveryMetadata: Record<string, unknown> | null = null;
-  let vipResult: { tier: string; expires_at: string } | null = null;
 
   if (body.type === "vehicle") {
     if (!body.vehicle_id) return json({ error: "vehicle_id required" }, 400);
@@ -107,22 +106,18 @@ Deno.serve(async (req) => {
       .from("vehicles").select("price, model, model_name, brand, category").eq("id", body.vehicle_id).maybeSingle();
     if (error || !v) return json({ error: "Vehicle not found" }, 404);
     price = v.price;
-    // SPAWN NAME = vehicles.model_name column (e.g. "sultanrs", "t20")
-    // DISPLAY NAME = vehicles.model column (e.g. "Kentas")
     const spawnName = v.model_name || v.model;
     const displayName = v.model;
     const vehicleCategory: "car" | "helicopter" = v.category === "helicopter" ? "helicopter" : "car";
     itemName = spawnName;
     label = `${v.brand} ${displayName}`;
 
-    // ----- Extras: custom plate (+5) and full tune (+5) -----
     let customPlate: string | null = null;
     if (typeof body.custom_plate === "string" && body.custom_plate.trim()) {
       const cp = body.custom_plate.trim().toUpperCase();
       if (!PLATE_REGEX.test(cp)) {
         return json({ error: "Invalid plate. Use 2-8 chars: A-Z, 0-9, spaces." }, 400);
       }
-      // Uniqueness check against pending + delivered plates we issued
       const { data: existing } = await admin
         .from("pending_deliveries").select("id").eq("plate", cp).maybeSingle();
       if (existing) return json({ error: "Plate already taken" }, 409);
@@ -133,9 +128,13 @@ Deno.serve(async (req) => {
     if (fullTune) price += TUNE_EXTRA_COST;
 
     plate = customPlate ?? generatePlate();
+    // For gifts, we don't yet know the character — placeholder identifier ""
+    // The claim-gift function patches the metadata with the real owner identifier.
     deliveryMetadata = buildVehicleDeliveryMetadata({
-      characterIdentifier: character.identifier,
-      characterName: `${character.first_name ?? ""} ${character.last_name ?? ""}`.trim() || null,
+      characterIdentifier: character?.identifier ?? "",
+      characterName: character
+        ? (`${character.first_name ?? ""} ${character.last_name ?? ""}`.trim() || null)
+        : null,
       brand: v.brand,
       model: spawnName,
       modelName: displayName,
@@ -156,184 +155,51 @@ Deno.serve(async (req) => {
     const picked = pickWeighted(items);
     itemName = picked.item_name;
     label = `${c.name} → ${picked.label}`;
-  } else if (body.type === "vip") {
-    if (!body.vip_tier_id) return json({ error: "vip_tier_id required" }, 400);
-    const { data: tier, error: tErr } = await admin
-      .from("vip_tiers")
-      .select("id, tier, name, price, duration_days, active")
-      .eq("id", body.vip_tier_id).maybeSingle();
-    if (tErr || !tier) return json({ error: "VIP tier not found" }, 404);
-    if (!tier.active) return json({ error: "VIP tier inactive" }, 400);
-    price = tier.price;
-    label = tier.name;
-    itemName = `vip_${tier.tier}`;
-    vipResult = { tier: tier.tier, expires_at: "" }; // filled after upsert
-
-    // Prorated upgrade pricing (only for self-purchase, not gifts):
-    // If user has a different active tier, credit the unused portion of the old tier.
-    const giftDiscordRaw = (body.gift_to_discord_id ?? "").trim();
-    const isGiftBuy = giftDiscordRaw.length > 0 && giftDiscordRaw !== profile.discord_id;
-    if (!isGiftBuy) {
-      const nowIsoCheck = new Date().toISOString();
-      const { data: currentActive } = await admin
-        .from("user_vips")
-        .select("tier_id, expires_at, created_at")
-        .eq("user_id", user.id)
-        .gt("expires_at", nowIsoCheck)
-        .order("expires_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (currentActive && currentActive.tier_id !== body.vip_tier_id) {
-        const { data: oldTier } = await admin
-          .from("vip_tiers")
-          .select("price, duration_days, sort_order")
-          .eq("id", currentActive.tier_id)
-          .maybeSingle();
-        const { data: newTierMeta } = await admin
-          .from("vip_tiers")
-          .select("sort_order")
-          .eq("id", body.vip_tier_id)
-          .maybeSingle();
-        // Block downgrades — user must wait until current VIP expires.
-        if (oldTier && newTierMeta && newTierMeta.sort_order < oldTier.sort_order) {
-          return json({ error: "Negalima žemesnio VIP — turi aukštesnį aktyvų lygį." }, 400);
-        }
-        if (oldTier && oldTier.duration_days > 0) {
-          const msLeft = new Date(currentActive.expires_at).getTime() - Date.now();
-          const daysLeft = Math.max(0, msLeft / (24 * 60 * 60 * 1000));
-          const remainingValue = (oldTier.price * daysLeft) / oldTier.duration_days;
-          const discounted = Math.max(1, Math.ceil(price - remainingValue));
-          price = Math.min(price, discounted);
-        }
-      }
-    }
   } else {
     return json({ error: "Invalid type" }, 400);
   }
 
-  // TEST MODE: VIP purchases are free — skip credit check & deduction
-  const isTestFreeVip = body.type === "vip";
-
-  if (!isTestFreeVip && profile.credits < price) {
+  if (profile.credits < price) {
     return json({ error: "Insufficient credits", credits: profile.credits, price }, 402);
   }
 
-  // Deduct credits with optimistic check (skipped in test-free VIP mode)
-  let updData: { credits: number } | null = { credits: profile.credits };
-  if (!isTestFreeVip) {
-    const { error: updErr, data: upd } = await admin
-      .from("profiles")
-      .update({ credits: profile.credits - price })
-      .eq("user_id", user.id)
-      .eq("credits", profile.credits) // optimistic concurrency
-      .select("credits")
-      .maybeSingle();
-    if (updErr || !upd) return json({ error: "Credit deduction failed, retry" }, 409);
-    updData = upd;
-  }
+  // Deduct credits with optimistic concurrency
+  const { error: updErr, data: upd } = await admin
+    .from("profiles")
+    .update({ credits: profile.credits - price })
+    .eq("user_id", user.id)
+    .eq("credits", profile.credits)
+    .select("credits")
+    .maybeSingle();
+  if (updErr || !upd) return json({ error: "Credit deduction failed, retry" }, 409);
+  const updData = upd;
 
-  // VIP path: extend, upgrade, or gift
-  if (body.type === "vip") {
-    const { data: tier } = await admin
-      .from("vip_tiers").select("tier, duration_days").eq("id", body.vip_tier_id!).maybeSingle();
-    const days = tier?.duration_days ?? 30;
+  // Create delivery row.
+  // - Self purchase: character_id set, ready for FiveM pickup.
+  // - Gift: character_id null, recipient_user_id set; recipient claims via claim-gift.
+  const giftLabelSuffix = isGift && recipientUsername
+    ? ` (Dovana ${recipientUsername})`
+    : isGift
+    ? ` (Dovana)`
+    : "";
 
-    // Resolve recipient: gift target (by discord_id) or self
-    let recipientUserId = user.id;
-    let recipientDiscordId: string | null = profile.discord_id;
-    const giftDiscord = (body.gift_to_discord_id ?? "").trim();
-    const isGift = giftDiscord.length > 0 && giftDiscord !== profile.discord_id;
-    if (isGift) {
-      if (!/^\d{5,32}$/.test(giftDiscord)) {
-        return json({ error: "Netinkamas Discord ID" }, 400);
-      }
-      const { data: recip } = await admin
-        .from("profiles")
-        .select("user_id, discord_id, username")
-        .eq("discord_id", giftDiscord)
-        .maybeSingle();
-      if (!recip) {
-        return json({ error: "Vartotojas su tokiu Discord ID nerastas" }, 404);
-      }
-      recipientUserId = recip.user_id;
-      recipientDiscordId = recip.discord_id;
-    }
-
-    // Find ANY active VIP for the recipient (for upgrade/extend logic)
-    const nowIso = new Date().toISOString();
-    const { data: anyActive } = await admin
-      .from("user_vips")
-      .select("id, tier_id, expires_at")
-      .eq("user_id", recipientUserId)
-      .gt("expires_at", nowIso)
-      .order("expires_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const sameTier = anyActive && anyActive.tier_id === body.vip_tier_id;
-    const now = Date.now();
-    // If same tier → extend from current expiry; otherwise start fresh from now (upgrade/downgrade replaces)
-    const base = sameTier
-      ? new Date(anyActive!.expires_at).getTime()
-      : now;
-    const expiresAt = new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
-
-    if (sameTier) {
-      const { error: upErr } = await admin
-        .from("user_vips").update({ expires_at: expiresAt }).eq("id", anyActive!.id);
-      if (upErr) {
-        if (!isTestFreeVip) {
-          await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
-        }
-        return json({ error: "VIP update failed: " + upErr.message }, 500);
-      }
-    } else {
-      // Remove any other active VIPs for this user (upgrade replaces previous tier)
-      if (anyActive) {
-        await admin.from("user_vips").delete().eq("user_id", recipientUserId);
-      }
-      const { error: insErr } = await admin.from("user_vips").insert({
-        user_id: recipientUserId,
-        discord_id: recipientDiscordId,
-        tier_id: body.vip_tier_id!,
-        expires_at: expiresAt,
-      });
-      if (insErr) {
-        if (!isTestFreeVip) {
-          await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
-        }
-        return json({ error: "VIP create failed: " + insErr.message }, 500);
-      }
-    }
-
-    return json({
-      success: true,
-      type: "vip",
-      label,
-      tier: tier?.tier,
-      expires_at: expiresAt,
-      price,
-      credits_remaining: updData!.credits,
-      gifted: isGift,
-      recipient_discord_id: isGift ? recipientDiscordId : null,
-    });
-  }
-
-  // Create delivery row (vehicle / case_item)
   const { data: delivery, error: delErr } = await admin
     .from("pending_deliveries").insert({
-      user_id: user.id,
-      discord_id: profile.discord_id,
-      character_id: character!.id,
-      character_identifier: character!.identifier,
+      user_id: isGift ? recipientUserId! : user.id,
+      discord_id: isGift ? recipientDiscordId! : profile.discord_id,
+      character_id: character?.id ?? null,
+      character_identifier: character?.identifier ?? null,
       type: body.type,
       item_name: itemName,
-      label,
+      label: label + giftLabelSuffix,
       plate,
       metadata: deliveryMetadata,
+      is_gift: isGift,
+      gifter_user_id: isGift ? user.id : null,
+      recipient_user_id: isGift ? recipientUserId! : null,
+      recipient_discord_id: isGift ? recipientDiscordId! : null,
     }).select().single();
   if (delErr) {
-    // refund
     await admin.from("profiles").update({ credits: profile.credits }).eq("user_id", user.id);
     return json({ error: "Delivery creation failed: " + delErr.message }, 500);
   }
@@ -341,11 +207,13 @@ Deno.serve(async (req) => {
   return json({
     success: true,
     delivery,
-    label,
+    label: label + giftLabelSuffix,
     plate,
     price,
     credits_remaining: updData.credits,
-    character: { first_name: character!.first_name, last_name: character!.last_name },
+    gifted: isGift,
+    recipient_username: isGift ? recipientUsername : null,
+    character: character ? { first_name: character.first_name, last_name: character.last_name } : null,
   });
 });
 
