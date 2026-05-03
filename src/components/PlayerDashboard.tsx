@@ -1677,8 +1677,9 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
               Padovanoti {giftDialog?.name}
             </DialogTitle>
             <DialogDescription>
-              Įvesk draugo Discord ID — jam bus iškart aktyvuotas {giftDialog?.name} ({giftDialog?.duration_days} d.).
-              Kreditai ({giftDialog?.price} €) bus nuskaityti iš tavo balanso.
+              Įvesk draugo Discord ID — VIP bus aktyvuotas jam, o mėnesinis mokėjimas
+              ({giftDialog?.eur_price ?? giftDialog?.price} € / mėn.) bus nuskaitomas iš tavo kortelės per Stripe.
+              Atšaukti gali bet kada.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
