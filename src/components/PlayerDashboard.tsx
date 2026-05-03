@@ -375,6 +375,8 @@ const DeliveryPicker = ({
   const [useCustomPlate, setUseCustomPlate] = useState(false);
   const [customPlate, setCustomPlate] = useState("");
   const [fullTune, setFullTune] = useState(false);
+  const [giftMode, setGiftMode] = useState(false);
+  const [giftDiscordId, setGiftDiscordId] = useState("");
   const qc = useQueryClient();
 
   // Reset state when closing
@@ -384,6 +386,8 @@ const DeliveryPicker = ({
       setUseCustomPlate(false);
       setCustomPlate("");
       setFullTune(false);
+      setGiftMode(false);
+      setGiftDiscordId("");
     }
   }, [open]);
 
