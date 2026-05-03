@@ -118,18 +118,27 @@ const Index = () => {
     };
   }, []);
 
-  // Verify Stripe checkout on return
+  // Verify Stripe checkout on return (credits + VIP subscription)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("checkout") !== "success") return;
+    const isCredits = params.get("checkout") === "success";
+    const isVip = params.get("vip_checkout") === "success";
+    if (!isCredits && !isVip) return;
     const sessionId = params.get("session_id");
     if (!sessionId) return;
     (async () => {
-      const { data, error } = await supabase.functions.invoke("verify-credit-checkout", {
-        body: { sessionId },
-      });
+      const fnName = isVip ? "verify-vip-checkout" : "verify-credit-checkout";
+      const { data, error } = await supabase.functions.invoke(fnName, { body: { sessionId } });
       if (error) {
         toast.error("Nepavyko patvirtinti mokėjimo");
+      } else if (isVip) {
+        if (data?.status === "fulfilled") {
+          toast.success(data?.gifted ? "VIP padovanotas!" : "VIP aktyvuotas!", {
+            description: data?.expires_at ? `Galioja iki ${new Date(data.expires_at).toLocaleString("lt-LT")}` : undefined,
+          });
+        } else {
+          toast.warning("Mokėjimas dar neapmokėtas");
+        }
       } else if (data?.status === "fulfilled") {
         toast.success(`Pridėta ${data.added} kreditų. Likutis: ${data.credits}`);
       } else if (data?.status === "already") {
