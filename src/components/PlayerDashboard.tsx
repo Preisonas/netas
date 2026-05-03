@@ -437,18 +437,17 @@ const DeliveryPicker = ({
       payload.case_id = sourceId;
     }
 
-    const { data, error } = await supabase.functions.invoke("process-purchase", { body: payload });
+    const { data, error } = await invokeFn<any>("process-purchase", { body: payload });
     setSubmitting(false);
 
-    if (error || (data && (data as { error?: string }).error)) {
-      const rawMsg = (data as { error?: string } | null)?.error ?? error?.message ?? "Nepavyko apdoroti pirkimo";
-      const isPlateTaken = /plate\s+already\s+taken/i.test(rawMsg);
+    if (error) {
+      const isPlateTaken = /plate\s+already\s+taken/i.test(error);
       if (isPlateTaken) {
         toast.error("Numeris jau užimtas", {
           description: `Numeris „${plateClean}" jau priklauso kitam transportui. Pasirink kitą.`,
         });
       } else {
-        toast.error("Pirkimas nepavyko", { description: rawMsg });
+        toast.error("Pirkimas nepavyko", { description: error });
       }
       return;
     }
@@ -1495,7 +1494,7 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
       return;
     }
     setBuyingId(tier.id);
-    const { data, error } = await supabase.functions.invoke("create-vip-subscription", {
+    const { data, error } = await invokeFn<{ url?: string }>("create-vip-subscription", {
       body: {
         vip_tier_id: tier.id,
         ...(giftTo ? { gift_to_discord_id: giftTo } : {}),
@@ -1503,13 +1502,12 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
       },
     });
     setBuyingId(null);
-    if (error || !(data as { url?: string })?.url) {
-      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Nepavyko pradėti mokėjimo";
-      toast.error("Klaida", { description: msg });
+    if (error || !data?.url) {
+      toast.error("Klaida", { description: error ?? "Nepavyko pradėti mokėjimo" });
       return;
     }
     // Redirect to Stripe — recurring monthly subscription
-    window.location.assign((data as { url: string }).url);
+    window.location.assign(data.url);
   };
 
   const submitGift = async () => {

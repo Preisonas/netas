@@ -42,7 +42,7 @@ export function CreditCheckoutDialog({
 
     (async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("create-credit-checkout", {
+        const { data, error } = await invokeFn<{ url?: string }>("create-credit-checkout", {
           body: {
             credits,
             discountCode,
@@ -53,8 +53,8 @@ export function CreditCheckoutDialog({
         if (!active) return;
 
         if (error || !data?.url) {
-          const msg = (error as any)?.message || data?.error || "Nepavyko pradėti mokėjimo";
-          console.error("create-credit-checkout failed:", error, data);
+          const msg = error || "Nepavyko pradėti mokėjimo";
+          console.error("create-credit-checkout failed:", error);
           setError(msg);
           toast.error(msg);
           return;

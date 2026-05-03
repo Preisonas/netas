@@ -341,23 +341,11 @@ export const LuckyWheelSection = ({
 
   const join = async () => {
     if (!wheel) return;
-    const { data, error } = await supabase.functions.invoke("lucky-wheel-join", {
+    const { error } = await invokeFn("lucky-wheel-join", {
       body: { wheel_id: wheel.id },
     });
-    // Try to extract a friendly message from non-2xx responses
-    let serverMsg: string | undefined = (data as { error?: string } | null)?.error;
-    if (error && !serverMsg) {
-      try {
-        // FunctionsHttpError exposes the original Response on error.context
-        const ctx = (error as unknown as { context?: Response }).context;
-        if (ctx && typeof ctx.json === "function") {
-          const body = await ctx.clone().json();
-          serverMsg = body?.error;
-        }
-      } catch { /* ignore */ }
-    }
-    if (error || serverMsg) {
-      toast.error("Nepavyko prisijungti", { description: serverMsg ?? error?.message ?? "Klaida" });
+    if (error) {
+      toast.error("Nepavyko prisijungti", { description: error });
       // Refresh wheel state in case it was cancelled/finished server-side
       qc.invalidateQueries({ queryKey: ["lucky-wheel-active"] });
       return;
@@ -1099,13 +1087,12 @@ const ClaimDialog = ({
       return;
     }
     setSubmitting(true);
-    const { data, error } = await supabase.functions.invoke("lucky-wheel-claim", {
+    const { error } = await invokeFn("lucky-wheel-claim", {
       body: { wheel_id: wheelId, character_id: characterId },
     });
     setSubmitting(false);
-    if (error || (data as { error?: string })?.error) {
-      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Klaida";
-      toast.error("Nepavyko atsiimti", { description: msg });
+    if (error) {
+      toast.error("Nepavyko atsiimti", { description: error });
       return;
     }
     toast.success("🎉 Prizas atsiųstas į garažą!");
