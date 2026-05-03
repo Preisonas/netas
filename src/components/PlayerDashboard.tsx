@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFn } from "@/lib/invokeFn";
+import GiftsSection from "@/components/GiftsSection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,6 +67,7 @@ type SectionKey =
   | "shop"
   | "vip"
   | "boxes"
+  | "gifts"
   | "credits"
   | "admin-credits"
   | "admin-cases"
@@ -82,6 +84,7 @@ const baseNavGroups: NavGroup[] = [
       { key: "shop", title: "Parduotuvė", icon: ShoppingBag },
       { key: "vip", title: "VIP", icon: Crown },
       { key: "boxes", title: "Dėžės", icon: Package },
+      { key: "gifts", title: "Dovanos", icon: Gift },
     ],
   },
 ];
@@ -303,6 +306,7 @@ const PlayerDashboard = ({ session, onClose, initialSection = "profile" }: Playe
           {active === "vip" && <VipSection userId={session.user.id} discordId={discordId} />}
           {active === "credits" && <CreditsSection />}
           {active === "boxes" && <BoxesSection discordId={discordId} userId={session.user.id} />}
+          {active === "gifts" && <GiftsSection userId={session.user.id} discordId={discordId} />}
           {active === "admin-credits" && isOwner && <AdminCreditsSection />}
           {active === "admin-cases" && isOwner && (
             <>
