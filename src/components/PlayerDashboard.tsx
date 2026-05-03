@@ -593,7 +593,8 @@ const DeliveryPicker = ({
                 })}
               </div>
             )}
-          </section>
+           </section>
+          )}
 
           {/* Vehicle extras */}
           {isVehicle && (
