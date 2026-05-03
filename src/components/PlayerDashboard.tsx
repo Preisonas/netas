@@ -1412,7 +1412,7 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vip_tiers")
-        .select("id, tier, name, description, price, duration_days, color, perks, sort_order")
+        .select("id, tier, name, description, price, eur_price, duration_days, color, perks, sort_order")
         .eq("active", true)
         .order("sort_order", { ascending: true });
       if (error) throw error;
@@ -1425,7 +1425,7 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_vips")
-        .select("id, tier_id, expires_at")
+        .select("id, tier_id, expires_at, stripe_subscription_id, auto_renew, gifter_user_id")
         .eq("user_id", userId);
       if (error) throw error;
       return (data ?? []) as UserVipRow[];
