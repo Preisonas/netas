@@ -1439,37 +1439,21 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
       return;
     }
     setBuyingId(tier.id);
-    const { data, error } = await supabase.functions.invoke("process-purchase", {
+    const { data, error } = await supabase.functions.invoke("create-vip-subscription", {
       body: {
-        type: "vip",
         vip_tier_id: tier.id,
         ...(giftTo ? { gift_to_discord_id: giftTo } : {}),
+        returnUrl: `${window.location.origin}/?vip_checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       },
     });
     setBuyingId(null);
-    if (error || (data && (data as { error?: string }).error)) {
-      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Pirkimas nepavyko";
-      toast.error("Nepavyko nupirkti VIP", { description: msg });
+    if (error || !(data as { url?: string })?.url) {
+      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Nepavyko pradėti mokėjimo";
+      toast.error("Klaida", { description: msg });
       return;
     }
-    const result = data as { credits_remaining?: number; expires_at?: string; gifted?: boolean };
-    if (typeof result.credits_remaining === "number") {
-      qc.setQueryData(["profile", userId], (old: { credits?: number } | null | undefined) =>
-        old ? { ...old, credits: result.credits_remaining } : old,
-      );
-    }
-    qc.invalidateQueries({ queryKey: ["user-vips", userId] });
-    qc.invalidateQueries({ queryKey: ["active-vip", userId] });
-    qc.invalidateQueries({ queryKey: ["profile", userId] });
-    if (result.gifted) {
-      toast.success(`${tier.name} padovanotas draugui!`);
-    } else {
-      toast.success(`${tier.name} aktyvuotas!`, {
-        description: result.expires_at
-          ? `Galioja iki ${new Date(result.expires_at).toLocaleString("lt-LT")}`
-          : undefined,
-      });
-    }
+    // Redirect to Stripe — recurring monthly subscription
+    window.location.assign((data as { url: string }).url);
   };
 
   const submitGift = async () => {
