@@ -319,49 +319,64 @@ export type Database = {
       }
       pending_deliveries: {
         Row: {
-          character_id: string
-          character_identifier: string
+          character_id: string | null
+          character_identifier: string | null
+          claimed_at: string | null
           created_at: string
           delivered_at: string | null
           discord_id: string
           error: string | null
+          gifter_user_id: string | null
           id: string
+          is_gift: boolean
           item_name: string
           label: string
           metadata: Json | null
           plate: string | null
+          recipient_discord_id: string | null
+          recipient_user_id: string | null
           status: string
           type: string
           user_id: string
         }
         Insert: {
-          character_id: string
-          character_identifier: string
+          character_id?: string | null
+          character_identifier?: string | null
+          claimed_at?: string | null
           created_at?: string
           delivered_at?: string | null
           discord_id: string
           error?: string | null
+          gifter_user_id?: string | null
           id?: string
+          is_gift?: boolean
           item_name: string
           label: string
           metadata?: Json | null
           plate?: string | null
+          recipient_discord_id?: string | null
+          recipient_user_id?: string | null
           status?: string
           type: string
           user_id: string
         }
         Update: {
-          character_id?: string
-          character_identifier?: string
+          character_id?: string | null
+          character_identifier?: string | null
+          claimed_at?: string | null
           created_at?: string
           delivered_at?: string | null
           discord_id?: string
           error?: string | null
+          gifter_user_id?: string | null
           id?: string
+          is_gift?: boolean
           item_name?: string
           label?: string
           metadata?: Json | null
           plate?: string | null
+          recipient_discord_id?: string | null
+          recipient_user_id?: string | null
           status?: string
           type?: string
           user_id?: string
@@ -414,28 +429,43 @@ export type Database = {
       }
       user_vips: {
         Row: {
+          auto_renew: boolean
+          cancelled_at: string | null
           created_at: string
           discord_id: string | null
           expires_at: string
+          gifter_user_id: string | null
           id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           tier_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          auto_renew?: boolean
+          cancelled_at?: string | null
           created_at?: string
           discord_id?: string | null
           expires_at: string
+          gifter_user_id?: string | null
           id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           tier_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          auto_renew?: boolean
+          cancelled_at?: string | null
           created_at?: string
           discord_id?: string | null
           expires_at?: string
+          gifter_user_id?: string | null
           id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           tier_id?: string
           updated_at?: string
           user_id?: string
@@ -511,11 +541,13 @@ export type Database = {
           created_at: string
           description: string | null
           duration_days: number
+          eur_price: number
           id: string
           name: string
           perks: string[]
           price: number
           sort_order: number
+          stripe_price_id: string | null
           tier: string
           updated_at: string
         }
@@ -525,11 +557,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_days?: number
+          eur_price?: number
           id?: string
           name: string
           perks?: string[]
           price?: number
           sort_order?: number
+          stripe_price_id?: string | null
           tier: string
           updated_at?: string
         }
@@ -539,11 +573,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_days?: number
+          eur_price?: number
           id?: string
           name?: string
           perks?: string[]
           price?: number
           sort_order?: number
+          stripe_price_id?: string | null
           tier?: string
           updated_at?: string
         }
