@@ -1708,22 +1708,75 @@ const VipTiersSection = ({ userId, discordId }: { userId: string; discordId?: st
                   </ul>
 
                   <div className="mt-6 space-y-2">
-                    <button
-                      onClick={() => buy(tier)}
-                      disabled={buyingId === tier.id || isDowngrade}
-                      title={isDowngrade ? "Negalima žemesnio VIP — turi aukštesnį aktyvų lygį." : undefined}
-                      className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {buyingId === tier.id
-                        ? "Apdorojama…"
-                        : isDowngrade
-                        ? "Žemesnis lygis"
-                        : active
-                        ? "Aktyvi prenumerata"
-                        : hasAnyActive
-                        ? "Pakeisti į šį (mėn.)"
-                        : "Užsisakyti (mėn.)"}
-                    </button>
+                    {active && myVip ? (
+                      <>
+                        {extendOpenId === myVip.id ? (
+                          <div className="rounded-md border border-border/60 bg-secondary/30 p-3 space-y-2">
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                              Pridėti dienų už kreditus
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {[3, 7, 14, 30].map((d) => {
+                                const eur = Number(tier.eur_price) || tier.price;
+                                const dur = tier.duration_days || 30;
+                                const cost = Math.ceil((eur / dur) * d);
+                                return (
+                                  <button
+                                    key={d}
+                                    type="button"
+                                    onClick={() => setExtendDays(d)}
+                                    className={`flex-1 min-w-[60px] h-9 rounded text-xs font-medium transition ${
+                                      extendDays === d
+                                        ? "bg-[image:var(--gradient-brand)] text-primary-foreground"
+                                        : "bg-secondary/60 text-foreground hover:bg-secondary"
+                                    }`}
+                                  >
+                                    {d}d · {cost}kr
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                onClick={() => setExtendOpenId(null)}
+                                className="flex-1 h-9 rounded-md text-xs font-medium border border-border bg-secondary/40 hover:bg-secondary/70 transition"
+                              >
+                                Atšaukti
+                              </button>
+                              <button
+                                onClick={() => extend(myVip.id, extendDays)}
+                                disabled={extendingId === myVip.id}
+                                className="flex-1 h-9 rounded-md text-xs font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
+                              >
+                                {extendingId === myVip.id ? "..." : `Pridėti ${extendDays}d`}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setExtendOpenId(myVip.id); setExtendDays(7); }}
+                            className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition inline-flex items-center justify-center gap-1.5"
+                          >
+                            + Pridėti dienų (kreditais)
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => buy(tier)}
+                        disabled={buyingId === tier.id || isDowngrade}
+                        title={isDowngrade ? "Negalima žemesnio VIP — turi aukštesnį aktyvų lygį." : undefined}
+                        className="w-full h-10 rounded-md text-sm font-semibold bg-[image:var(--gradient-brand)] text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {buyingId === tier.id
+                          ? "Apdorojama…"
+                          : isDowngrade
+                          ? "Žemesnis lygis"
+                          : hasAnyActive
+                          ? "Pakeisti į šį (mėn.)"
+                          : "Užsisakyti (mėn.)"}
+                      </button>
+                    )}
 
                     <button
                       onClick={() => { setGiftDialog(tier); setGiftDiscordId(""); }}
