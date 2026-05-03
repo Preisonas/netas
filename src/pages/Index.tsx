@@ -31,6 +31,7 @@ import PlayerPanel from "@/components/PlayerPanel";
 import PlayerDashboard from "@/components/PlayerDashboard";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFn } from "@/lib/invokeFn";
 import type { Session } from "@supabase/supabase-js";
 
 const navItems = ["Pradžia", "Parduotuvė", "Wiki", "Taisyklės"];
@@ -128,9 +129,9 @@ const Index = () => {
     if (!sessionId) return;
     (async () => {
       const fnName = isVip ? "verify-vip-checkout" : "verify-credit-checkout";
-      const { data, error } = await supabase.functions.invoke(fnName, { body: { sessionId } });
+      const { data, error } = await invokeFn<any>(fnName, { body: { sessionId } });
       if (error) {
-        toast.error("Nepavyko patvirtinti mokėjimo");
+        toast.error("Nepavyko patvirtinti mokėjimo", { description: error });
       } else if (isVip) {
         if (data?.status === "fulfilled") {
           toast.success(data?.gifted ? "VIP padovanotas!" : "VIP aktyvuotas!", {

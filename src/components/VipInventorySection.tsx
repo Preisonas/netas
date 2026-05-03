@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFn } from "@/lib/invokeFn";
 import { toast } from "sonner";
 import { Trophy, Gift, Car, CheckCircle2, Package } from "lucide-react";
 import {
@@ -219,13 +220,12 @@ const ClaimDialog = ({
   const submit = async () => {
     if (!characterId || !wheelId) return;
     setSubmitting(true);
-    const { data, error } = await supabase.functions.invoke("lucky-wheel-claim", {
+    const { error } = await invokeFn("lucky-wheel-claim", {
       body: { wheel_id: wheelId, character_id: characterId },
     });
     setSubmitting(false);
-    if (error || (data as { error?: string })?.error) {
-      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Klaida";
-      toast.error("Nepavyko atsiimti", { description: msg });
+    if (error) {
+      toast.error("Nepavyko atsiimti", { description: error });
       return;
     }
     toast.success("🎉 Prizas atsiųstas į garažą!");
